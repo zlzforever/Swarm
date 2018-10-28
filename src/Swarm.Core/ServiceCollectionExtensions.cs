@@ -89,7 +89,7 @@ namespace Swarm.Core
             sched.Start();
 
             var store = app.ApplicationServices.GetRequiredService<IStore>();
-            store.CleanClients();
+            store.DisconnectAllClients().Wait();
 
             app.UseSignalR(routes => { routes.MapHub<ClientHub>("/client"); });
 

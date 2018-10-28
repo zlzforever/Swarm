@@ -22,30 +22,53 @@ namespace Swarm.Core.Impl
             _logger = loggerFactory.CreateLogger<SqlServerStore>();
         }
 
-        public async Task<bool> RegisterClient(Client client)
+        public async Task<bool> AddClient(Client client)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
-                var exist = await conn.QuerySingleAsync<int>(
-                                "SELECT COUNT(*) FROM [SWARM_CLIENTS] WHERE [NAME] = @Name AND [GROUP] = @Group",
-                                new {client.Name, client.Group}) > 0;
-                if (exist)
-                {
-                    return false;
-                }
-
                 return await conn.ExecuteAsync(
-                           "INSERT INTO [SWARM_CLIENTS] ([NAME], [GROUP], [CONNECTION_ID], [IP], [CREATION_TIME]) VALUES (@Name, @Group, @ConnectionId, @Ip, CURRENT_TIMESTAMP)",
+                           "INSERT INTO [SWARM_CLIENTS] ([NAME], [GROUP], [CONNECTION_ID], [IP], [IS_CONNECTED], [CREATION_TIME]) VALUES (@Name, @Group, @ConnectionId, @Ip, @IsConnected, CURRENT_TIMESTAMP)",
                            client) > 0;
             }
         }
 
-        public async Task RemoveClient(string connectionId)
+        public async Task RemoveClient(string name, string group)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 await conn.ExecuteAsync(
-                    "DELETE FROM [SWARM_CLIENTS] WHERE [CONNECTION_ID] = @ConnectionId",
+                    "DELETE FROM [SWARM_CLIENTS] WHERE [NAME] = @Name AND [GROUP] = @Group",
+                    new {Name = name, Group = group});
+            }
+        }
+
+        public async Task<Client> GetClient(string name, string group)
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                var client = await conn.QuerySingleOrDefaultAsync<Client>(
+                    "SELECT TOP 1 [ID], [NAME], [GROUP], [CONNECTION_ID] AS CONNECTIONID, [IP], [IS_CONNECTED] AS ISCONNECTED, [CREATION_TIME] AS CREATIONTIME, [LAST_MODIFICATION_TIME] AS LASTMODIFICATIONTIME FROM [SWARM_CLIENTS] WHERE [NAME] = @Name AND [GROUP] = @Group",
+                    new {Name = name, Group = group});
+                return client;
+            }
+        }
+
+        public async Task ConnectClient(string name, string group, string connectionId)
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                await conn.ExecuteAsync(
+                    "UPDATE [SWARM_CLIENTS] SET [IS_CONNECTED] = 'true', [CONNECTION_ID] = @ConnectionId, [LAST_MODIFICATION_TIME] =  CURRENT_TIMESTAMP WHERE [NAME] = @Name AND [GROUP] = @Group",
+                    new {Name = name, Group = group, ConnectionId = connectionId});
+            }
+        }
+
+        public async Task DisconnectClient(string connectionId)
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                await conn.ExecuteAsync(
+                    "UPDATE [SWARM_CLIENTS] SET [IS_CONNECTED] = 'false', [LAST_MODIFICATION_TIME] =  CURRENT_TIMESTAMP WHERE [CONNECTION_ID] = @ConnectionId",
                     new {ConnectionId = connectionId});
             }
         }
@@ -55,16 +78,16 @@ namespace Swarm.Core.Impl
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return (await conn.QueryAsync<Client>(
-                    "SELECT [NAME], [IP], [CONNECTION_ID] AS CONNECTIONID, [GROUP] FROM [SWARM_CLIENTS] WHERE [GROUP] = @Group",
+                    "SELECT [ID], [NAME], [IP], [CONNECTION_ID] AS CONNECTIONID, [GROUP], [IS_CONNECTED] AS ISCONNECTED FROM [SWARM_CLIENTS] WHERE [GROUP] = @Group",
                     new {Group = group}));
             }
         }
 
-        public void CleanClients()
+        public async Task DisconnectAllClients()
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
-                conn.Execute("DELETE FROM [SWARM_CLIENTS];");
+                await conn.ExecuteAsync("UPDATE [SWARM_CLIENTS] SET [IS_CONNECTED] = 'false';");
             }
         }
 
@@ -135,7 +158,7 @@ namespace Swarm.Core.Impl
 
                     await conn.ExecuteAsync(
                         "DELETE FROM [SWARM_JOB_PROPERTIES] WHERE [JOB_ID] = @Id",
-                        new {job.Id});
+                        new {job.Id}, trans);
 
                     await conn.ExecuteAsync(
                         "INSERT INTO [SWARM_JOB_PROPERTIES] ([JOB_ID], [NAME], [VALUE], [CREATION_TIME]) VALUES (@JobId,@Name,@Value,CURRENT_TIMESTAMP)",
@@ -161,10 +184,10 @@ namespace Swarm.Core.Impl
                 {
                     await conn.ExecuteAsync(
                         "DELETE FROM [SWARM_JOB_PROPERTIES] WHERE [JOB_ID] = @Id",
-                        new {Id = id});
+                        new {Id = id}, trans);
                     await conn.ExecuteAsync(
                         "DELETE FROM [SWARM_JOBS] WHERE Id = @Id",
-                        new {Id = id});
+                        new {Id = id}, trans);
                     trans.Commit();
                 }
                 catch (Exception ex)
@@ -191,7 +214,7 @@ namespace Swarm.Core.Impl
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return (await conn.QueryAsync<JobProperty>(
-                    "SELECT [JOB_ID] AS JOBID, [NAME], [VALUE], [CREATION_TIME] AS CREATIONTIME FROM [SWARM_JOB_PROPERTIES] WHERE [JOB_ID] = @Id",
+                    "SELECT [ID], [JOB_ID] AS JOBID, [NAME], [VALUE], [CREATION_TIME] AS CREATIONTIME FROM [SWARM_JOB_PROPERTIES] WHERE [JOB_ID] = @Id",
                     new {Id = id})).ToList();
             }
         }
@@ -242,12 +265,12 @@ namespace Swarm.Core.Impl
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 var js = await conn.QuerySingleOrDefaultAsync<JobState>(
-                    @"SELECT TOP 1 [JOB_ID] AS JOBID, [TRACE_ID] AS TRACEID, [STATE], [CLIENT], [MSG], [CREATION_TIME] AS CreationTime, [LAST_MODIFICATION_TIME] AS LastModificationTime FROM [SWARM_JOB_STATE] WHERE [JOB_ID] = @Id ORDER BY CREATION_TIME DESC",
+                    @"SELECT TOP 1 [ID], [JOB_ID] AS JOBID, [TRACE_ID] AS TRACEID, [STATE], [CLIENT], [MSG], [CREATION_TIME] AS CreationTime, [LAST_MODIFICATION_TIME] AS LastModificationTime FROM [SWARM_JOB_STATE] WHERE [JOB_ID] = @Id ORDER BY CREATION_TIME DESC",
                     new {Id = id});
                 if (js != null)
                 {
                     return (await conn.QueryAsync<JobState>(
-                        @"SELECT [JOB_ID] AS JOBID, [TRACE_ID] AS TRACEID, [STATE], [CLIENT], [MSG], [CREATION_TIME] AS CreationTime, [LAST_MODIFICATION_TIME] AS LastModificationTime FROM [SWARM_JOB_STATE]
+                        @"SELECT [ID], [JOB_ID] AS JOBID, [TRACE_ID] AS TRACEID, [STATE], [CLIENT], [MSG], [CREATION_TIME] AS CreationTime, [LAST_MODIFICATION_TIME] AS LastModificationTime FROM [SWARM_JOB_STATE]
  WHERE [TRACE_ID] = @TraceId", new {js.TraceId})).ToList();
                 }
                 else

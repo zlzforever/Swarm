@@ -12,46 +12,54 @@ namespace Swarm.Migrator.Migrations
                 name: "SWARM_CLIENTS",
                 columns: table => new
                 {
+                    ID = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     NAME = table.Column<string>(maxLength: 120, nullable: false),
                     GROUP = table.Column<string>(maxLength: 120, nullable: true),
                     CONNECTION_ID = table.Column<string>(maxLength: 50, nullable: false),
                     IP = table.Column<string>(maxLength: 50, nullable: false),
-                    CREATION_TIME = table.Column<DateTimeOffset>(nullable: false)
+                    IS_CONNECTED = table.Column<bool>(nullable: false),
+                    CREATION_TIME = table.Column<DateTimeOffset>(nullable: false),
+                    LAST_MODIFICATION_TIME = table.Column<DateTimeOffset>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SWARM_CLIENTS", x => x.NAME);
+                    table.PrimaryKey("PK_SWARM_CLIENTS", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
                 name: "SWARM_JOB_PROPERTIES",
                 columns: table => new
                 {
-                    JOB_ID = table.Column<string>(maxLength: 32, nullable: false),
-                    NAME = table.Column<string>(maxLength: 32, nullable: false),
+                    ID = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    JOB_ID = table.Column<string>(maxLength: 32, nullable: true),
+                    NAME = table.Column<string>(maxLength: 32, nullable: true),
                     VALUE = table.Column<string>(maxLength: 250, nullable: true),
                     CREATION_TIME = table.Column<DateTimeOffset>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SWARM_JOB_PROPERTIES", x => new { x.JOB_ID, x.NAME });
+                    table.PrimaryKey("PK_SWARM_JOB_PROPERTIES", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
                 name: "SWARM_JOB_STATE",
                 columns: table => new
                 {
-                    JOB_ID = table.Column<string>(maxLength: 32, nullable: false),
-                    TRACE_ID = table.Column<string>(maxLength: 32, nullable: false),
+                    ID = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    JOB_ID = table.Column<string>(maxLength: 32, nullable: true),
+                    TRACE_ID = table.Column<string>(maxLength: 32, nullable: true),
                     STATE = table.Column<int>(nullable: false),
-                    CLIENT = table.Column<string>(maxLength: 120, nullable: false),
+                    CLIENT = table.Column<string>(maxLength: 120, nullable: true),
                     MSG = table.Column<string>(maxLength: 500, nullable: true),
                     CREATION_TIME = table.Column<DateTimeOffset>(nullable: false),
                     LAST_MODIFICATION_TIME = table.Column<DateTimeOffset>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SWARM_JOB_STATE", x => new { x.JOB_ID, x.TRACE_ID, x.CLIENT });
+                    table.PrimaryKey("PK_SWARM_JOB_STATE", x => x.ID);
                 });
 
             migrationBuilder.CreateTable(
@@ -84,7 +92,7 @@ namespace Swarm.Migrator.Migrations
                 name: "SWARM_LOGS",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
+                    ID = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     JOB_ID = table.Column<string>(maxLength: 32, nullable: true),
                     TRACE_ID = table.Column<string>(maxLength: 32, nullable: true),
@@ -93,8 +101,19 @@ namespace Swarm.Migrator.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SWARM_LOGS", x => x.Id);
+                    table.PrimaryKey("PK_SWARM_LOGS", x => x.ID);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_CLIENTS_CONNECTION_ID",
+                table: "SWARM_CLIENTS",
+                column: "CONNECTION_ID",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_CLIENTS_CREATION_TIME",
+                table: "SWARM_CLIENTS",
+                column: "CREATION_TIME");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SWARM_CLIENTS_NAME_GROUP",
@@ -107,6 +126,13 @@ namespace Swarm.Migrator.Migrations
                 name: "IX_SWARM_JOB_PROPERTIES_JOB_ID",
                 table: "SWARM_JOB_PROPERTIES",
                 column: "JOB_ID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_JOB_PROPERTIES_JOB_ID_NAME",
+                table: "SWARM_JOB_PROPERTIES",
+                columns: new[] { "JOB_ID", "NAME" },
+                unique: true,
+                filter: "[JOB_ID] IS NOT NULL AND [NAME] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SWARM_JOB_STATE_JOB_ID",
@@ -122,7 +148,15 @@ namespace Swarm.Migrator.Migrations
                 name: "IX_SWARM_JOB_STATE_TRACE_ID_CLIENT",
                 table: "SWARM_JOB_STATE",
                 columns: new[] { "TRACE_ID", "CLIENT" },
-                unique: true);
+                unique: true,
+                filter: "[TRACE_ID] IS NOT NULL AND [CLIENT] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_JOB_STATE_JOB_ID_TRACE_ID_CLIENT",
+                table: "SWARM_JOB_STATE",
+                columns: new[] { "JOB_ID", "TRACE_ID", "CLIENT" },
+                unique: true,
+                filter: "[JOB_ID] IS NOT NULL AND [TRACE_ID] IS NOT NULL AND [CLIENT] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SWARM_JOBS_GROUP",
@@ -138,6 +172,11 @@ namespace Swarm.Migrator.Migrations
                 name: "IX_SWARM_JOBS_OWNER",
                 table: "SWARM_JOBS",
                 column: "OWNER");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_JOBS_NAME_GROUP",
+                table: "SWARM_JOBS",
+                columns: new[] { "NAME", "GROUP" });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

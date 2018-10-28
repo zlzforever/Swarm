@@ -5,9 +5,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Swarm.Basic.Entity
 {
     [Table("SWARM_LOGS")]
-    public class Log
+    public class Log : IEntity<int>
     {
-        [Key] public int Id { get; set; }
+        [Key] [Column("ID")] public int Id { get; set; }
 
         [Column("JOB_ID")] [StringLength(32)] public string JobId { get; set; }
 
@@ -15,11 +15,8 @@ namespace Swarm.Basic.Entity
         [StringLength(32)]
         public string TraceId { get; set; }
 
-        [Column("MSG")] 
-        public string Msg { get; set; }
-        
-        [Required]
-        [Column("CREATION_TIME")]
-        public DateTimeOffset CreationTime { get; set; }
+        [Column("MSG")] public string Msg { get; set; }
+
+        [Required] [Column("CREATION_TIME")] public DateTimeOffset CreationTime { get; set; }
     }
 }

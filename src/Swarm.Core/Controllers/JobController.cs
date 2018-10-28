@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -54,11 +56,38 @@ namespace Swarm.Core.Controllers
         {
             if (ModelState.IsValid)
             {
+                //TODO: VALID PROPERTIES
+
+                switch (value.Executor)
+                {
+                    case Executor.Process:
+                    {
+                        if (string.IsNullOrWhiteSpace(properties.GetValue(SwarmConts.ApplicationProperty)))
+                        {
+                            return new JsonResult(new ApiResult
+                                {Code = ApiResult.ModelNotValid, Msg = "The Application field is required."});
+                        }
+
+                        break;
+                    }
+                    case Executor.Reflection:
+                    {
+                        if (string.IsNullOrWhiteSpace(properties.GetValue(SwarmConts.ClassProperty)))
+                        {
+                            return new JsonResult(new ApiResult
+                                {Code = ApiResult.ModelNotValid, Msg = "The ClassName field is required."});
+                        }
+
+                        break;
+                    }
+                }
+
                 if (await _store.CheckJobExists(value.Name, value.Group))
                 {
                     return new JsonResult(new ApiResult
                         {Code = ApiResult.Error, Msg = $"Job [{value.Name}, {value.Group}] exists."});
                 }
+
 
                 // default state is exit
                 value.State = State.Exit;
@@ -79,7 +108,22 @@ namespace Swarm.Core.Controllers
                 return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Msg = value.Id});
             }
 
-            return new JsonResult(new ApiResult {Code = ApiResult.ModelNotValid});
+            return new JsonResult(new ApiResult {Code = ApiResult.ModelNotValid, Msg = GetModelStateErrorMsg()});
+        }
+
+        private string GetModelStateErrorMsg()
+        {
+            var errors = new List<string>();
+            foreach (var state in ModelState)
+            {
+                var error = state.Value.Errors.FirstOrDefault();
+                if (error != null)
+                {
+                    errors.Add(error.ErrorMessage);
+                }
+            }
+
+            return string.Join(",", errors);
         }
 
         [HttpPut]
@@ -108,7 +152,7 @@ namespace Swarm.Core.Controllers
                 return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Msg = "success"});
             }
 
-            return new JsonResult(new ApiResult {Code = ApiResult.ModelNotValid});
+            return new JsonResult(new ApiResult {Code = ApiResult.ModelNotValid, Msg = GetModelStateErrorMsg()});
         }
 
         [HttpDelete("{id}")]

@@ -23,7 +23,8 @@ namespace Swarm.Sample
         static void Main(string[] args)
         {
             //CreateReflectionJob();
-            //CreateProcessJob();
+            // CreateProcessJob();
+
             SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001");
             client.Start();
             Console.Read();

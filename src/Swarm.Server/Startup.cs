@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Swarm.Core;
@@ -26,7 +27,10 @@ namespace Swarm.Server
                 options.CheckConsentNeeded = context => true;
                 options.MinimumSameSitePolicy = SameSiteMode.None;
             });
-
+            services.AddDbContext<SwarmDbContext>(options =>
+                options.UseSqlServer(
+                    Configuration.GetSection("Swarm").GetValue<string>("ConnectionString")));
+            
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1).AddSwarm(
                 Configuration.GetSection("Swarm"),
                 configure => { configure.UseSqlServer(); });

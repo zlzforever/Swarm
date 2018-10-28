@@ -5,8 +5,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Swarm.Basic.Entity
 {
     [Table("SWARM_JOB_PROPERTIES")]
-    public class JobProperty
+    public class JobProperty: IEntity<int>
     {
+        [Key]
+        [Column("ID")]
+        public int Id { get; set; }
+        
         [StringLength(32)]
         [Column("JOB_ID")]
         public string JobId { get; set; }

@@ -7,10 +7,13 @@ namespace Swarm.Core
 {
     public interface IStore
     {
-        Task<bool> RegisterClient(Client client);
-        Task RemoveClient(string connectionId);
+        Task<bool> AddClient(Client client);
+        Task RemoveClient(string name, string group);
+        Task ConnectClient(string name, string group, string connectionId);
+        Task<Client> GetClient(string name, string group);
+        Task DisconnectClient(string connectionId);
         Task<IEnumerable<Client>> GetClients(string group);
-        void CleanClients();
+        Task DisconnectAllClients();
         Task<bool> CheckJobExists(string jobId);
         Task<bool> CheckJobExists(string name, string group);
         Task<string> AddJob(Job job, IDictionary<string, string> properties);

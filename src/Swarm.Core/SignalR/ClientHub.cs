@@ -56,6 +56,8 @@ namespace Swarm.Core.SignalR
                 skip = true;
             }
 
+            await base.OnConnectedAsync();
+            
             if (!skip && (string.IsNullOrWhiteSpace(ci.Name) || string.IsNullOrWhiteSpace(ci.Ip)))
             {
                 _logger.LogWarning(
@@ -67,14 +69,30 @@ namespace Swarm.Core.SignalR
             {
                 try
                 {
-                    var success = await _store.RegisterClient(ci);
-                    if (success)
+                    var client = await _store.GetClient(ci.Name, ci.Group);
+                    if (client == null)
                     {
-                        await base.OnConnectedAsync();
+                        ci.IsConnected = true;
+                        await _store.AddClient(ci);
+                        _logger.LogInformation(
+                            $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] register success.");
+                        return;
                     }
-
-                    _logger.LogInformation(
-                        $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] register success.");
+                    else
+                    {
+                        if (client.IsConnected)
+                        {
+                            _logger.LogInformation(
+                                $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] is connected.");
+                        }
+                        else
+                        {
+                            await _store.ConnectClient(ci.Name,ci.Group,ci.ConnectionId);
+                            _logger.LogInformation(
+                                $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] register success.");
+                            return;
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -82,10 +100,8 @@ namespace Swarm.Core.SignalR
                         $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] register failed: {ex.Message}.");
                 }
             }
-            else
-            {
-                Context.Abort();
-            }
+
+            Context.Abort();
         }
 
         public override async Task OnDisconnectedAsync(Exception exception)
@@ -94,7 +110,7 @@ namespace Swarm.Core.SignalR
 
             try
             {
-                await _store.RemoveClient(Context.ConnectionId);
+                await _store.DisconnectClient(ci.ConnectionId);
                 await base.OnDisconnectedAsync(exception);
                 _logger.LogInformation($"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] disconnected.");
             }

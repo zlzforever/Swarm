@@ -13,7 +13,9 @@ namespace Swarm.Client.Impl
     public class ProcessExecutor : IExecutor
     {
         private readonly ILogger _logger;
-        private static readonly Dictionary<string, Process> _processes = new Dictionary<string, Process>();
+
+        private static readonly Dictionary<string, Dictionary<string, Process>> _processes =
+            new Dictionary<string, Dictionary<string, Process>>();
 
         public ProcessExecutor()
         {
@@ -25,7 +27,12 @@ namespace Swarm.Client.Impl
 
         public Task<int> Execute(JobContext context, Action<string, string, string> logger)
         {
-            if (_processes.ContainsKey(context.JobId))
+            if (!_processes.ContainsKey(context.JobId))
+            {
+                _processes.Add(context.JobId, new Dictionary<string, Process>());
+            }
+
+            if (_processes[context.JobId].Count > 1)
             {
                 if (context.ConcurrentExecutionDisallowed)
                 {
@@ -53,14 +60,18 @@ namespace Swarm.Client.Impl
             {
                 process.OutputDataReceived += (sender, e) =>
                 {
-                    if (!String.IsNullOrEmpty(e.Data) && Regex.IsMatch(logPattern, e.Data))
+                    if (!String.IsNullOrEmpty(e.Data))
                     {
-                        logger?.Invoke(context.JobId, context.TraceId, e.Data);
+                        _logger.LogInformation(e.Data);
+                        if (Regex.IsMatch(logPattern, e.Data))
+                        {
+                            logger?.Invoke(context.JobId, context.TraceId, e.Data);
+                        }
                     }
                 };
             }
 
-            _processes.Add(context.JobId, process);
+            _processes[context.JobId].Add(context.TraceId, process);
             process.Start();
             if (!string.IsNullOrWhiteSpace(logPattern))
             {
@@ -70,7 +81,7 @@ namespace Swarm.Client.Impl
             _logger.LogInformation(
                 $"Start process [{context.Name}, {context.Group}] PID: {process.Id}.");
             process.WaitForExit();
-            _processes.Remove(context.JobId);
+            _processes[context.JobId].Remove(context.TraceId);
             _logger.LogInformation(
                 $"[{context.Name}, {context.Group}] PID: {process.Id} exited.");
             return Task.FromResult(process.ExitCode);

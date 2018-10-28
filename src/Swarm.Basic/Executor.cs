@@ -1,8 +1,12 @@
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+
 namespace Swarm.Basic
 {
-    public enum Executor
-    {
-        Process,
-        Reflection
-    }
-}
+    [JsonConverter(typeof(StringEnumConverter))]
+     public enum Executor
+     {
+         Process,
+         Reflection
+     }
+ }

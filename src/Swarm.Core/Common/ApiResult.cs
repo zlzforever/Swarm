@@ -12,5 +12,7 @@ namespace Swarm.Core.Common
         public int Code { get; set; }
 
         public string Msg { get; set; }
+        
+        public dynamic Data { get; set; }
     }
 }
