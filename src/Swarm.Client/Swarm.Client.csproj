@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>7.1</LangVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="1.0.4" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.1.1" />
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Swarm.Basic\Swarm.Basic.csproj" />
+    </ItemGroup>
+</Project>

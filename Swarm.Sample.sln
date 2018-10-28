@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swarm.Sample", "src\Swarm.Sample\Swarm.Sample.csproj", "{D31D1506-BA64-481F-8110-230F4D69DE2D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swarm.Client", "src\Swarm.Client\Swarm.Client.csproj", "{41BDDFCB-74CB-4EC7-A472-76ABA543290F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swarm.Basic", "src\Swarm.Basic\Swarm.Basic.csproj", "{3D3DF12D-13AC-4337-8485-C150B27C756D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{688ABC4E-ED98-48A9-882F-052B7ACF727B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{688ABC4E-ED98-48A9-882F-052B7ACF727B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{688ABC4E-ED98-48A9-882F-052B7ACF727B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{688ABC4E-ED98-48A9-882F-052B7ACF727B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B1115A04-A83F-4B42-9858-F4F3666B89FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B1115A04-A83F-4B42-9858-F4F3666B89FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B1115A04-A83F-4B42-9858-F4F3666B89FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B1115A04-A83F-4B42-9858-F4F3666B89FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D31D1506-BA64-481F-8110-230F4D69DE2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D31D1506-BA64-481F-8110-230F4D69DE2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D31D1506-BA64-481F-8110-230F4D69DE2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D31D1506-BA64-481F-8110-230F4D69DE2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41BDDFCB-74CB-4EC7-A472-76ABA543290F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41BDDFCB-74CB-4EC7-A472-76ABA543290F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41BDDFCB-74CB-4EC7-A472-76ABA543290F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41BDDFCB-74CB-4EC7-A472-76ABA543290F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D3DF12D-13AC-4337-8485-C150B27C756D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D3DF12D-13AC-4337-8485-C150B27C756D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D3DF12D-13AC-4337-8485-C150B27C756D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D3DF12D-13AC-4337-8485-C150B27C756D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
