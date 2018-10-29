@@ -91,7 +91,7 @@ namespace Swarm.Core
             var store = app.ApplicationServices.GetRequiredService<IStore>();
             store.DisconnectAllClients().Wait();
 
-            app.UseSignalR(routes => { routes.MapHub<ClientHub>("/client"); });
+            app.UseSignalR(routes => { routes.MapHub<ClientHub>("/clienthub"); });
 
             return app;
         }

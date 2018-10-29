@@ -1,0 +1,40 @@
+ <h4>Job Detail: <span id="jobId">@ViewData["JobId"]</span></h4>
+<br/>
+<div id="view" class="card">
+    <div class="row" v-for="el in els">
+        <div class="col s12 m2">
+            <span type="text" disabled="disabled" v-text="el[0] + ':'" />
+        </div>
+        <div class="col s12 m10">
+            <span type="text" disabled="disabled" v-text="el[1]"/>
+        </div>
+        <hr/>
+    </div>
+    <br/>
+</div>
+
+@section scripts{
+    <script>
+        $(function() {
+            var jobId = $('#jobId').text();
+            if (!jobId) return;
+            new Vue({
+                el: '#view',
+                data: {
+                    els: []
+                },
+                mounted: function() {
+                    loadView(this);
+                }
+            });
+
+            function loadView(vue) {
+                const url = '/swarm/v1.0/job/' + jobId;
+                hub.get(url,
+                    function(result) {
+                        vue.$data.els = result.data;
+                    });
+            }
+        });
+    </script>
+}

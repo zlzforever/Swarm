@@ -8,7 +8,7 @@ namespace Swarm.Core
     public interface IStore
     {
         Task<bool> AddClient(Client client);
-        Task RemoveClient(string name, string group);
+        Task RemoveClient(int clientId);
         Task ConnectClient(string name, string group, string connectionId);
         Task<Client> GetClient(string name, string group);
         Task DisconnectClient(string connectionId);

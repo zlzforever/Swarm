@@ -6,11 +6,11 @@ using Swarm.Server.Models;
 
 namespace Swarm.Server.Controllers
 {
-    public class NodeController : Controller
+    public class ClientController : Controller
     {
         private readonly SwarmDbContext _dbContext;
 
-        public NodeController(SwarmDbContext dbContext)
+        public ClientController(SwarmDbContext dbContext)
         {
             _dbContext = dbContext;
         }
@@ -21,11 +21,11 @@ namespace Swarm.Server.Controllers
         }
 
         [HttpGet]
-        [Route("swarm/v1.0/[controller]")]
+        [Route("swarm/v1.0/client")]
         public IActionResult Query([FromQuery] PaginationQueryInput input)
         {
             var output = _dbContext.Client.PageList<Client, int, DateTimeOffset>(input, null, d => d.CreationTime);
-            return new JsonResult(new ApiResult {Code =  ApiResult.SuccessCode, Data = output});
+            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Data = output});
         }
     }
 }

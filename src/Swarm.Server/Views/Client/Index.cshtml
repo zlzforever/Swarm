@@ -1,0 +1,55 @@
+﻿<h4>
+    CLIENT
+</h4>
+<table class="card bordered highlight responsive-table centered" id="view">
+    <thead>
+    <tr>
+        <th width="5">#</th>
+        <th>Name</th>
+        <th>Group</th>
+        <th>IP</th>
+        <th>ConnectionId</th>
+        <th>Is Connected</th>
+        <th>Connected Time</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr v-show="els.length==0">
+        <td colspan="13">
+            No data to display...
+        </td>
+    </tr>
+    <tr v-for="el in els">
+        <td>
+            <span :style="{'background-color': el.isConnected?'green':'red'}"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        </td>
+        <td>
+            <span v-text="el.name"></span>
+        </td>
+        <td>
+            <span v-text="el.group"></span>
+        </td>
+        <td>
+            <span v-text="el.ip"></span>
+        </td>
+        <td>
+            <span v-text="el.connectionId"></span>
+        </td>
+        <td>
+            <span v-text="el.isConnected"></span>
+        </td>
+        <td>
+            <span v-text="hub.formatDate(el.lastModificationTime)"></span>
+        </td>
+        <td>
+            <button class="waves-effect waves-light btn-small" :disabled="!el.isConnected" @@click.stop="exit(el.connectionId)">Exit</button>
+            <button class="waves-effect waves-light btn-small" :disabled="el.isConnected" @@click.stop="remove(el.id)">Remove</button>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+@section scripts{
+    <script src="~/js/client.js" asp-append-version="true"></script>
+}

@@ -36,6 +36,12 @@ namespace Swarm.Server.Controllers
             return View();
         }
         
+        public IActionResult Detail(string id)
+        {
+            ViewData["JobID"] = id;
+            return View();
+        }
+        
         [HttpGet]
         [Route("swarm/v1.0/log")]
         public IActionResult QueryLog([FromQuery] LogPaginationQueryInput input)
@@ -62,7 +68,7 @@ namespace Swarm.Server.Controllers
         }
 
         [HttpGet]
-        [Route("swarm/v1.0/[controller]")]
+        [Route("swarm/v1.0/job")]
         public IActionResult Query([FromQuery] JobPaginationQueryInput input)
         {
             var keyword = input.Keyword;

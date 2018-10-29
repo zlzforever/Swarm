@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Quartz;
 using Swarm.Basic;
 using Swarm.Basic.Entity;
 using Swarm.Core.Common.Internal;
-using Swarm.Core.SignalR;
 
 namespace Swarm.Core.Impl
 {

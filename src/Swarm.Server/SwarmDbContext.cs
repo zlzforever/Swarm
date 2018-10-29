@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Swarm.Basic;
 using Swarm.Basic.Entity;
 
 // ReSharper disable once CheckNamespace

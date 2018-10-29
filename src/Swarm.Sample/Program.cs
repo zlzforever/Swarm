@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Swarm.Client;
+using Microsoft.AspNetCore.SignalR.Client;
 using Swarm.Basic;
 using Swarm.Basic.Entity;
+using Swarm.Client;
 
 namespace Swarm.Sample
 {
@@ -23,12 +22,8 @@ namespace Swarm.Sample
     {
         static void Main(string[] args)
         {
-            var a = Regex.Match(@"[\w]+", "asdfasdfasdf");
-            //CreateReflectionJob();
-            // CreateProcessJob();
-
-            SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001");
-            client.Start();
+           SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001");
+          client.Start();
             Console.Read();
         }
 

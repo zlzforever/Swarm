@@ -7,17 +7,19 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
+using Microsoft.Extensions.Options;
 using Swarm.Basic;
 using Swarm.Client.Impl;
 
 namespace Swarm.Client
 {
-    public class SwarmClient
+    public class SwarmClient : ISwarmClient
     {
         private readonly ILogger _logger;
         private int _retryTimes;
         private bool _isRunning;
-        private CancellationToken _cancellationToken;
+        private CancellationTokenSource _cancellationTokenSource;
+        private bool _isDisconncted = true;
 
         /// <summary>
         /// 分组
@@ -27,7 +29,7 @@ namespace Swarm.Client
         /// <summary>
         /// Scheduler.NET 服务地址
         /// </summary>
-        public string Url { get; }
+        public string Host { get; }
 
         /// <summary>
         /// Client 名称
@@ -41,8 +43,11 @@ namespace Swarm.Client
         /// </summary>
         public int RetryTimes { get; set; } = 3600;
 
-        protected SwarmClient()
+        public int DetectInterval { get; set; } = 1500;
+
+        private SwarmClient()
         {
+            //TODO: Validate data
             Name = string.IsNullOrWhiteSpace(Name) ? Dns.GetHostName() : Name;
             if (_logger == null)
             {
@@ -50,94 +55,136 @@ namespace Swarm.Client
             }
         }
 
+        public SwarmClient(IOptions<SwarmClientOptions> options, ILoggerFactory loggerFactory) : this()
+        {
+            var ops = options.Value;
+            Name = ops.Name;
+            Host = new Uri(ops.Host).ToString();
+            Group = ops.Group;
+            AccessToken = ops.AccessToken;
+            RetryTimes = ops.RetryTimes;
+            _logger = loggerFactory.CreateLogger<SwarmClient>();
+        }
+
         /// <summary>
         /// 构造方法
         /// </summary>
         /// <param name="url">服务地址</param>
+        /// <param name="accessToken"></param>
         /// <param name="name">名称</param>
         /// <param name="group">分组</param>
         public SwarmClient(string url, string accessToken, string name, string group = "DEFAULT") : this()
         {
             Group = group;
-            Url = new Uri(url).ToString();
+            Host = new Uri(url).ToString();
             Name = name;
             AccessToken = accessToken;
         }
 
-        public void Start(CancellationToken cancellationToken = default)
+        public Task Start(CancellationToken cancellationToken = default)
         {
             if (_isRunning)
             {
                 throw new SwarmClientException("Client is running.");
             }
 
-            _cancellationToken = cancellationToken;
-            _isRunning = true;
-            Task.Factory.StartNew(async () =>
+            CancellationToken token;
+            if (cancellationToken == default)
             {
-                var times = Interlocked.Increment(ref _retryTimes);
-                while (times <= RetryTimes)
+                _cancellationTokenSource = new CancellationTokenSource();
+                token = _cancellationTokenSource.Token;
+            }
+            else
+            {
+                token = cancellationToken;
+            }
+
+            _isRunning = true;
+
+            return Task.Factory.StartNew(async () =>
+            {
+                while (_retryTimes < RetryTimes && !token.IsCancellationRequested)
                 {
-                    bool exit = false;
-                    while (times <= RetryTimes)
+                    if (_isDisconncted)
                     {
-                        var connection = new HubConnectionBuilder()
-                            .WithUrl($"{Url}client/?group={Group}&name={Name}&ip=127.0.0.1", config =>
-                            {
-                                config.Headers = new Dictionary<string, string>
-                                {
-                                    {SwarmConts.AccessTokenHeader, AccessToken}
-                                };
-                            })
-                            .Build();
-                        try
-                        {
-                            connection.Closed += e =>
-                            {
-                                exit = true;
-                                _logger.LogWarning($"Disconnected from server: {e?.Message}.");
-                                return Task.CompletedTask;
-                            };
-                            OnTrigger(connection);
-                            await connection.StartAsync(cancellationToken);
-                            break;
-                        }
-                        catch (Exception e) when (e.InnerException?.InnerException is SocketException)
-                        {
-                            await connection.StopAsync(cancellationToken);
-                            await connection.DisposeAsync();
-                            var exception = (SocketException) e.InnerException.InnerException;
-                            if (exception.SocketErrorCode == SocketError.TimedOut ||
-                                exception.SocketErrorCode == SocketError.ConnectionRefused)
-                            {
-                                Thread.Sleep(1000);
-
-                                if (times <= RetryTimes)
-                                {
-                                    _logger.LogInformation("Retry to connect server.");
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-                        }
+                        await CreateConnection(token);
+                    }
+                    else
+                    {
+                        Interlocked.Exchange(ref _retryTimes, 0);
                     }
 
-                    while (!cancellationToken.IsCancellationRequested && !exit)
-                    {
-                        cancellationToken.WaitHandle.WaitOne(TimeSpan.FromSeconds(1));
-                    }
+                    token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(1500));
                 }
-            }, cancellationToken).ContinueWith(t => { _isRunning = false; }, cancellationToken);
+
+                _isRunning = false;
+            }, token);
+        }
+
+
+        private async Task<HubConnection> CreateConnection(CancellationToken token)
+        {
+            HubConnection connection = null;
+            while (_retryTimes < RetryTimes && !token.IsCancellationRequested)
+            {
+                Interlocked.Increment(ref _retryTimes);
+
+                connection = new HubConnectionBuilder()
+                    .WithUrl($"{Host}clienthub/?group={Group}&name={Name}&ip=127.0.0.1", config =>
+                    {
+                        config.Headers = new Dictionary<string, string>
+                        {
+                            {SwarmConts.AccessTokenHeader, AccessToken}
+                        };
+                    }).Build();
+                connection.Closed += e =>
+                {
+                    _isDisconncted = true;
+                    _logger.LogWarning($"Disconnected from server: {e?.Message}.");
+                    return Task.CompletedTask;
+                };
+
+                AddListener(connection, token);
+                var kv = await connection.StartAsync(token)
+                    .ContinueWith(t => new Tuple<bool, string>(t.IsFaulted, t.Exception?.Message), token);
+                _isDisconncted = kv.Item1;
+                if (_isDisconncted)
+                {
+                    _logger.LogError($"Connect server failed: {kv.Item2}.");
+                    token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(1500));
+                }
+                else
+                {
+                    _logger.LogError($"Connect server success.");
+                    break;
+                }
+            }
+
+            return connection;
         }
 
         public void Stop()
         {
-            _cancellationToken.ThrowIfCancellationRequested();
+            _cancellationTokenSource?.Cancel();
+
+            // TODO: Wait all process exit, and all ISwarmJob exit.
+            foreach (var job in ProcessExecutor.Processes)
+            {
+                foreach (var proc in job.Value)
+                {
+                    try
+                    {
+                        proc.Value.Kill();
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError(e, $"Kill job {job.Key}, trace {proc.Key}] process failed: {e.Message}.");
+                    }
+                }
+            }
         }
 
-        private void OnTrigger(HubConnection connection)
+        private void AddListener(HubConnection connection, CancellationToken token)
         {
             connection.On<JobContext>("Trigger", async context =>
             {
@@ -152,7 +199,7 @@ namespace Swarm.Client
                 {
                     _logger.LogError($"Trigger job [{context.Name}, {context.Group}] timeout: {delay}.");
                     await connection.SendAsync("StateChanged", context.JobId, context.TraceId, State.Exit, "Timeout",
-                        _cancellationToken);
+                        token);
                     return;
                 }
 
@@ -161,26 +208,33 @@ namespace Swarm.Client
                     _logger.LogInformation($"Try execute job: [{context.JobId}]");
 
                     await connection.SendAsync("StateChanged", context.JobId, context.TraceId, State.Running, "",
-                        _cancellationToken);
+                        token);
 
                     var exitCode = await ExecutorFactory.Create(context.Executor).Execute(context,
                         async (jobId, traceId, msg) =>
                         {
                             await connection.SendAsync("OnLog", jobId, traceId, msg,
-                                cancellationToken: _cancellationToken);
+                                token);
                         });
 
                     await connection.SendAsync("StateChanged", context.JobId, context.TraceId, State.Exit,
                         $"Exit: {exitCode}",
-                        _cancellationToken);
+                        token);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"Execute job [{context.Name}, {context.Group}] failed.");
                     await connection.SendAsync("StateChanged", context.JobId, context.TraceId, State.Exit,
                         $"Failed: {ex.Message}",
-                        _cancellationToken);
+                        token);
                 }
+            });
+
+            connection.On("Exit", () =>
+            {
+                Stop();
+                _logger.LogInformation("Exit by server.");
+                Environment.Exit(0);
             });
         }
     }

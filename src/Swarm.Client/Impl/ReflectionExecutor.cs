@@ -1,5 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
@@ -39,10 +38,8 @@ namespace Swarm.Client.Impl
                         return -1;
                     }
                 }
-                else
-                {
-                    throw new SwarmClientException($"{className} is not implement ISwarmJob.");
-                }
+
+                throw new SwarmClientException($"{className} is not implement ISwarmJob.");
             }
 
             throw new SwarmClientException($"{className} unfounded.");

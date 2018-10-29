@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -9,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Quartz;
-using Quartz.Xml.JobSchedulingData20;
 using Swarm.Basic;
 using Swarm.Basic.Common;
 using Swarm.Basic.Entity;
@@ -31,8 +28,9 @@ namespace Swarm.Core.Controllers
         {
             _options = options.Value;
             _scheduler = scheduler;
-            _logger = loggerFactory.CreateLogger(GetType());
+            _logger = loggerFactory.CreateLogger<JobController>();
             _store = store;
+            _logger.LogDebug("swarm.core.controllers.job");
         }
 
         public override void OnActionExecuting(ActionExecutingContext context)
@@ -45,6 +43,47 @@ namespace Swarm.Core.Controllers
             base.OnActionExecuting(context);
         }
 
+        [HttpGet("{jobId}")]
+        public async Task<IActionResult> GetJobInfo(string jobId)
+        {
+            if (string.IsNullOrWhiteSpace(jobId))
+            {
+                return new JsonResult(new ApiResult
+                    {Code = ApiResult.ModelNotValid, Msg = "The id is required."});
+            }
+
+            var job = await _store.GetJob(jobId);
+            if (job == null)
+            {
+                return new JsonResult(new ApiResult
+                    {Code = ApiResult.ModelNotValid, Msg = $"Job {jobId} is not exists."});
+            }
+
+            var properties = await _store.GetJobProperties(jobId);
+            var result = new List<object[]>();
+            foreach (var property in properties)
+            {
+                result.Add(new object[]{property.Name, property.Value});
+            }
+
+            result.Add(new object[]{"id", job.Id});
+            result.Add(new object[]{"Description", job.Description});
+            result.Add(new object[]{"Executor", job.Executor});
+            result.Add(new object[]{"Group", job.Group});
+            result.Add(new object[]{"Name", job.Name});
+            result.Add(new object[]{"Owner", job.Owner});
+            result.Add(new object[]{"Performer", job.Performer});
+            result.Add(new object[]{"Sharding", job.Sharding});
+            result.Add(new object[]{"State", job.State});
+            result.Add(new object[]{"Trigger", job.Trigger});
+            result.Add(new object[]{"CreationTime", job.CreationTime});
+            result.Add(new object[]{"RetryCount", job.RetryCount});
+            result.Add(new object[]{"ShardingParameters", job.ShardingParameters});
+            result.Add(new object[]{"ConcurrentExecutionDisallowed", job.ConcurrentExecutionDisallowed});
+            result.Add(new object[]{"LastModificationTime", job.LastModificationTime});
+            
+            return new JsonResult(new ApiResult{ Code = ApiResult.SuccessCode, Data = result});
+        }
 
         /// <summary>
         /// 添加任务
@@ -133,7 +172,7 @@ namespace Swarm.Core.Controllers
             {
                 if (string.IsNullOrWhiteSpace(value.Id))
                 {
-                    return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = $"Id is empty/null."});
+                    return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = "Id is empty/null."});
                 }
 
                 if (!await _store.CheckJobExists(value.Id))
@@ -160,7 +199,7 @@ namespace Swarm.Core.Controllers
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = $"Id is empty/null."});
+                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = "Id is empty/null."});
             }
 
             if (!await _store.CheckJobExists(id))
@@ -180,7 +219,7 @@ namespace Swarm.Core.Controllers
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = $"Id is empty/null."});
+                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = "Id is empty/null."});
             }
 
             if (!await _store.CheckJobExists(id))

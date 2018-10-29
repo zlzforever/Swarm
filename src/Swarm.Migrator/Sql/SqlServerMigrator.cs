@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 using System.IO;
 using Dapper;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 
 namespace Swarm.Migrator.Sql
 {

@@ -1,15 +1,14 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Swarm.Basic;
-using Swarm.Basic.Entity;
 using Swarm.Core.Common;
 
 namespace Swarm.Core.SignalR
 {
+    
     public class ClientHub : Hub
     {
         private readonly SwarmOptions _options;
@@ -81,20 +80,18 @@ namespace Swarm.Core.SignalR
                             $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] register success.");
                         return;
                     }
+
+                    if (client.IsConnected)
+                    {
+                        _logger.LogInformation(
+                            $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] is connected.");
+                    }
                     else
                     {
-                        if (client.IsConnected)
-                        {
-                            _logger.LogInformation(
-                                $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] is connected.");
-                        }
-                        else
-                        {
-                            await _store.ConnectClient(ci.Name, ci.Group, ci.ConnectionId);
-                            _logger.LogInformation(
-                                $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] register success.");
-                            return;
-                        }
+                        await _store.ConnectClient(ci.Name, ci.Group, ci.ConnectionId);
+                        _logger.LogInformation(
+                            $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] register success.");
+                        return;
                     }
                 }
                 catch (Exception ex)

@@ -14,7 +14,7 @@ namespace Swarm.Client.Impl
     {
         private readonly ILogger _logger;
 
-        private static readonly Dictionary<string, Dictionary<string, Process>> _processes =
+        internal static readonly Dictionary<string, Dictionary<string, Process>> Processes =
             new Dictionary<string, Dictionary<string, Process>>();
 
         public ProcessExecutor()
@@ -27,12 +27,12 @@ namespace Swarm.Client.Impl
 
         public Task<int> Execute(JobContext context, Action<string, string, string> logger)
         {
-            if (!_processes.ContainsKey(context.JobId))
+            if (!Processes.ContainsKey(context.JobId))
             {
-                _processes.Add(context.JobId, new Dictionary<string, Process>());
+                Processes.Add(context.JobId, new Dictionary<string, Process>());
             }
 
-            if (_processes[context.JobId].Count > 1)
+            if (Processes[context.JobId].Count > 1)
             {
                 if (context.ConcurrentExecutionDisallowed)
                 {
@@ -71,7 +71,7 @@ namespace Swarm.Client.Impl
                 };
             }
 
-            _processes[context.JobId].Add(context.TraceId, process);
+            Processes[context.JobId].Add(context.TraceId, process);
             process.Start();
             if (!string.IsNullOrWhiteSpace(logPattern))
             {
@@ -81,7 +81,7 @@ namespace Swarm.Client.Impl
             _logger.LogInformation(
                 $"Start process [{context.Name}, {context.Group}] PID: {process.Id}.");
             process.WaitForExit();
-            _processes[context.JobId].Remove(context.TraceId);
+            Processes[context.JobId].Remove(context.TraceId);
             _logger.LogInformation(
                 $"[{context.Name}, {context.Group}] PID: {process.Id} exited.");
             return Task.FromResult(process.ExitCode);

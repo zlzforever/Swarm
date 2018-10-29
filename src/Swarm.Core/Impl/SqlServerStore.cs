@@ -32,13 +32,13 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task RemoveClient(string name, string group)
+        public async Task RemoveClient(int clientId)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 await conn.ExecuteAsync(
-                    "DELETE FROM [SWARM_CLIENTS] WHERE [NAME] = @Name AND [GROUP] = @Group",
-                    new {Name = name, Group = group});
+                    "DELETE FROM [SWARM_CLIENTS] WHERE [ID] = @Id",
+                    new { Id= clientId});
             }
         }
 
@@ -210,7 +210,7 @@ namespace Swarm.Core.Impl
             {
                 return await conn.QuerySingleOrDefaultAsync<Job>(
                     @"SELECT [ID], [STATE], [TRIGGER],[PERFORMER] AS Performer,  [EXECUTER] AS EXECUTER, [NAME], [GROUP], [LOAD], [SHARDING],
-                        [SHARDING_PARAMETERS] AS SHARDINGPARAMETERS, [DESCRIPTION], [RETRY_COUNT] AS RETRYCOUNT, [OWNER], [CONCURRENT_EXECUTION_DISALLOWED] AS CONCURRENTEXECUTIONDISALLOWED FROM [SWARM_JOBS] WHERE ID = @Id",
+ [SHARDING_PARAMETERS] AS SHARDINGPARAMETERS, [DESCRIPTION], [RETRY_COUNT] AS RETRYCOUNT, [OWNER], [CONCURRENT_EXECUTION_DISALLOWED] AS CONCURRENTEXECUTIONDISALLOWED, [CREATION_TIME] AS CREATIONTIME, [LAST_MODIFICATION_TIME] AS LASTMODIFICATIONTIME FROM [SWARM_JOBS] WHERE ID = @Id",
                     new {Id = id});
             }
         }
@@ -279,10 +279,8 @@ namespace Swarm.Core.Impl
                         @"SELECT [ID], [JOB_ID] AS JOBID, [TRACE_ID] AS TRACEID, [STATE], [CLIENT], [MSG], [CREATION_TIME] AS CreationTime, [LAST_MODIFICATION_TIME] AS LastModificationTime FROM [SWARM_JOB_STATE]
  WHERE [TRACE_ID] = @TraceId", new {js.TraceId})).ToList();
                 }
-                else
-                {
-                    return new List<JobState>();
-                }
+
+                return new List<JobState>();
             }
         }
 
