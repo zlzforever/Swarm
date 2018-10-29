@@ -20,6 +20,10 @@ namespace Swarm.Basic.Entity
         [Column("CLIENT")] [StringLength(120)] public string Client { get; set; }
 
         [Column("MSG")] [StringLength(500)] public string Msg { get; set; }
+        
+        [Column("SHARDING")]
+        [Required]
+        public int Sharding { get; set; }
 
         [Required] [Column("CREATION_TIME")] public DateTimeOffset CreationTime { get; set; }
 

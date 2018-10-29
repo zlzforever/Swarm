@@ -54,6 +54,7 @@ namespace Swarm.Migrator.Migrations
                     STATE = table.Column<int>(nullable: false),
                     CLIENT = table.Column<string>(maxLength: 120, nullable: true),
                     MSG = table.Column<string>(maxLength: 500, nullable: true),
+                    SHARDING = table.Column<int>(nullable: false),
                     CREATION_TIME = table.Column<DateTimeOffset>(nullable: false),
                     LAST_MODIFICATION_TIME = table.Column<DateTimeOffset>(nullable: true)
                 },
@@ -135,6 +136,11 @@ namespace Swarm.Migrator.Migrations
                 filter: "[JOB_ID] IS NOT NULL AND [NAME] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SWARM_JOB_STATE_CREATION_TIME",
+                table: "SWARM_JOB_STATE",
+                column: "CREATION_TIME");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SWARM_JOB_STATE_JOB_ID",
                 table: "SWARM_JOB_STATE",
                 column: "JOB_ID");
@@ -145,18 +151,23 @@ namespace Swarm.Migrator.Migrations
                 columns: new[] { "JOB_ID", "TRACE_ID" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_SWARM_JOB_STATE_TRACE_ID_CLIENT",
+                name: "IX_SWARM_JOB_STATE_SHARDING_TRACE_ID_CLIENT",
                 table: "SWARM_JOB_STATE",
-                columns: new[] { "TRACE_ID", "CLIENT" },
+                columns: new[] { "SHARDING", "TRACE_ID", "CLIENT" },
                 unique: true,
                 filter: "[TRACE_ID] IS NOT NULL AND [CLIENT] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SWARM_JOB_STATE_JOB_ID_TRACE_ID_CLIENT",
+                name: "IX_SWARM_JOB_STATE_SHARDING_JOB_ID_TRACE_ID_CLIENT",
                 table: "SWARM_JOB_STATE",
-                columns: new[] { "JOB_ID", "TRACE_ID", "CLIENT" },
+                columns: new[] { "SHARDING", "JOB_ID", "TRACE_ID", "CLIENT" },
                 unique: true,
                 filter: "[JOB_ID] IS NOT NULL AND [TRACE_ID] IS NOT NULL AND [CLIENT] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_JOBS_CREATION_TIME",
+                table: "SWARM_JOBS",
+                column: "CREATION_TIME");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SWARM_JOBS_GROUP",
@@ -177,6 +188,21 @@ namespace Swarm.Migrator.Migrations
                 name: "IX_SWARM_JOBS_NAME_GROUP",
                 table: "SWARM_JOBS",
                 columns: new[] { "NAME", "GROUP" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_LOGS_CREATION_TIME",
+                table: "SWARM_LOGS",
+                column: "CREATION_TIME");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_LOGS_JOB_ID",
+                table: "SWARM_LOGS",
+                column: "JOB_ID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_LOGS_JOB_ID_TRACE_ID",
+                table: "SWARM_LOGS",
+                columns: new[] { "JOB_ID", "TRACE_ID" });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

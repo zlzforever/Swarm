@@ -1,22 +1,28 @@
- <h4>Job Detail: <span id="jobId">@ViewData["JobId"]</span></h4>
-<br/>
-<div id="view" class="card">
-    <div class="row" v-for="el in els">
-        <div class="col s12 m2">
-            <span type="text" disabled="disabled" v-text="el[0] + ':'" />
-        </div>
-        <div class="col s12 m10">
-            <span type="text" disabled="disabled" v-text="el[1]"/>
-        </div>
-        <hr/>
-    </div>
-    <br/>
-</div>
+<h4>Job Detail</h4>
+<input hidden="true" id="jobId" value="@ViewData["JobId"]"/>
+<table id="view" class="card bordered highlight responsive-table centered">
+    <tbody>
+    <tr v-show="els.length==0">
+        <td colspan="13">
+            No data to display...
+        </td>
+    </tr>
+    <tr v-for="el in els">
+        <td>
+            <span class="left" v-text="el[0]"></span>
+        </td>
+        <td>
+            <span class="left" v-text="el[1]"></span>
+        </td>
+    </tr>
+    </tbody>
+</table>
+
 
 @section scripts{
     <script>
         $(function() {
-            var jobId = $('#jobId').text();
+            var jobId = $('#jobId').val();
             if (!jobId) return;
             new Vue({
                 el: '#view',

@@ -22,8 +22,8 @@ namespace Swarm.Core
         Task<Job> GetJob(string jobId);
         Task<List<JobProperty>> GetJobProperties(string jobId);
         Task ChangeJobState(string jobId, State state);
-        Task AddJobState(string jobId, string traceId, string client, State state, string msg);
-        Task ChangeJobState(string traceId, string client, State state, string msg);
+        Task AddJobState(string jobId, string traceId, string client, int sharding, State state, string msg);
+        Task ChangeJobState(string traceId, string client, int sharding, State state, string msg);
         Task AddLog(string jobId, string traceId, string msg);
         Task<List<JobState>> GetCurrentJobStates(string jobId);
         Task<bool> CheckJobExited(string jobId);

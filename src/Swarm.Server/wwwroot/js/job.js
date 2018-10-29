@@ -27,7 +27,7 @@ $(function () {
                     type: "warning",
                     showCancelButton: true
                 }, function () {
-                    hub.get("swarm/v1.0/job/" + id + '?action=exit', function () {
+                    hub.delete("swarm/v1.0/job?id=" + id, function () {
                         loadView(that);
                     });
                 });

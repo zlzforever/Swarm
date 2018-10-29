@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -155,7 +157,7 @@ namespace Swarm.Client
                 }
                 else
                 {
-                    _logger.LogError($"Connect server success.");
+                    _logger.LogInformation($"Connect server success.");
                     break;
                 }
             }
@@ -168,18 +170,16 @@ namespace Swarm.Client
             _cancellationTokenSource?.Cancel();
 
             // TODO: Wait all process exit, and all ISwarmJob exit.
-            foreach (var job in ProcessExecutor.Processes)
+            foreach (var kv in ProcessExecutor.Processes)
             {
-                foreach (var proc in job.Value)
+                try
                 {
-                    try
-                    {
-                        proc.Value.Kill();
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.LogError(e, $"Kill job {job.Key}, trace {proc.Key}] process failed: {e.Message}.");
-                    }
+                    kv.Value.Kill();
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e,
+                        $"Kill job {kv.Key.JobId}, trace {kv.Key.TraceId}, sharding {kv.Key.Sharding}] process failed: {e.Message}.");
                 }
             }
         }
@@ -198,7 +198,8 @@ namespace Swarm.Client
                 if (delay > 10)
                 {
                     _logger.LogError($"Trigger job [{context.Name}, {context.Group}] timeout: {delay}.");
-                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, State.Exit, "Timeout",
+                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, context.Sharding,
+                        State.Exit, "Timeout",
                         token);
                     return;
                 }
@@ -207,7 +208,8 @@ namespace Swarm.Client
                 {
                     _logger.LogInformation($"Try execute job: [{context.JobId}]");
 
-                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, State.Running, "",
+                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, context.Sharding,
+                        State.Running, "",
                         token);
 
                     var exitCode = await ExecutorFactory.Create(context.Executor).Execute(context,
@@ -217,14 +219,16 @@ namespace Swarm.Client
                                 token);
                         });
 
-                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, State.Exit,
+                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, context.Sharding,
+                        State.Exit,
                         $"Exit: {exitCode}",
                         token);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"Execute job [{context.Name}, {context.Group}] failed.");
-                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, State.Exit,
+                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, context.Sharding,
+                        State.Exit,
                         $"Failed: {ex.Message}",
                         token);
                 }
@@ -235,6 +239,52 @@ namespace Swarm.Client
                 Stop();
                 _logger.LogInformation("Exit by server.");
                 Environment.Exit(0);
+            });
+
+            connection.On<string>("Kill", (jobId) =>
+            {
+                var keys = ProcessExecutor.Processes.Keys.Where(k => k.JobId == jobId).ToList();
+
+                foreach (var key in keys)
+                {
+                    ProcessExecutor.Processes.TryGetValue(key, out Process proc);
+                    if (proc != null)
+                    {
+                        try
+                        {
+                            proc?.Kill();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Kill PID {proc.Id} Job {jobId} failed: {ex.Message}.");
+                        }
+                    }
+                }
+
+                foreach (var key in keys)
+                {
+                    ProcessExecutor.Processes.TryRemove(key, out _);
+                }
+            });
+
+            connection.On<string, string, int>("Kill", (jobId, traceId, sharding) =>
+            {
+                var key = new ProcessExecutor.ProcessKey(jobId, traceId, sharding);
+                if (ProcessExecutor.Processes.ContainsKey(key))
+                {
+                    ProcessExecutor.Processes.TryGetValue(key, out Process proc);
+                    if (proc != null)
+                    {
+                        try
+                        {
+                            proc?.Kill();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"Kill PID {proc.Id} Job {jobId} failed: {ex.Message}.");
+                        }
+                    }
+                }
             });
         }
     }

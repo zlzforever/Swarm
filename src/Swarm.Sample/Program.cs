@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -22,8 +25,8 @@ namespace Swarm.Sample
     {
         static void Main(string[] args)
         {
-           SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001");
-          client.Start();
+            SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001");
+            client.Start();
             Console.Read();
         }
 

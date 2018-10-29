@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -12,10 +14,29 @@ namespace Swarm.Client.Impl
 {
     public class ProcessExecutor : IExecutor
     {
+        internal class ProcessKey
+        {
+            public string JobId { get; }
+            public string TraceId { get; }
+            public int Sharding { get; }
+
+            public ProcessKey(string jobId, string traceId, int sharding)
+            {
+                JobId = jobId;
+                TraceId = traceId;
+                Sharding = sharding;
+            }
+
+            public override int GetHashCode()
+            {
+                return $"{JobId}_{TraceId}_{Sharding}".GetHashCode();
+            }
+        }
+
         private readonly ILogger _logger;
 
-        internal static readonly Dictionary<string, Dictionary<string, Process>> Processes =
-            new Dictionary<string, Dictionary<string, Process>>();
+        internal static readonly ConcurrentDictionary<ProcessKey, Process> Processes =
+            new ConcurrentDictionary<ProcessKey, Process>();
 
         public ProcessExecutor()
         {
@@ -27,12 +48,14 @@ namespace Swarm.Client.Impl
 
         public Task<int> Execute(JobContext context, Action<string, string, string> logger)
         {
-            if (!Processes.ContainsKey(context.JobId))
+            var key = new ProcessKey(context.JobId, context.TraceId, context.CurrentSharding);
+            if (Processes.ContainsKey(key))
             {
-                Processes.Add(context.JobId, new Dictionary<string, Process>());
+                throw new SwarmClientException(
+                    $"[{context.JobId}, {context.TraceId}, {context.CurrentSharding}] is running");
             }
 
-            if (Processes[context.JobId].Count > 1)
+            if (Processes.Keys.Count(k => k.JobId == context.JobId) > 1)
             {
                 if (context.ConcurrentExecutionDisallowed)
                 {
@@ -47,31 +70,32 @@ namespace Swarm.Client.Impl
             }
 
             var arguments = context.Parameters.GetValue(SwarmConts.ArgumentsProperty);
+            arguments = ReplaceEnvironments(arguments);
             var logPattern = context.Parameters.GetValue(SwarmConts.LogPatternProperty);
-            var process = new Process();
-            process.StartInfo = new ProcessStartInfo(app, arguments)
+            var process = new Process
             {
-                WorkingDirectory = AppContext.BaseDirectory,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = !string.IsNullOrWhiteSpace(logPattern)
+                StartInfo = new ProcessStartInfo(app, arguments)
+                {
+                    WorkingDirectory = AppContext.BaseDirectory,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = !string.IsNullOrWhiteSpace(logPattern)
+                }
             };
             if (!string.IsNullOrWhiteSpace(logPattern))
             {
                 process.OutputDataReceived += (sender, e) =>
                 {
-                    if (!String.IsNullOrEmpty(e.Data))
+                    if (string.IsNullOrEmpty(e.Data)) return;
+                    _logger.LogInformation(e.Data);
+                    if (Regex.IsMatch(e.Data, logPattern))
                     {
-                        _logger.LogInformation(e.Data);
-                        if (Regex.IsMatch( e.Data,logPattern))
-                        {
-                            logger?.Invoke(context.JobId, context.TraceId, e.Data);
-                        }
+                        logger?.Invoke(context.JobId, context.TraceId, e.Data);
                     }
                 };
             }
 
-            Processes[context.JobId].Add(context.TraceId, process);
+            Processes.TryAdd(key, process);
             process.Start();
             if (!string.IsNullOrWhiteSpace(logPattern))
             {
@@ -81,10 +105,15 @@ namespace Swarm.Client.Impl
             _logger.LogInformation(
                 $"Start process [{context.Name}, {context.Group}] PID: {process.Id}.");
             process.WaitForExit();
-            Processes[context.JobId].Remove(context.TraceId);
+            Processes.TryRemove(key, out _);
             _logger.LogInformation(
                 $"[{context.Name}, {context.Group}] PID: {process.Id} exited.");
             return Task.FromResult(process.ExitCode);
+        }
+
+        private string ReplaceEnvironments(string arguments)
+        {
+            return arguments.Replace("%root%", AppContext.BaseDirectory);
         }
     }
 }

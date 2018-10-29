@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
@@ -12,6 +13,7 @@ using Swarm.Basic.Common;
 using Swarm.Basic.Entity;
 using Swarm.Core.Common;
 using Swarm.Core.Impl;
+using Swarm.Core.SignalR;
 
 namespace Swarm.Core.Controllers
 {
@@ -22,15 +24,17 @@ namespace Swarm.Core.Controllers
         private readonly SwarmOptions _options;
         private readonly ILogger _logger;
         private readonly IStore _store;
+        private readonly IHubContext<ClientHub> _hubContext;
 
         public JobController(IScheduler scheduler, ILoggerFactory loggerFactory, IStore store,
+            IHubContext<ClientHub> hubContext,
             IOptions<SwarmOptions> options)
         {
             _options = options.Value;
             _scheduler = scheduler;
             _logger = loggerFactory.CreateLogger<JobController>();
             _store = store;
-            _logger.LogDebug("swarm.core.controllers.job");
+            _hubContext = hubContext;
         }
 
         public override void OnActionExecuting(ActionExecutingContext context)
@@ -63,26 +67,26 @@ namespace Swarm.Core.Controllers
             var result = new List<object[]>();
             foreach (var property in properties)
             {
-                result.Add(new object[]{property.Name, property.Value});
+                result.Add(new object[] {property.Name, property.Value});
             }
 
-            result.Add(new object[]{"id", job.Id});
-            result.Add(new object[]{"Description", job.Description});
-            result.Add(new object[]{"Executor", job.Executor});
-            result.Add(new object[]{"Group", job.Group});
-            result.Add(new object[]{"Name", job.Name});
-            result.Add(new object[]{"Owner", job.Owner});
-            result.Add(new object[]{"Performer", job.Performer});
-            result.Add(new object[]{"Sharding", job.Sharding});
-            result.Add(new object[]{"State", job.State});
-            result.Add(new object[]{"Trigger", job.Trigger});
-            result.Add(new object[]{"CreationTime", job.CreationTime});
-            result.Add(new object[]{"RetryCount", job.RetryCount});
-            result.Add(new object[]{"ShardingParameters", job.ShardingParameters});
-            result.Add(new object[]{"ConcurrentExecutionDisallowed", job.ConcurrentExecutionDisallowed});
-            result.Add(new object[]{"LastModificationTime", job.LastModificationTime});
-            
-            return new JsonResult(new ApiResult{ Code = ApiResult.SuccessCode, Data = result});
+            result.Add(new object[] {"id", job.Id});
+            result.Add(new object[] {"Description", job.Description});
+            result.Add(new object[] {"Executor", job.Executor});
+            result.Add(new object[] {"Group", job.Group});
+            result.Add(new object[] {"Name", job.Name});
+            result.Add(new object[] {"Owner", job.Owner});
+            result.Add(new object[] {"Performer", job.Performer});
+            result.Add(new object[] {"Sharding", job.Sharding});
+            result.Add(new object[] {"State", job.State});
+            result.Add(new object[] {"Trigger", job.Trigger});
+            result.Add(new object[] {"CreationTime", job.CreationTime});
+            result.Add(new object[] {"RetryCount", job.RetryCount});
+            result.Add(new object[] {"ShardingParameters", job.ShardingParameters});
+            result.Add(new object[] {"ConcurrentExecutionDisallowed", job.ConcurrentExecutionDisallowed});
+            result.Add(new object[] {"LastModificationTime", job.LastModificationTime});
+
+            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Data = result});
         }
 
         /// <summary>
@@ -229,6 +233,41 @@ namespace Swarm.Core.Controllers
 
             await _scheduler.TriggerJob(new JobKey(id));
             return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Msg = "success"});
+        }
+
+        [HttpDelete()]
+        public async Task<IActionResult> Exit(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = "Id is empty/null."});
+            }
+
+            var job = await _store.GetJob(id);
+            if (job == null)
+            {
+                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = $"Job {id} not exists."});
+            }
+
+            ApiResult result;
+            switch (job.Performer)
+            {
+                case Performer.SignalR:
+                {
+                    await _hubContext.Clients.All.SendAsync("Kill", id);
+                    result = new ApiResult {Code = ApiResult.SuccessCode, Msg = "success"};
+                    break;
+                }
+                default:
+                {
+                    result = new ApiResult
+                        {Code = ApiResult.Error, Msg = $"{job.Performer} is not support exit."};
+                    break;
+                }
+            }
+
+            await _store.ChangeJobState(id, State.Exit);
+            return new JsonResult(result);
         }
     }
 }

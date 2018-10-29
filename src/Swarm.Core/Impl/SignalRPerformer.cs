@@ -24,43 +24,62 @@ namespace Swarm.Core.Impl
                 var shardingParameters = jobContext.ShardingParameters == null
                     ? new string[0]
                     : jobContext.ShardingParameters?.Split(new[] {";"}, StringSplitOptions.RemoveEmptyEntries);
-                for (int i = 0; i < clients.Count; ++i)
-                {
-                    var client = clients[i];
 
-                    await store.AddJobState(jobContext.JobId, jobContext.TraceId, client.Name, State.Performing,
-                        $"Performing on client: [{client.Name}, {client.Group}, {client.Ip}]."
-                    );
+
+                for (int i = 0, j = 0; j < clients.Count && i < jobContext.Sharding;)
+                {
+                    var client = clients[j];
 
                     var shardingParameter = i < shardingParameters.Length ? shardingParameters[i] : "";
 
-                    jobContext.CurrentSharding = i;
-                    jobContext.CurrentShardingParameter = shardingParameter;
+                    var jc = jobContext.Clone();
+                    jc.CurrentSharding = i;
+                    jc.CurrentShardingParameter = shardingParameter;
 
-                    if (jobContext.Parameters.ContainsKey(SwarmConts.ArgumentsProperty))
+                    await store.AddJobState(jc.JobId, jc.TraceId, client.Name,
+                        jc.CurrentSharding, State.Performing,
+                        $"Performing on client: [{client.Name}, {client.Group}, {client.Ip}]."
+                    );
+
+                    if (jc.Parameters.ContainsKey(SwarmConts.ArgumentsProperty))
                     {
-                        var arguments = jobContext.Parameters[SwarmConts.ArgumentsProperty];
+                        var arguments = jc.Parameters[SwarmConts.ArgumentsProperty];
                         if (!string.IsNullOrWhiteSpace(arguments))
                         {
-                            arguments = arguments.Replace("%JobId%", jobContext.JobId);
-                            arguments = arguments.Replace("%TraceId%", jobContext.TraceId);
-                            arguments = arguments.Replace("%Sharding%", jobContext.Sharding.ToString());
-                            arguments = arguments.Replace("%Partition%", i.ToString());
-                            arguments = arguments.Replace("%ShardingParameter%", shardingParameter);
-                            jobContext.Parameters[SwarmConts.ArgumentsProperty] = arguments;
+                            arguments = arguments.Replace("%jobid%", jc.JobId);
+                            arguments = arguments.Replace("%traceid%", jc.TraceId);
+                            arguments = arguments.Replace("%sharding%", jc.Sharding.ToString());
+                            arguments = arguments.Replace("%currentsharding%", jc.CurrentSharding.ToString());
+                            arguments = arguments.Replace("%currentshardingparameter%",
+                                jc.CurrentShardingParameter);
+                            arguments = arguments.Replace("%name%", jc.Name);
+                            arguments = arguments.Replace("%group%", jc.Group);
+                            arguments = arguments.Replace("%firetime%",
+                                jc.FireTimeUtc.ToString("yyyy-MM-dd hh:mm:ss"));
+                            
+                            jc.Parameters[SwarmConts.ArgumentsProperty] = arguments;
                         }
                     }
 
-                    await hubContext.Clients.Client(client.ConnectionId).SendAsync("Trigger", jobContext);
-                    await store.ChangeJobState(jobContext.TraceId, client.Name, State.Performed,
+                    await hubContext.Clients.Client(client.ConnectionId).SendAsync("Trigger", jc);
+                    await store.ChangeJobState(jc.TraceId, client.Name, jc.CurrentSharding,
+                        State.Performed,
                         $"Performed on client: [{client.Name}, {client.Group}, {client.Ip}]."
                     );
+
+                    i++;
+                    j++;
+                    if (j == clients.Count)
+                    {
+                        j = 0;
+                    }
                 }
             }
             else
             {
                 logger.LogError($"Unfounded available client for job {jobContext.JobId}.");
-                await store.AddJobState(jobContext.JobId, jobContext.TraceId, "Internal", State.Performing,
+                await store.AddJobState(jobContext.JobId, jobContext.TraceId, "Swarm", jobContext.CurrentSharding,
+                    State.Performing,
                     "Unfounded available client");
             }
         }

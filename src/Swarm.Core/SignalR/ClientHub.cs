@@ -8,7 +8,6 @@ using Swarm.Core.Common;
 
 namespace Swarm.Core.SignalR
 {
-    
     public class ClientHub : Hub
     {
         private readonly SwarmOptions _options;
@@ -23,10 +22,10 @@ namespace Swarm.Core.SignalR
             _store = store;
         }
 
-        public async Task StateChanged(string jobId, string traceId, State state, string msg)
+        public async Task StateChanged(string jobId, string traceId, int sharding, State state, string msg)
         {
             var ci = Context.GetClient();
-            await _store.ChangeJobState(traceId, ci.Name, state, msg);
+            await _store.ChangeJobState(traceId, ci.Name, sharding, state, msg);
             switch (state)
             {
                 case State.Exit:
@@ -34,6 +33,7 @@ namespace Swarm.Core.SignalR
                     {
                         await _store.ChangeJobState(jobId, State.Exit);
                     }
+
                     break;
                 case State.Running:
                     await _store.ChangeJobState(jobId, State.Running);

@@ -27,7 +27,7 @@ namespace Swarm.Core.Impl
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return await conn.ExecuteAsync(
-                           "INSERT INTO [SWARM_CLIENTS] ([NAME], [GROUP], [CONNECTION_ID], [IP], [IS_CONNECTED], [CREATION_TIME]) VALUES (@Name, @Group, @ConnectionId, @Ip, @IsConnected, CURRENT_TIMESTAMP)",
+                           "INSERT INTO [SWARM_CLIENTS] ([NAME], [GROUP], [CONNECTION_ID], [IP], [IS_CONNECTED], [CREATION_TIME], [LAST_MODIFICATION_TIME]) VALUES (@Name, @Group, @ConnectionId, @Ip, @IsConnected, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
                            client) > 0;
             }
         }
@@ -38,7 +38,7 @@ namespace Swarm.Core.Impl
             {
                 await conn.ExecuteAsync(
                     "DELETE FROM [SWARM_CLIENTS] WHERE [ID] = @Id",
-                    new { Id= clientId});
+                    new {Id = clientId});
             }
         }
 
@@ -235,24 +235,28 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task AddJobState(string jobId, string traceId, string client, State state, string msg)
+        public async Task AddJobState(string jobId, string traceId, string client, int sharding, State state,
+            string msg)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 await conn.ExecuteAsync(
-                    @"INSERT [SWARM_JOB_STATE] ([JOB_ID], [TRACE_ID], [STATE], [CLIENT], [MSG], [CREATION_TIME]) VALUES (
-@JobId, @TraceId, @State, @Client, @Msg, CURRENT_TIMESTAMP);",
-                    new {JobId = jobId, TraceId = traceId, State = state, Client = client, Msg = msg});
+                    @"INSERT [SWARM_JOB_STATE] ([JOB_ID], [TRACE_ID], [STATE], [CLIENT], [SHARDING], [MSG], [CREATION_TIME]) VALUES (
+@JobId, @TraceId, @State, @Client, @Sharding, @Msg, CURRENT_TIMESTAMP);",
+                    new
+                    {
+                        JobId = jobId, TraceId = traceId, State = state, Client = client, Sharding = sharding, Msg = msg
+                    });
             }
         }
 
-        public async Task ChangeJobState(string traceId, string client, State state, string msg)
+        public async Task ChangeJobState(string traceId, string client, int sharding, State state, string msg)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 await conn.ExecuteAsync(
-                    "UPDATE [SWARM_JOB_STATE] SET [STATE] = @State, [MSG] = @Msg, [LAST_MODIFICATION_TIME] = CURRENT_TIMESTAMP WHERE [TRACE_ID] = @TraceId AND [CLIENT] = @Client",
-                    new {Client = client, TraceId = traceId, State = state, Msg = msg});
+                    "UPDATE [SWARM_JOB_STATE] SET [STATE] = @State, [MSG] = @Msg, [LAST_MODIFICATION_TIME] = CURRENT_TIMESTAMP WHERE [TRACE_ID] = @TraceId AND [CLIENT] = @Client AND [Sharding] = @Sharding;",
+                    new {Client = client, TraceId = traceId, State = state, Sharding = sharding, Msg = msg});
             }
         }
 
