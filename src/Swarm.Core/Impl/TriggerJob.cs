@@ -28,6 +28,7 @@ namespace Swarm.Core.Impl
                     return;
                 }
 
+                logger.LogInformation($"Try to performer job: {jobId}.");
                 var policy = Policy.Handle<Exception>().Retry(job.RetryCount <= 0 ? 1 : job.RetryCount,
                     (ex, count) => { logger.LogError(ex, $"Perform job {jobId} failed [{count}]: {ex.Message}."); });
 
@@ -62,6 +63,7 @@ namespace Swarm.Core.Impl
 
                     await performer.Perform(jobContext);
                     await store.ChangeJobState(jobId, State.Performed);
+                    logger.LogInformation($"Performed job: {jobId} complete."); 
                 });
             }
             catch (Exception ex)

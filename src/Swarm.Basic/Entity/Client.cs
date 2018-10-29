@@ -31,7 +31,7 @@ namespace Swarm.Basic.Entity
 
         [Column("IS_CONNECTED")] public bool IsConnected { get; set; }
 
-        [Required] [Column("CREATION_TIME")] public DateTimeOffset CreationTIme { get; set; }
+        [Required] [Column("CREATION_TIME")] public DateTimeOffset CreationTime { get; set; }
 
         [Column("LAST_MODIFICATION_TIME")] public DateTimeOffset? LastModificationTime { get; set; }
     }

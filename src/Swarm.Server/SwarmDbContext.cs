@@ -32,18 +32,24 @@ namespace Swarm
             modelBuilder.Entity<Job>().HasIndex(x => x.Name);
             modelBuilder.Entity<Job>().HasIndex(x => new {x.Name, x.Group});
             modelBuilder.Entity<Job>().HasIndex(x => x.Owner);
-
+            modelBuilder.Entity<Job>().HasIndex(x => x.CreationTime);
+            
             modelBuilder.Entity<JobProperty>().HasIndex(x => x.JobId);
             modelBuilder.Entity<JobProperty>().HasIndex(x => new {x.JobId, x.Name}).IsUnique();
 
             modelBuilder.Entity<Client>().HasIndex(x => new {x.Name, x.Group}).IsUnique();
             modelBuilder.Entity<Client>().HasIndex(x => x.ConnectionId).IsUnique();
-            modelBuilder.Entity<Client>().HasIndex(x => x.CreationTIme);
+            modelBuilder.Entity<Client>().HasIndex(x => x.CreationTime);
             
             modelBuilder.Entity<JobState>().HasIndex(x => new {x.JobId, x.TraceId, x.Client}).IsUnique();
             modelBuilder.Entity<JobState>().HasIndex(x => x.JobId);
             modelBuilder.Entity<JobState>().HasIndex(x => new {x.JobId, x.TraceId});
             modelBuilder.Entity<JobState>().HasIndex(x => new {x.TraceId, x.Client}).IsUnique();
+            modelBuilder.Entity<JobState>().HasIndex(x => x.CreationTime);
+            
+            modelBuilder.Entity<Log>().HasIndex(x => x.JobId);
+            modelBuilder.Entity<Log>().HasIndex(x => x.CreationTime);
+            modelBuilder.Entity<Log>().HasIndex(x => new {x.JobId,x.TraceId});
         }
 
         public SwarmDbContext CreateDbContext(string[] args)

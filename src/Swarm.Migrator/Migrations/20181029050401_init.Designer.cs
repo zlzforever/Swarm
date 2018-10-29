@@ -10,7 +10,7 @@ using Swarm;
 namespace Swarm.Migrator.Migrations
 {
     [DbContext(typeof(SwarmDbContext))]
-    [Migration("20181028113131_init")]
+    [Migration("20181029050401_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,7 +33,7 @@ namespace Swarm.Migrator.Migrations
                         .HasColumnName("CONNECTION_ID")
                         .HasMaxLength(50);
 
-                    b.Property<DateTimeOffset>("CreationTIme")
+                    b.Property<DateTimeOffset>("CreationTime")
                         .HasColumnName("CREATION_TIME");
 
                     b.Property<string>("Group")
@@ -61,7 +61,7 @@ namespace Swarm.Migrator.Migrations
                     b.HasIndex("ConnectionId")
                         .IsUnique();
 
-                    b.HasIndex("CreationTIme");
+                    b.HasIndex("CreationTime");
 
                     b.HasIndex("Name", "Group")
                         .IsUnique()

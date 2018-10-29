@@ -63,7 +63,7 @@ namespace Swarm.Client.Impl
                     if (!String.IsNullOrEmpty(e.Data))
                     {
                         _logger.LogInformation(e.Data);
-                        if (Regex.IsMatch(logPattern, e.Data))
+                        if (Regex.IsMatch( e.Data,logPattern))
                         {
                             logger?.Invoke(context.JobId, context.TraceId, e.Data);
                         }

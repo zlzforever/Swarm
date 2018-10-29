@@ -31,7 +31,10 @@ namespace Swarm.Core.SignalR
             switch (state)
             {
                 case State.Exit:
-                    CheckAndUpdateJobState(jobId, traceId);
+                    if (await _store.CheckJobExited(jobId))
+                    {
+                        await _store.ChangeJobState(jobId, State.Exit);
+                    }
                     break;
                 case State.Running:
                     await _store.ChangeJobState(jobId, State.Running);
@@ -57,7 +60,7 @@ namespace Swarm.Core.SignalR
             }
 
             await base.OnConnectedAsync();
-            
+
             if (!skip && (string.IsNullOrWhiteSpace(ci.Name) || string.IsNullOrWhiteSpace(ci.Ip)))
             {
                 _logger.LogWarning(
@@ -87,7 +90,7 @@ namespace Swarm.Core.SignalR
                         }
                         else
                         {
-                            await _store.ConnectClient(ci.Name,ci.Group,ci.ConnectionId);
+                            await _store.ConnectClient(ci.Name, ci.Group, ci.ConnectionId);
                             _logger.LogInformation(
                                 $"[{Context.ConnectionId}, {ci.Name}, {ci.Group}, {ci.Ip}] register success.");
                             return;
@@ -118,11 +121,6 @@ namespace Swarm.Core.SignalR
             {
                 _logger.LogError(ex, $"Disconnect connection failed: {ex.Message}.");
             }
-        }
-
-        private void CheckAndUpdateJobState(string id, string traceId)
-        {
-            //TODO: IF ALL TRACE COMPLETED, UPDATE JOB STATE IN JOB TABLE
         }
     }
 }

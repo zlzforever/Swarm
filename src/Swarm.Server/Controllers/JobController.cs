@@ -20,11 +20,45 @@ namespace Swarm.Server.Controllers
         {
             return View();
         }
-        
+
         public IActionResult CronProc()
         {
-
             return View();
+        }
+
+        public IActionResult State()
+        {
+            return View();
+        }
+
+        public IActionResult Log()
+        {
+            return View();
+        }
+        
+        [HttpGet]
+        [Route("swarm/v1.0/log")]
+        public IActionResult QueryLog([FromQuery] LogPaginationQueryInput input)
+        {
+            var output = _dbContext.Log.PageList<Log, int, int>(input, l=>l.JobId==input.JobId, d => d.Id);
+            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Data = output});
+        }
+        
+        [HttpGet]
+        [Route("swarm/v1.0/jobState")]
+        public IActionResult QueryState([FromQuery] JobStatePaginationQueryInput input)
+        {
+            var id = input.JobId;
+
+            Expression<Func<JobState, bool>> where = j => j.JobId == id;
+            if (input.State != null)
+            {
+                where = t => t.State == input.State;
+            }
+            //TODO: 更多的条件
+
+            var output = _dbContext.JobState.PageList<JobState, int, int>(input, where, d => d.Id);
+            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Data = output});
         }
 
         [HttpGet]

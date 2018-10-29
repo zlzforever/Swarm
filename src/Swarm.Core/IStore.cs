@@ -26,5 +26,6 @@ namespace Swarm.Core
         Task ChangeJobState(string traceId, string client, State state, string msg);
         Task AddLog(string jobId, string traceId, string msg);
         Task<List<JobState>> GetCurrentJobStates(string jobId);
+        Task<bool> CheckJobExited(string jobId);
     }
 }

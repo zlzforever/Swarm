@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Swarm.Client;
@@ -22,6 +23,7 @@ namespace Swarm.Sample
     {
         static void Main(string[] args)
         {
+            var a = Regex.Match(@"[\w]+", "asdfasdfasdf");
             //CreateReflectionJob();
             // CreateProcessJob();
 

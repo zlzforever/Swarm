@@ -24,7 +24,7 @@ namespace Swarm.Server.Controllers
         [Route("swarm/v1.0/[controller]")]
         public IActionResult Query([FromQuery] PaginationQueryInput input)
         {
-            var output = _dbContext.Client.PageList<Client, int, DateTimeOffset>(input, null, d => d.CreationTIme);
+            var output = _dbContext.Client.PageList<Client, int, DateTimeOffset>(input, null, d => d.CreationTime);
             return new JsonResult(new ApiResult {Code =  ApiResult.SuccessCode, Data = output});
         }
     }

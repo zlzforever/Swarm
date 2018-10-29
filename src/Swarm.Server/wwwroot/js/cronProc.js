@@ -15,7 +15,7 @@ $(function () {
                 application: '',
                 arguments: '',
                 concurrentExecutionDisallowed: 'True',
-                logPattern: '\[ERR\]'
+                logPattern: '\\w+'
             }
         },
         mounted: function () {
@@ -24,8 +24,9 @@ $(function () {
         methods: {
             create: function () {
                 var job = this.$data.job;
-                hub.post("/swarm/v1.0/job?cron=" + job.cron + "&application=" + job.application + "&logpattern=" +
-                    job.logPattern + "&arguments=" + job.arguments, {
+                var url = "/swarm/v1.0/job?" + "cron=" + job.cron + "&application=" + job.application + "&logpattern=" +
+                    job.logPattern.replace('+','%2B')+ "&arguments=" + job.arguments;
+                hub.post(url, {
                     name: job.name,
                     group: job.group,
                     retryCount: job.retryCount,
@@ -35,7 +36,8 @@ $(function () {
                     load: job.load,
                     owner: job.owner,
                     sharding: job.sharding,
-                    shardingParameters: job.shardingParameters
+                    shardingParameters: job.shardingParameters,
+                    concurrentExecutionDisallowed: !job.concurrentExecutionDisallowed
                 }, function () {
                     window.location.href = '/job';
                 });

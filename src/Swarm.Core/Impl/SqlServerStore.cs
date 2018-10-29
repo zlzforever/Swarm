@@ -188,6 +188,12 @@ namespace Swarm.Core.Impl
                     await conn.ExecuteAsync(
                         "DELETE FROM [SWARM_JOBS] WHERE Id = @Id",
                         new {Id = id}, trans);
+                    await conn.ExecuteAsync(
+                        "DELETE FROM [SWARM_JOB_STATE] WHERE [JOB_ID] = @Id",
+                        new {Id = id}, trans);
+                    await conn.ExecuteAsync(
+                        "DELETE FROM [SWARM_LOGS] WHERE [JOB_ID] = @Id",
+                        new {Id = id}, trans);
                     trans.Commit();
                 }
                 catch (Exception ex)
@@ -260,13 +266,13 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task<List<JobState>> GetCurrentJobStates(string id)
+        public async Task<List<JobState>> GetCurrentJobStates(string jobId)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 var js = await conn.QuerySingleOrDefaultAsync<JobState>(
                     @"SELECT TOP 1 [ID], [JOB_ID] AS JOBID, [TRACE_ID] AS TRACEID, [STATE], [CLIENT], [MSG], [CREATION_TIME] AS CreationTime, [LAST_MODIFICATION_TIME] AS LastModificationTime FROM [SWARM_JOB_STATE] WHERE [JOB_ID] = @Id ORDER BY CREATION_TIME DESC",
-                    new {Id = id});
+                    new {Id = jobId});
                 if (js != null)
                 {
                     return (await conn.QueryAsync<JobState>(
@@ -277,6 +283,16 @@ namespace Swarm.Core.Impl
                 {
                     return new List<JobState>();
                 }
+            }
+        }
+
+        public async Task<bool> CheckJobExited(string jobId)
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                return await conn.QuerySingleAsync<int>(
+                           "SELECT COUNT(*) FROM [SWARM_JOB_STATE] WHERE [JOB_ID] = @JobId AND [STATE] != @State",
+                           new {JobId = jobId, State = State.Exit}) == 0;
             }
         }
     }

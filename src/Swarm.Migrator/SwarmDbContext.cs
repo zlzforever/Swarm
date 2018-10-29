@@ -38,7 +38,7 @@ namespace Swarm
 
             modelBuilder.Entity<Client>().HasIndex(x => new {x.Name, x.Group}).IsUnique();
             modelBuilder.Entity<Client>().HasIndex(x => x.ConnectionId).IsUnique();
-            modelBuilder.Entity<Client>().HasIndex(x => x.CreationTIme);
+            modelBuilder.Entity<Client>().HasIndex(x => x.CreationTime);
             
             modelBuilder.Entity<JobState>().HasIndex(x => new {x.JobId, x.TraceId, x.Client}).IsUnique();
             modelBuilder.Entity<JobState>().HasIndex(x => x.JobId);
