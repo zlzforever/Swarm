@@ -26,13 +26,13 @@ namespace Swarm.Core.Controllers
         {
             if (string.IsNullOrWhiteSpace(connectionId))
             {
-                return new JsonResult(new ApiResult
-                    {Code = ApiResult.Error, Msg = $"{nameof(connectionId)} should not be empty/null."});
+                return new JsonResult(new ApiResult(ApiResult.Error,
+                    $"{nameof(connectionId)} is empty/null"));
             }
 
-            _logger.LogInformation($"Try to exit connection: {connectionId}.");
+            _logger.LogInformation($"Try to exit connection {connectionId}");
             await _hubContext.Clients.Client(connectionId).SendAsync("Exit");
-            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode});
+            return new JsonResult(new ApiResult());
         }
 
         [HttpDelete]
@@ -40,11 +40,11 @@ namespace Swarm.Core.Controllers
         {
             if (clientId == 0)
             {
-                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = "Id should larger than 0."});
+                return new JsonResult(new ApiResult(ApiResult.Error, "Id should be larger than 0"));
             }
 
             await _store.RemoveClient(clientId);
-            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode});
+            return new JsonResult(new ApiResult ());
         }
     }
 }

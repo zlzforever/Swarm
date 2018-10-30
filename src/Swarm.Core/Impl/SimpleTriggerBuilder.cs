@@ -27,13 +27,13 @@ namespace Swarm.Core.Impl
             {
                 // 设置为 -1 则为永远重复
                 var rcStr = properties.GetValue(SwarmConts.RepeatCountProperty);
-                if (!string.IsNullOrWhiteSpace(rcStr) && int.TryParse(rcStr, out int rc))
+                if (!string.IsNullOrWhiteSpace(rcStr) && int.TryParse(rcStr, out var rc))
                 {
                     bd.WithRepeatCount(rc);
                 }
 
                 var isStr = properties.GetValue(SwarmConts.IntervalProperty);
-                if (!string.IsNullOrWhiteSpace(rcStr) && int.TryParse(isStr, out int isd))
+                if (!string.IsNullOrWhiteSpace(rcStr) && int.TryParse(isStr, out var isd))
                 {
                     bd.WithIntervalInSeconds(isd);
                 }

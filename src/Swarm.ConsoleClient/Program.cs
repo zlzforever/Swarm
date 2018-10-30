@@ -22,40 +22,42 @@ namespace Swarm.ConsoleClient
                 .CreateLogger();
 
             IServiceCollection services = new ServiceCollection();
-            services.AddLogging(options =>
-            {
-                options.AddSerilog();
-            });
+            services.AddLogging(options => { options.AddSerilog(); });
 
             string file;
             if (args.Length == 1)
             {
                 file = args[0];
                 if (!File.Exists(file))
-                {                    
+                {
                     Log.Logger.Error($"File not exists: {file}");
                     return;
                 }
-            }else if (args.Length > 1)
+            }
+            else if (args.Length > 1)
             {
                 Log.Logger.Error("Use command: Swarm.ConsoleClient {file}");
                 return;
             }
             else
             {
-                file = "config.ini";
+                file = "/Users/lewis/swarm.ini";
             }
+
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddIniFile(file)
                 .Build();
             services.AddSwarmClient(config.GetSection("Client"));
-
-            services.BuildServiceProvider().GetRequiredService<ISwarmClient>().Start();
+            var client = services.BuildServiceProvider().GetRequiredService<ISwarmClient>();
+            client.Start();
+            Console.WriteLine("Press any key to exit:");
             Console.Read();
+            client.Stop();
+            Console.WriteLine("Exited.");
         }
-        
-         public static SystemConsoleTheme ConsoleTheme { get; set; } = new SystemConsoleTheme(
+
+        public static SystemConsoleTheme ConsoleTheme { get; set; } = new SystemConsoleTheme(
             new Dictionary<ConsoleThemeStyle, SystemConsoleThemeStyle>
             {
                 [ConsoleThemeStyle.Text] = new SystemConsoleThemeStyle

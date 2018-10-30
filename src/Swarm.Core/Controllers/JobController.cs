@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -42,7 +41,7 @@ namespace Swarm.Core.Controllers
         {
             if (!context.HttpContext.Request.IsAccess(_options))
             {
-                throw new SwarmException("Auth dined.");
+                throw new SwarmException("Auth dined");
             }
 
             base.OnActionExecuting(context);
@@ -53,19 +52,17 @@ namespace Swarm.Core.Controllers
         {
             if (string.IsNullOrWhiteSpace(jobId))
             {
-                return new JsonResult(new ApiResult
-                    {Code = ApiResult.ModelNotValid, Msg = "The id is required."});
+                return new JsonResult(new ApiResult(ApiResult.ModelNotValid, "The id is required"));
             }
 
             var job = await _store.GetJob(jobId);
             if (job == null)
             {
-                return new JsonResult(new ApiResult
-                    {Code = ApiResult.ModelNotValid, Msg = $"Job {jobId} is not exists."});
+                return new JsonResult(new ApiResult(ApiResult.ModelNotValid, $"Job {jobId} is not exists"));
             }
 
             var result = job.ToPropertyArray();
-            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Data = result});
+            return new JsonResult(new ApiResult(ApiResult.SuccessCode, null, result));
         }
 
         /// <summary>
@@ -85,14 +82,13 @@ namespace Swarm.Core.Controllers
 
                 if (await _store.IsJobExists(value.Name, value.Group))
                 {
-                    return new JsonResult(new ApiResult
-                        {Code = ApiResult.Error, Msg = $"Job [{value.Name}, {value.Group}] exists."});
+                    return new JsonResult(new ApiResult(ApiResult.Error, $"Job [{value.Name}, {value.Group}] exists"));
                 }
 
                 await _store.AddJob(value);
                 if (string.IsNullOrWhiteSpace(value.Id))
                 {
-                    return new JsonResult(new ApiResult {Code = ApiResult.DbError, Msg = "Save job failed."});
+                    return new JsonResult(new ApiResult(ApiResult.DbError, "Save job failed"));
                 }
 
                 var qzJob = value.ToQuartzJob();
@@ -101,11 +97,11 @@ namespace Swarm.Core.Controllers
                 await _scheduler.ScheduleJob(qzJob, trigger);
 
                 _logger.LogInformation(
-                    $"Create job: {JsonConvert.SerializeObject(value)}.");
-                return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Msg = value.Id});
+                    $"Create job {JsonConvert.SerializeObject(value)} success");
+                return new JsonResult(new ApiResult(ApiResult.SuccessCode, null, value.Id));
             }
 
-            return new JsonResult(new ApiResult {Code = ApiResult.ModelNotValid, Msg = GetModelStateErrorMsg()});
+            return new JsonResult(new ApiResult(ApiResult.ModelNotValid, GetModelStateErrorMsg()));
         }
 
         [HttpPut("{jobId}")]
@@ -115,12 +111,12 @@ namespace Swarm.Core.Controllers
             {
                 if (string.IsNullOrWhiteSpace(jobId))
                 {
-                    return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = "Id is empty/null."});
+                    return new JsonResult(new ApiResult(ApiResult.Error, "Id is empty/null"));
                 }
 
                 if (!await _store.CheckJobExists(jobId))
                 {
-                    return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = $"Job {jobId} not exists."});
+                    return new JsonResult(new ApiResult(ApiResult.Error, $"Job {jobId} not exists"));
                 }
 
                 var qzJob = value.ToQuartzJob();
@@ -132,10 +128,10 @@ namespace Swarm.Core.Controllers
                 await _scheduler.UnscheduleJob(new TriggerKey(jobId));
                 await _scheduler.ScheduleJob(qzJob, trigger);
 
-                return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Msg = "success"});
+                return new JsonResult(new ApiResult(ApiResult.SuccessCode, "success"));
             }
 
-            return new JsonResult(new ApiResult {Code = ApiResult.ModelNotValid, Msg = GetModelStateErrorMsg()});
+            return new JsonResult(new ApiResult(ApiResult.ModelNotValid, GetModelStateErrorMsg()));
         }
 
         [HttpDelete("{jobId}")]
@@ -143,33 +139,33 @@ namespace Swarm.Core.Controllers
         {
             if (string.IsNullOrWhiteSpace(jobId))
             {
-                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = "Id is empty/null."});
+                return new JsonResult(new ApiResult(ApiResult.Error, "Id is empty/null"));
             }
 
             if (!await _store.CheckJobExists(jobId))
             {
-                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = $"Job {jobId} not exists."});
+                return new JsonResult(new ApiResult(ApiResult.Error, $"Job {jobId} not exists"));
             }
 
             // Remove from quartz firstly, then remove from swarm
             await _scheduler.DeleteJob(new JobKey(jobId));
             await _scheduler.UnscheduleJob(new TriggerKey(jobId));
             await _store.DeleteJob(jobId);
-            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Msg = "success"});
+            return new JsonResult(new ApiResult(ApiResult.SuccessCode, "success"));
         }
-       
+
         [HttpPost("{jobId}")]
         public async Task<IActionResult> Exit(string jobId)
         {
             if (string.IsNullOrWhiteSpace(jobId))
             {
-                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = "Id is empty/null."});
+                return new JsonResult(new ApiResult(ApiResult.Error, "Id is empty/null"));
             }
 
             var job = await _store.GetJob(jobId);
             if (job == null)
             {
-                return new JsonResult(new ApiResult {Code = ApiResult.Error, Msg = $"Job {jobId} not exists."});
+                return new JsonResult(new ApiResult(ApiResult.Error, $"Job {jobId} not exists"));
             }
 
             ApiResult result;
@@ -178,13 +174,12 @@ namespace Swarm.Core.Controllers
                 case Performer.SignalR:
                 {
                     await _hubContext.Clients.All.SendAsync("Kill", jobId);
-                    result = new ApiResult {Code = ApiResult.SuccessCode, Msg = "success"};
+                    result = new ApiResult(ApiResult.SuccessCode, "success");
                     break;
                 }
                 default:
                 {
-                    result = new ApiResult
-                        {Code = ApiResult.Error, Msg = $"{job.Performer} is not support exit."};
+                    result = new ApiResult(ApiResult.Error, $"Performer {job.Performer} is not support to exit");
                     break;
                 }
             }
@@ -203,8 +198,8 @@ namespace Swarm.Core.Controllers
                 {
                     if (string.IsNullOrWhiteSpace(value.Properties.GetValue(SwarmConts.ApplicationProperty)))
                     {
-                        return new JsonResult(new ApiResult
-                            {Code = ApiResult.ModelNotValid, Msg = "The Application field is required."});
+                        return new JsonResult(new ApiResult(ApiResult.ModelNotValid,
+                            "The Application field is required"));
                     }
 
                     break;
@@ -213,8 +208,8 @@ namespace Swarm.Core.Controllers
                 {
                     if (string.IsNullOrWhiteSpace(value.Properties.GetValue(SwarmConts.ClassProperty)))
                     {
-                        return new JsonResult(new ApiResult
-                            {Code = ApiResult.ModelNotValid, Msg = "The ClassName field is required."});
+                        return new JsonResult(
+                            new ApiResult(ApiResult.ModelNotValid, "The ClassName field is required"));
                     }
 
                     break;

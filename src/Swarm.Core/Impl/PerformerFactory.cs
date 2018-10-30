@@ -16,7 +16,7 @@ namespace Swarm.Core.Impl
         {
             if (!Performers.ContainsKey(performer))
             {
-                throw new SwarmException($"Unsupported trigger: {performer}.");
+                throw new SwarmException($"Unsupported trigger {performer}");
             }
 
             return Performers[performer];

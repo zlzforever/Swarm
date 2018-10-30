@@ -4,16 +4,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Swarm.Basic.Entity
 {
+    /// <summary>
+    /// 任务状态
+    /// </summary>
     [Table("SWARM_JOB_STATE")]
-    public class JobState : IEntity<int>
+    public class JobState : EntityBase<int>
     {
-        /// <summary>
-        /// 主键
-        /// </summary>
-        [Key]
-        [Column("ID")]
-        public int Id { get; set; }
-
         /// <summary>
         /// 任务编号
         /// </summary>

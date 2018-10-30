@@ -96,7 +96,7 @@ namespace Swarm.Core.Impl
                                 Msg = $"Perform on {client} success"
                             }
                         );
-                        logger.LogInformation($"Perform {jobContext.JobId} on {client} success.");
+                        logger.LogInformation($"Perform {jobContext.JobId} on {client} success");
                         i++;
                         j++;
                         if (j == clients.Count)
@@ -106,7 +106,7 @@ namespace Swarm.Core.Impl
                     }
                     catch (Exception ex)
                     {
-                        logger.LogError($"Perform {jobContext.JobId} on {client} failed: {ex.Message}.");
+                        logger.LogError($"Perform {jobContext.JobId} on {client} failed: {ex.Message}");
                         await store.UpdateJobState(new JobState
                         {
                             TraceId = jc.TraceId,
@@ -130,7 +130,7 @@ namespace Swarm.Core.Impl
             }
             else
             {
-                logger.LogError($"Unfounded available client for job {jobContext.JobId}.");
+                logger.LogError($"Unfounded available client for job {jobContext.JobId}");
                 await store.AddJobState(new JobState
                     {
                         JobId = jobContext.JobId,

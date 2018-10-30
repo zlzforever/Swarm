@@ -4,26 +4,31 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Swarm.Basic.Entity
 { 
+    /// <summary>
+    /// Swarm 节点
+    /// </summary>
     [Table("SWARM_NODES")]
-    public class Node : IEntity<int>
+    public class Node : EntityBase<int>
     {
         /// <summary>
-        /// 主键
+        /// 节点地址
         /// </summary>
-        [Key] 
-        [Column("ID")]
-        public int Id { get; set; }
-        
         [StringLength(250)]
         [Required]
         [Column("HOST")]
         public string Host { get; set; }
         
+        /// <summary>
+        /// 节点名称
+        /// </summary>
         [StringLength(250)]
         [Required]
         [Column("NAME")]
         public string Name { get; set; }
         
+        /// <summary>
+        /// 节点分组
+        /// </summary>
         [StringLength(250)]
         [Required]
         [Column("GROUP")]

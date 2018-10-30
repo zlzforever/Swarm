@@ -35,21 +35,21 @@ namespace Swarm.Server.Controllers
         {
             return View();
         }
-        
+
         public IActionResult Detail(string id)
         {
             ViewData["JobID"] = id;
             return View();
         }
-        
+
         [HttpGet]
         [Route("swarm/v1.0/log")]
         public IActionResult QueryLog([FromQuery] LogPaginationQueryInput input)
         {
-            var output = _dbContext.Log.PageList<Log, int, int>(input, l=>l.JobId==input.JobId, d => d.Id);
-            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Data = output});
+            var output = _dbContext.Log.PageList<Log, int, int>(input, l => l.JobId == input.JobId, d => d.Id);
+            return new JsonResult(new ApiResult(ApiResult.SuccessCode, null, output));
         }
-        
+
         [HttpGet]
         [Route("swarm/v1.0/jobState")]
         public IActionResult QueryState([FromQuery] JobStatePaginationQueryInput input)
@@ -64,7 +64,7 @@ namespace Swarm.Server.Controllers
             //TODO: 更多的条件
 
             var output = _dbContext.JobState.PageList<JobState, int, int>(input, where, d => d.Id);
-            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Data = output});
+            return new JsonResult(new ApiResult(ApiResult.SuccessCode, null, output));
         }
 
         [HttpGet]
@@ -81,7 +81,7 @@ namespace Swarm.Server.Controllers
             //TODO: 更多的条件
 
             var output = _dbContext.Job.PageList<Job, string, DateTimeOffset>(input, where, d => d.CreationTime);
-            return new JsonResult(new ApiResult {Code = ApiResult.SuccessCode, Data = output});
+            return new JsonResult(new ApiResult(ApiResult.SuccessCode, null, output));
         }
     }
 }

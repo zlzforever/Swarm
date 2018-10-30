@@ -20,7 +20,7 @@ namespace Swarm.Sample
     {
         static void Main(string[] args)
         {
-            SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001");
+            SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001", null);
             client.Start();
             Console.Read();
         }
@@ -69,7 +69,10 @@ namespace Swarm.Sample
                     {SwarmConts.CronProperty, "*/15 * * * * ?"},
                     {SwarmConts.ApplicationProperty, "echo"},
                     {SwarmConts.LogPatternProperty, @"\[INF\]"},
-                    {SwarmConts.ArgumentsProperty, "[INF]: %JobId% %TraceId% %Sharding% %Partition% %ShardingParameter%"}
+                    {
+                        SwarmConts.ArgumentsProperty,
+                        "[INF]: %JobId% %TraceId% %Sharding% %Partition% %ShardingParameter%"
+                    }
                 }
             };
             api.Create(job).Wait();

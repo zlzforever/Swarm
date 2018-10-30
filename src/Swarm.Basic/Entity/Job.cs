@@ -7,8 +7,11 @@ using System.Reflection;
 
 namespace Swarm.Basic.Entity
 {
+    /// <summary>
+    /// 任务
+    /// </summary>
     [Table("SWARM_JOBS")]
-    public class Job : IEntity<string>
+    public class Job : EntityBase<string>
     {
         private static readonly List<PropertyInfo> PropertyInfos;
 
@@ -16,14 +19,6 @@ namespace Swarm.Basic.Entity
         {
             PropertyInfos = typeof(Job).GetProperties().Where(p => p.Name != "Properties" && p.CanWrite).ToList();
         }
-
-        /// <summary>
-        /// 主键
-        /// </summary>
-        [Key]
-        [Column("ID")]
-        [StringLength(32)]
-        public string Id { get; set; }
 
         /// <summary>
         /// 任务的状态
@@ -114,14 +109,14 @@ namespace Swarm.Basic.Entity
         public int RetryCount { get; set; } = 3;
 
         /// <summary>
-        /// 
+        /// 任务负责人
         /// </summary>
         [StringLength(120)]
         [Column("OWNER")]
         public string Owner { get; set; }
 
         /// <summary>
-        /// 是否并行执行
+        /// 是否允许并行执行
         /// </summary>
         [Column("CONCURRENT_EXECUTION_DISALLOWED")]
         public bool ConcurrentExecutionDisallowed { get; set; }
@@ -139,7 +134,11 @@ namespace Swarm.Basic.Entity
         [Column("LAST_MODIFICATION_TIME")]
         public DateTimeOffset? LastModificationTime { get; set; }
 
-        [NotMapped] public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
+        /// <summary>
+        /// 任务额外信息
+        /// </summary>
+        [NotMapped]
+        public Dictionary<string, string> Properties { get; set; } = new Dictionary<string, string>();
 
         internal List<object[]> ToPropertyArray()
         {

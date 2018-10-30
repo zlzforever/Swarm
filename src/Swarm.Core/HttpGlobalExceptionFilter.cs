@@ -18,8 +18,9 @@ namespace Swarm.Core
         public void OnException(ExceptionContext context)
         {
             context.HttpContext.Response.StatusCode = 201;
-            var info = JsonConvert.SerializeObject(context.Exception is SwarmException ? 
-                new ApiResult { Code = ApiResult.SwarmError, Msg = context.Exception.Message } : new ApiResult { Code = ApiResult.InternalError, Msg = "Internal Error" });
+            var info = JsonConvert.SerializeObject(context.Exception is SwarmException
+                ? new ApiResult(ApiResult.SwarmError, context.Exception.Message)
+                : new ApiResult(ApiResult.InternalError, "Internal Error"));
 
             _logger.LogError(context.Exception.ToString());
 

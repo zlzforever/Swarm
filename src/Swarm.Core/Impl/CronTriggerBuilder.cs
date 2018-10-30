@@ -14,17 +14,15 @@ namespace Swarm.Core.Impl
                     bd =>
                     {
                         var tzpStr = properties.GetValue(SwarmConts.TimeZoneProperty);
-                        if (!string.IsNullOrWhiteSpace(tzpStr))
+                        if (string.IsNullOrWhiteSpace(tzpStr)) return;
+                        try
                         {
-                            try
-                            {
-                                var tzp = TimeZoneInfo.FromSerializedString(tzpStr);
-                                bd.InTimeZone(tzp);
-                            }
-                            catch
-                            {
-                                throw new SwarmException("TimeZone string is uncorrected.");
-                            }
+                            var tzp = TimeZoneInfo.FromSerializedString(tzpStr);
+                            bd.InTimeZone(tzp);
+                        }
+                        catch
+                        {
+                            throw new SwarmException("TimeZone string is uncorrected");
                         }
                     })
                 .WithIdentity(id).Build();

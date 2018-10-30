@@ -37,7 +37,7 @@ namespace Swarm.Migrator.Sql
                     }
                     else
                     {
-                        Console.WriteLine("Database already exists.");
+                        Console.WriteLine("Database already exists");
                         return;
                     }
                 }

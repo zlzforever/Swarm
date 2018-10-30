@@ -10,7 +10,7 @@ using Swarm;
 namespace Swarm.Migrator.Migrations
 {
     [DbContext(typeof(SwarmDbContext))]
-    [Migration("20181030054545_init")]
+    [Migration("20181030134747_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -74,8 +74,7 @@ namespace Swarm.Migrator.Migrations
                 {
                     b.Property<string>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("ID")
-                        .HasMaxLength(32);
+                        .HasColumnName("ID");
 
                     b.Property<bool>("ConcurrentExecutionDisallowed")
                         .HasColumnName("CONCURRENT_EXECUTION_DISALLOWED");
@@ -143,8 +142,7 @@ namespace Swarm.Migrator.Migrations
 
                     b.HasIndex("Owner");
 
-                    b.HasIndex("Name", "Group")
-                        .IsUnique();
+                    b.HasIndex("Name", "Group");
 
                     b.ToTable("SWARM_JOBS");
                 });
@@ -294,6 +292,11 @@ namespace Swarm.Migrator.Migrations
                         .HasMaxLength(250);
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CreationTime");
+
+                    b.HasIndex("Name", "Group")
+                        .IsUnique();
 
                     b.ToTable("SWARM_NODES");
                 });

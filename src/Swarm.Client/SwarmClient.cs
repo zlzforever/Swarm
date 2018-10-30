@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -19,7 +18,7 @@ namespace Swarm.Client
 {
     public class SwarmClient : ISwarmClient
     {
-        private readonly ILogger _logger;
+        private ILogger _logger;
         private int _retryTimes;
         private bool _isRunning;
         private CancellationTokenSource _cancellationTokenSource;
@@ -28,21 +27,21 @@ namespace Swarm.Client
         /// <summary>
         /// 分组
         /// </summary>
-        public string Group { get; }
+        public string Group { get; private set; }
 
         /// <summary>
         /// Scheduler.NET 服务地址
         /// </summary>
-        public string Host { get; }
+        public string Host { get; private set; }
 
         /// <summary>
         /// Client 名称
         /// </summary>
-        public string Name { get; }
+        public string Name { get; private set; }
 
-        public string AccessToken { get; }
+        public string AccessToken { get; private set; }
 
-        public string Ip { get; set; }
+        public string Ip { get; private set; }
 
         /// <summary>
         /// 服务连接重试次数
@@ -51,38 +50,7 @@ namespace Swarm.Client
 
         public int DetectInterval { get; set; } = 1500;
 
-        private SwarmClient()
-        {
-            //TODO: Validate data
-            Name = string.IsNullOrWhiteSpace(Name) ? Dns.GetHostName() : Name;
-            if (_logger == null)
-            {
-                _logger = new ConsoleLogger("SwarmClient", (cat, lv) => lv > LogLevel.Debug, true);
-            }
-
-            if (string.IsNullOrWhiteSpace(Ip))
-            {
-                var interf = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i =>
-                    (i.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
-                     i.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
-                    i.OperationalStatus == OperationalStatus.Up);
-                if (interf != null)
-                {
-                    var unicastAddresses = interf.GetIPProperties().UnicastAddresses;
-                    Ip = unicastAddresses.FirstOrDefault(a =>
-                            a.IPv4Mask?.ToString() != "255.255.255.255" &&
-                            a.Address.AddressFamily == AddressFamily.InterNetwork)?.Address
-                        .ToString();
-                }
-            }
-
-            if (string.IsNullOrWhiteSpace(Ip))
-            {
-                Ip = "127.0.0.1";
-            }
-        }
-
-        public SwarmClient(IOptions<SwarmClientOptions> options, ILoggerFactory loggerFactory) : this()
+        public SwarmClient(IOptions<SwarmClientOptions> options, ILoggerFactory loggerFactory)
         {
             var ops = options.Value;
             Name = ops.Name;
@@ -92,6 +60,7 @@ namespace Swarm.Client
             RetryTimes = ops.RetryTimes;
             Ip = ops.Ip;
             _logger = loggerFactory.CreateLogger<SwarmClient>();
+            Init();
         }
 
         /// <summary>
@@ -100,13 +69,17 @@ namespace Swarm.Client
         /// <param name="url">服务地址</param>
         /// <param name="accessToken"></param>
         /// <param name="name">名称</param>
+        /// <param name="ip"></param>
         /// <param name="group">分组</param>
-        public SwarmClient(string url, string accessToken, string name, string group = "DEFAULT") : this()
+        public SwarmClient(string url, string accessToken, string name, string ip, string group = "DEFAULT")
         {
             Group = group;
             Host = new Uri(url).ToString();
             Name = name;
             AccessToken = accessToken;
+            Ip = ip;
+
+            Init();
         }
 
         public Task Start(CancellationToken cancellationToken = default)
@@ -149,6 +122,36 @@ namespace Swarm.Client
             }, token);
         }
 
+        private void Init()
+        {
+            //TODO: Validate data
+            Name = string.IsNullOrWhiteSpace(Name) ? Dns.GetHostName() : Name;
+
+            if (_logger == null)
+            {
+                _logger = new ConsoleLogger("SwarmClient", (cat, lv) => lv > LogLevel.Debug, true);
+            }
+
+            if (string.IsNullOrWhiteSpace(Ip))
+            {
+                var interfaces = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i =>
+                    (i.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
+                     i.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
+                    i.OperationalStatus == OperationalStatus.Up);
+                if (interfaces != null)
+                {
+                    Ip = interfaces.GetIPProperties().UnicastAddresses.FirstOrDefault(a =>
+                            a.IPv4Mask?.ToString() != "255.255.255.255" &&
+                            a.Address.AddressFamily == AddressFamily.InterNetwork)?.Address
+                        .ToString();
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(Ip))
+            {
+                Ip = "127.0.0.1";
+            }
+        }
 
         private async Task<HubConnection> CreateConnection(CancellationToken token)
         {
@@ -158,7 +161,7 @@ namespace Swarm.Client
                 Interlocked.Increment(ref _retryTimes);
 
                 connection = new HubConnectionBuilder()
-                    .WithUrl($"{Host}clienthub/?group={Group}&name={Name}&ip=127.0.0.1", config =>
+                    .WithUrl($"{Host}clientHub/?group={Group}&name={Name}&ip={Ip}", config =>
                     {
                         config.Headers = new Dictionary<string, string>
                         {
@@ -193,7 +196,12 @@ namespace Swarm.Client
 
         public void Stop()
         {
-            _cancellationTokenSource?.Cancel();
+            if (!_isRunning)
+            {
+                return;
+            }
+
+            _cancellationTokenSource.Cancel();
 
             // TODO: Wait all process exit, and all ISwarmJob exit.
             foreach (var kv in ProcessExecutor.Processes)
@@ -207,6 +215,11 @@ namespace Swarm.Client
                     _logger.LogError(e,
                         $"Kill job {kv.Key.JobId}, trace {kv.Key.TraceId}, sharding {kv.Key.Sharding}] process failed: {e.Message}.");
                 }
+            }
+
+            while (_isRunning)
+            {
+                _cancellationTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(DetectInterval));
             }
         }
 
@@ -296,17 +309,15 @@ namespace Swarm.Client
 
                 foreach (var key in keys)
                 {
-                    ProcessExecutor.Processes.TryGetValue(key, out Process proc);
-                    if (proc != null)
+                    ProcessExecutor.Processes.TryGetValue(key, out var proc);
+                    if (proc == null) continue;
+                    try
                     {
-                        try
-                        {
-                            proc.Kill();
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError($"Kill PID {proc.Id} Job {jobId} failed: {ex.Message}.");
-                        }
+                        proc.Kill();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError($"Kill PID {proc.Id} Job {jobId} failed: {ex.Message}.");
                     }
                 }
 
@@ -319,20 +330,16 @@ namespace Swarm.Client
             connection.On<string, string, int>("Kill", (jobId, traceId, sharding) =>
             {
                 var key = new ProcessExecutor.ProcessKey(jobId, traceId, sharding);
-                if (ProcessExecutor.Processes.ContainsKey(key))
+                if (!ProcessExecutor.Processes.ContainsKey(key)) return;
+                ProcessExecutor.Processes.TryGetValue(key, out var proc);
+                if (proc == null) return;
+                try
                 {
-                    ProcessExecutor.Processes.TryGetValue(key, out Process proc);
-                    if (proc != null)
-                    {
-                        try
-                        {
-                            proc.Kill();
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError($"Kill PID {proc.Id} Job {jobId} failed: {ex.Message}.");
-                        }
-                    }
+                    proc.Kill();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"Kill PID {proc.Id} Job {jobId} failed: {ex.Message}.");
                 }
             });
         }

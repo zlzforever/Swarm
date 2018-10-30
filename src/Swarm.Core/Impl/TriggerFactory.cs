@@ -18,7 +18,7 @@ namespace Swarm.Core.Impl
         {
             if (!TriggerBuilders.ContainsKey(trigger))
             {
-                throw new SwarmException($"Unsupported trigger: {trigger}.");
+                throw new SwarmException($"Unsupported trigger {trigger}");
             }
 
             return TriggerBuilders[trigger].Build(id, parameters);

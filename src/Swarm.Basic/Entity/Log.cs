@@ -4,16 +4,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Swarm.Basic.Entity
 {
+    /// <summary>
+    /// 日志
+    /// </summary>
     [Table("SWARM_LOGS")]
-    public class Log : IEntity<int>
+    public class Log : EntityBase<int>
     {
-        /// <summary>
-        /// 主键
-        /// </summary>
-        [Key]
-        [Column("ID")]
-        public int Id { get; set; }
-
         /// <summary>
         /// 任务编号
         /// </summary>

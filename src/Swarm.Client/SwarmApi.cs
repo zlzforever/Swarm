@@ -35,7 +35,6 @@ namespace Swarm.Client
         /// 创建普通任务
         /// </summary>
         /// <param name="job">任务信息</param>
-        /// <param name="cron"></param>
         /// <returns>任务编号</returns>
         public async Task<ApiResult> Create(Job job)
         {

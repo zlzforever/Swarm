@@ -67,7 +67,7 @@ namespace Swarm.Migrator.Migrations
                 name: "SWARM_JOBS",
                 columns: table => new
                 {
-                    ID = table.Column<string>(maxLength: 32, nullable: false),
+                    ID = table.Column<string>(nullable: false),
                     STATE = table.Column<int>(nullable: false),
                     TRIGGER = table.Column<int>(nullable: false),
                     PERFORMER = table.Column<int>(nullable: false),
@@ -204,8 +204,7 @@ namespace Swarm.Migrator.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_SWARM_JOBS_NAME_GROUP",
                 table: "SWARM_JOBS",
-                columns: new[] { "NAME", "GROUP" },
-                unique: true);
+                columns: new[] { "NAME", "GROUP" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SWARM_LOGS_CREATION_TIME",
@@ -221,6 +220,17 @@ namespace Swarm.Migrator.Migrations
                 name: "IX_SWARM_LOGS_JOB_ID_TRACE_ID",
                 table: "SWARM_LOGS",
                 columns: new[] { "JOB_ID", "TRACE_ID" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_NODES_CREATION_TIME",
+                table: "SWARM_NODES",
+                column: "CREATION_TIME");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SWARM_NODES_NAME_GROUP",
+                table: "SWARM_NODES",
+                columns: new[] { "NAME", "GROUP" },
+                unique: true);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

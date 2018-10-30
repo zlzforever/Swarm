@@ -88,12 +88,12 @@ namespace Swarm.Core
             var options = app.ApplicationServices.GetRequiredService<IOptions<SwarmOptions>>().Value;
             if (options == null)
             {
-                throw  new SwarmException("SwarmOption is empty.");
+                throw  new SwarmException("SwarmOption is empty");
             }
 
             if (string.IsNullOrWhiteSpace(options.Name))
             {
-                throw  new SwarmException("Name in SwarmOption is empty.");
+                throw  new SwarmException("Name in SwarmOption is empty");
             }
             var sched = app.ApplicationServices.GetRequiredService<IScheduler>();
             sched.Start();

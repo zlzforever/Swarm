@@ -22,12 +22,12 @@ namespace Swarm.Core.Impl
                 Job job = await store.GetJob(jobId);
                 if (job == null)
                 {
-                    logger.LogWarning($"Job {jobId} is missing.");
+                    logger.LogWarning($"Job {jobId} is missing");
                     return;
                 }
 
                 var policy = Policy.Handle<Exception>().Retry(job.RetryCount <= 0 ? 1 : job.RetryCount,
-                    (ex, count) => { logger.LogError(ex, $"Perform {jobId} failed [{count}]: {ex.Message}."); });
+                    (ex, count) => { logger.LogError(ex, $"Perform {jobId} failed [{count}]: {ex.Message}"); });
 
                 await policy.Execute(async () =>
                 {
@@ -70,7 +70,7 @@ namespace Swarm.Core.Impl
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Perform job {jobId} failed: {ex.Message}.");
+                logger.LogError(ex, $"Perform job {jobId} failed: {ex.Message}");
                 await store.ChangeJobState(jobId, State.Exit);
             }
         }

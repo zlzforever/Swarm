@@ -29,14 +29,14 @@ namespace Swarm.Core.SignalR
             if (jobState == null)
             {
                 var ci= Context.GetClient();
-                _logger.LogError($"{nameof(jobState)} is null from {ci}.");
+                _logger.LogError($"{nameof(jobState)} is null from {ci}");
                 return;
             }
             var oldJobState = await _store.GetJobState(jobState.TraceId,jobState.Client, jobState.Sharding);
             if (oldJobState == null)
             {
                 var ci= Context.GetClient();
-                _logger.LogError($"{ci}: {jobState.TraceId}, {jobState.Client}, {jobState.Sharding} is not exists.");
+                _logger.LogError($"{ci} {jobState.TraceId}, {jobState.Client}, {jobState.Sharding} is not exists");
                 return;
             }
             else
@@ -74,7 +74,7 @@ namespace Swarm.Core.SignalR
             if (!Context.GetHttpRequest().IsAccess(_options))
             {
                 _logger.LogWarning(
-                    $"{ci} access denied.");
+                    $"{ci} access denied");
                 skip = true;
             }
 
@@ -83,7 +83,7 @@ namespace Swarm.Core.SignalR
             if (!skip && (string.IsNullOrWhiteSpace(ci.Name) || string.IsNullOrWhiteSpace(ci.Ip)))
             {
                 _logger.LogWarning(
-                    $"{ci} is not valid.");
+                    $"{ci} is not valid");
                 skip = true;
             }
 
@@ -97,27 +97,27 @@ namespace Swarm.Core.SignalR
                         ci.IsConnected = true;
                         await _store.AddClient(ci);
                         _logger.LogInformation(
-                            $"{ci} register success.");
+                            $"{ci} register success");
                         return;
                     }
 
                     if (client.IsConnected)
                     {
                         _logger.LogInformation(
-                            $"{ci} is connected.");
+                            $"{ci} is connected");
                     }
                     else
                     {
                         await _store.ConnectClient(ci.Name, ci.Group, ci.ConnectionId);
                         _logger.LogInformation(
-                            $"{ci} register success.");
+                            $"{ci} register success");
                         return;
                     }
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex,
-                        $"{ci} register failed: {ex.Message}.");
+                        $"{ci} register failed: {ex.Message}");
                 }
             }
 
@@ -132,11 +132,11 @@ namespace Swarm.Core.SignalR
             {
                 await _store.DisconnectClient(ci.Name, ci.Group);
                 await base.OnDisconnectedAsync(exception);
-                _logger.LogInformation($"{ci} disconnected.");
+                _logger.LogInformation($"{ci} disconnected");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, $"Disconnect connection failed: {ex.Message}.");
+                _logger.LogError(ex, $"Disconnect connection failed: {ex.Message}");
             }
         }
     }
