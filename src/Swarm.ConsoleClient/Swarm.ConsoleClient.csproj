@@ -5,7 +5,7 @@
         <TargetFramework>netcoreapp2.1</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-        <Version>0.1.1</Version>
+        <Version>0.1.2</Version>
         <Authors>zlzforever@163.com;</Authors>
         <AssemblyName>Swarm.ConsoleClient</AssemblyName>
         <Copyright>Copyright 2018 Lewis Zou</Copyright>

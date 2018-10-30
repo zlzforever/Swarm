@@ -31,7 +31,7 @@ namespace Swarm.ConsoleClient
             if (args.Length == 1)
             {
                 file = args[0];
-                if (File.Exists(file))
+                if (!File.Exists(file))
                 {                    
                     Log.Logger.Error($"File not exists: {file}");
                     return;
