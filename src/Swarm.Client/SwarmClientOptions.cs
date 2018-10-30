@@ -1,5 +1,3 @@
-using System.Dynamic;
-
 namespace Swarm.Client
 {
     public class SwarmClientOptions

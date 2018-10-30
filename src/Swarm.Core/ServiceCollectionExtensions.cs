@@ -77,7 +77,7 @@ namespace Swarm.Core
                     }
                 }).GetScheduler().Result;
             });
-            builder.Services.AddSingleton<IStore, SqlServerStore>();
+            builder.Services.AddSingleton<ISwarmStore, SqlServerSwarmStore>();
             return builder;
         }
 
@@ -85,10 +85,20 @@ namespace Swarm.Core
         {
             Ioc.ServiceProvider = app.ApplicationServices;
 
+            var options = app.ApplicationServices.GetRequiredService<IOptions<SwarmOptions>>().Value;
+            if (options == null)
+            {
+                throw  new SwarmException("SwarmOption is empty.");
+            }
+
+            if (string.IsNullOrWhiteSpace(options.Name))
+            {
+                throw  new SwarmException("Name in SwarmOption is empty.");
+            }
             var sched = app.ApplicationServices.GetRequiredService<IScheduler>();
             sched.Start();
 
-            var store = app.ApplicationServices.GetRequiredService<IStore>();
+            var store = app.ApplicationServices.GetRequiredService<ISwarmStore>();
             store.DisconnectAllClients().Wait();
 
             app.UseSignalR(routes => { routes.MapHub<ClientHub>("/clienthub"); });

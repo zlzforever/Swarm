@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -11,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Swarm.Basic;
+using Swarm.Basic.Entity;
 using Swarm.Client.Impl;
 
 namespace Swarm.Client
@@ -116,8 +116,7 @@ namespace Swarm.Client
                         Interlocked.Exchange(ref _retryTimes, 0);
                     }
 
-                    
-                    token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(1500));
+                    token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(DetectInterval));
                 }
 
                 _isRunning = false;
@@ -154,11 +153,11 @@ namespace Swarm.Client
                 if (_isDisconncted)
                 {
                     _logger.LogError($"Connect server failed: {kv.Item2}.");
-                    token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(1500));
+                    token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(DetectInterval));
                 }
                 else
                 {
-                    _logger.LogInformation($"Connect server success.");
+                    _logger.LogInformation("Connect server success.");
                     break;
                 }
             }
@@ -199,39 +198,62 @@ namespace Swarm.Client
                 if (delay > 10)
                 {
                     _logger.LogError($"Trigger job [{context.Name}, {context.Group}] timeout: {delay}.");
-                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, context.Sharding,
-                        State.Exit, "Timeout",
-                        token);
+                    await connection.SendAsync("StateChanged", new JobState
+                        {
+                            JobId = context.JobId,
+                            TraceId = context.TraceId,
+                            Sharding = context.Sharding,
+                            State = State.Exit,
+                            Client = Name,
+                            Msg = "Timeout"
+                        }
+                        , token);
                     return;
                 }
 
                 try
                 {
-                    _logger.LogInformation($"Try execute job: [{context.JobId}]");
+                    _logger.LogInformation($"Try execute job [{context.JobId}]");
 
-                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, context.Sharding,
-                        State.Running, "",
-                        token);
+                    await connection.SendAsync("StateChanged", new JobState
+                        {
+                            JobId = context.JobId,
+                            TraceId = context.TraceId,
+                            Sharding = context.Sharding,
+                            Client = Name,
+                            State = State.Running
+                        }
+                        , token);
 
                     var exitCode = await ExecutorFactory.Create(context.Executor).Execute(context,
                         async (jobId, traceId, msg) =>
                         {
-                            await connection.SendAsync("OnLog", jobId, traceId, msg,
+                            await connection.SendAsync("OnLog", new Log {JobId = jobId, TraceId = traceId, Msg = msg},
                                 token);
                         });
 
-                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, context.Sharding,
-                        State.Exit,
-                        $"Exit: {exitCode}",
-                        token);
+                    await connection.SendAsync("StateChanged", new JobState
+                    {
+                        JobId = context.JobId,
+                        TraceId = context.TraceId,
+                        Sharding = context.Sharding,
+                        Client = Name,
+                        State = State.Exit,
+                        Msg =   $"Exit: {exitCode}"
+                    }, token);                   
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"Execute job [{context.Name}, {context.Group}] failed.");
-                    await connection.SendAsync("StateChanged", context.JobId, context.TraceId, context.Sharding,
-                        State.Exit,
-                        $"Failed: {ex.Message}",
-                        token);
+                    await connection.SendAsync("StateChanged", new JobState
+                        {
+                            JobId = context.JobId,
+                            TraceId = context.TraceId,
+                            Sharding = context.Sharding,
+                            Client = Name,
+                            State = State.Exit,
+                            Msg = $"Failed: {ex.Message}"
+                        }, token);
                 }
             });
 
@@ -242,7 +264,7 @@ namespace Swarm.Client
                 Environment.Exit(0);
             });
 
-            connection.On<string>("Kill", (jobId) =>
+            connection.On<string>("Kill", jobId =>
             {
                 var keys = ProcessExecutor.Processes.Keys.Where(k => k.JobId == jobId).ToList();
 
@@ -253,7 +275,7 @@ namespace Swarm.Client
                     {
                         try
                         {
-                            proc?.Kill();
+                            proc.Kill();
                         }
                         catch (Exception ex)
                         {
@@ -278,7 +300,7 @@ namespace Swarm.Client
                     {
                         try
                         {
-                            proc?.Kill();
+                            proc.Kill();
                         }
                         catch (Exception ex)
                         {

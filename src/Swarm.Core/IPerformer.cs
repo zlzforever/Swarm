@@ -5,6 +5,6 @@ namespace Swarm.Core
 {
     public interface IPerformer
     {
-        Task Perform(JobContext jobContext);
+        Task<bool> Perform(JobContext jobContext);
     }
 }

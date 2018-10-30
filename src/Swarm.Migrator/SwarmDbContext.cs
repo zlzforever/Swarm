@@ -13,7 +13,8 @@ namespace Swarm
         public DbSet<Client> Client { get; set; }
         public DbSet<JobState> JobState { get; set; }
         public DbSet<Log> Log { get; set; }
-
+        public DbSet<Node> Node { get; set; }
+        
         public SwarmDbContext()
         {
         }
@@ -49,6 +50,9 @@ namespace Swarm
             modelBuilder.Entity<Log>().HasIndex(x => x.JobId);
             modelBuilder.Entity<Log>().HasIndex(x => x.CreationTime);
             modelBuilder.Entity<Log>().HasIndex(x => new {x.JobId, x.TraceId});
+            
+            modelBuilder.Entity<Job>().HasIndex(x => new {x.Name, x.Group}).IsUnique();
+            modelBuilder.Entity<JobState>().HasIndex(x => x.CreationTime);
         }
 
         public SwarmDbContext CreateDbContext(string[] args)

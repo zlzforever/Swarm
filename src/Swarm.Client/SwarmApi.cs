@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -39,10 +37,9 @@ namespace Swarm.Client
         /// <param name="job">任务信息</param>
         /// <param name="cron"></param>
         /// <returns>任务编号</returns>
-        public async Task<ApiResult> Create(Job job, IDictionary<string, string> properties)
+        public async Task<ApiResult> Create(Job job)
         {
-            var query = string.Join("&", properties.Select(p => $"{p.Key.ToLower()}={p.Value}"));
-            var url = $"{_host}swarm/{_version}/job?{query}";
+            var url = $"{_host}swarm/{_version}/job";
             var msg = new HttpRequestMessage(HttpMethod.Post, url);
             AddAccessTokenHeader(msg);
             msg.Content = new StringContent(JsonConvert.SerializeObject(job), Encoding.UTF8, "application/json");
@@ -55,10 +52,9 @@ namespace Swarm.Client
         /// 更新普通任务
         /// </summary>
         /// <param name="job">任务</param>
-        public async Task<ApiResult> Update(Job job, IDictionary<string, string> properties)
+        public async Task<ApiResult> Update(Job job)
         {
-            var query = string.Join("&", properties.Select(p => $"{p.Key.ToLower()}={p.Value}"));
-            var url = $"{_host}swarm/{_version}/job?{query}";
+            var url = $"{_host}swarm/{_version}/job/{job.Id}";
             var msg = new HttpRequestMessage(HttpMethod.Put, url)
             {
                 Content = new StringContent(JsonConvert.SerializeObject(job), Encoding.UTF8, "application/json")
@@ -74,7 +70,7 @@ namespace Swarm.Client
         /// <param name="id">任务编号</param>
         public async Task<ApiResult> Delete(string id)
         {
-            var url = $"{_host}swarm/{_version}/job?id={id}";
+            var url = $"{_host}swarm/{_version}/job/{id}";
             var msg = new HttpRequestMessage(HttpMethod.Delete, url);
             AddAccessTokenHeader(msg);
             var response = await HttpClient.SendAsync(msg);
@@ -87,7 +83,7 @@ namespace Swarm.Client
         /// <param name="id">任务编号</param>
         public async Task<ApiResult> Trigger(string id)
         {
-            var url = $"{_host}swarm/{_version}/job?id={id}";
+            var url = $"{_host}swarm/{_version}/trigger/{id}";
             var msg = new HttpRequestMessage(HttpMethod.Post, url);
             AddAccessTokenHeader(msg);
             var response = await HttpClient.SendAsync(msg);

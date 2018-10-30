@@ -71,9 +71,10 @@ namespace Swarm.Migrator.Migrations
                     STATE = table.Column<int>(nullable: false),
                     TRIGGER = table.Column<int>(nullable: false),
                     PERFORMER = table.Column<int>(nullable: false),
-                    EXECUTER = table.Column<int>(nullable: false),
+                    EXECUTOR = table.Column<int>(nullable: false),
                     NAME = table.Column<string>(maxLength: 120, nullable: false),
                     GROUP = table.Column<string>(maxLength: 120, nullable: false),
+                    NODE = table.Column<string>(maxLength: 120, nullable: true),
                     LOAD = table.Column<int>(nullable: false),
                     SHARDING = table.Column<int>(nullable: false),
                     SHARDING_PARAMETERS = table.Column<string>(maxLength: 500, nullable: true),
@@ -103,6 +104,22 @@ namespace Swarm.Migrator.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_SWARM_LOGS", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SWARM_NODES",
+                columns: table => new
+                {
+                    ID = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    HOST = table.Column<string>(maxLength: 250, nullable: false),
+                    NAME = table.Column<string>(maxLength: 250, nullable: false),
+                    GROUP = table.Column<string>(maxLength: 250, nullable: false),
+                    CREATION_TIME = table.Column<DateTimeOffset>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SWARM_NODES", x => x.ID);
                 });
 
             migrationBuilder.CreateIndex(
@@ -187,7 +204,8 @@ namespace Swarm.Migrator.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_SWARM_JOBS_NAME_GROUP",
                 table: "SWARM_JOBS",
-                columns: new[] { "NAME", "GROUP" });
+                columns: new[] { "NAME", "GROUP" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_SWARM_LOGS_CREATION_TIME",
@@ -221,6 +239,9 @@ namespace Swarm.Migrator.Migrations
 
             migrationBuilder.DropTable(
                 name: "SWARM_LOGS");
+
+            migrationBuilder.DropTable(
+                name: "SWARM_NODES");
         }
     }
 }

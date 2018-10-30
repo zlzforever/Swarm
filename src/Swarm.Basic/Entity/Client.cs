@@ -34,5 +34,10 @@ namespace Swarm.Basic.Entity
         [Required] [Column("CREATION_TIME")] public DateTimeOffset CreationTime { get; set; }
 
         [Column("LAST_MODIFICATION_TIME")] public DateTimeOffset? LastModificationTime { get; set; }
+
+        public override string ToString()
+        {
+            return $"[{ConnectionId}, {Name}, {Group}, {Ip}]";
+        }
     }
 }

@@ -12,9 +12,9 @@ namespace Swarm.Core.Controllers
     {
         private readonly ILogger _logger;
         private readonly IHubContext<ClientHub> _hubContext;
-        private readonly IStore _store;
+        private readonly ISwarmStore _store;
 
-        public ClientController(ILoggerFactory loggerFactory, IStore store, IHubContext<ClientHub> hubContext)
+        public ClientController(ILoggerFactory loggerFactory, ISwarmStore store, IHubContext<ClientHub> hubContext)
         {
             _logger = loggerFactory.CreateLogger<ClientController>();
             _hubContext = hubContext;

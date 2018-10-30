@@ -14,7 +14,7 @@ namespace Swarm.Core.Impl
     {
         public async Task Execute(IJobExecutionContext context)
         {
-            var store = Ioc.GetRequiredService<IStore>();
+            var store = Ioc.GetRequiredService<ISwarmStore>();
             var logger = Ioc.GetRequiredService<ILoggerFactory>().CreateLogger<TriggerJob>();
             var jobId = context.JobDetail.Key.Name;
             try
@@ -26,14 +26,12 @@ namespace Swarm.Core.Impl
                     return;
                 }
 
-                logger.LogInformation($"Try to performer job: {jobId}.");
                 var policy = Policy.Handle<Exception>().Retry(job.RetryCount <= 0 ? 1 : job.RetryCount,
-                    (ex, count) => { logger.LogError(ex, $"Perform job {jobId} failed [{count}]: {ex.Message}."); });
+                    (ex, count) => { logger.LogError(ex, $"Perform {jobId} failed [{count}]: {ex.Message}."); });
 
                 await policy.Execute(async () =>
                 {
                     var traceId = Guid.NewGuid().ToString("N");
-                    List<JobProperty> properties = await store.GetJobProperties(jobId);
                     var performer = PerformerFactory.Create(job.Performer);
                     await store.ChangeJobState(jobId, State.Performing);
                     var jobContext = new JobContext
@@ -54,14 +52,20 @@ namespace Swarm.Core.Impl
                         TraceId = traceId,
                         ConcurrentExecutionDisallowed = job.ConcurrentExecutionDisallowed
                     };
-                    foreach (var jobProperty in properties)
+                    foreach (var jobProperty in job.Properties)
                     {
-                        jobContext.Parameters.Add(jobProperty.Name, jobProperty.Value);
+                        jobContext.Parameters.Add(jobProperty.Key, jobProperty.Value);
                     }
 
-                    await performer.Perform(jobContext);
-                    await store.ChangeJobState(jobId, State.Performed);
-                    logger.LogInformation($"Performed job: {jobId} complete."); 
+                    var success = await performer.Perform(jobContext);
+                    if (success)
+                    {
+                        await store.ChangeJobState(jobId, State.Performed);
+                    }
+                    else
+                    {
+                        await store.ChangeJobState(jobId, State.Exit);
+                    }
                 });
             }
             catch (Exception ex)

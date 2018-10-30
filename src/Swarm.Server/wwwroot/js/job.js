@@ -27,7 +27,7 @@ $(function () {
                     type: "warning",
                     showCancelButton: true
                 }, function () {
-                    hub.delete("swarm/v1.0/job?id=" + id, function () {
+                    hub.post("swarm/v1.0/job/" + id, function () {
                         loadView(that);
                     });
                 });
@@ -41,7 +41,7 @@ $(function () {
                         showCancelButton: false
                     });
                 } else {
-                    hub.post("swarm/v1.0/job/" + id, null, function () {
+                    hub.post("swarm/v1.0/trigger/" + id, null, function () {
                         loadView(that);
                         swal({
                             title: "Trigger success",

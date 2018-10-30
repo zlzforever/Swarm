@@ -10,7 +10,7 @@ using Swarm;
 namespace Swarm.Migrator.Migrations
 {
     [DbContext(typeof(SwarmDbContext))]
-    [Migration("20181029144142_init")]
+    [Migration("20181030054545_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -88,7 +88,7 @@ namespace Swarm.Migrator.Migrations
                         .HasMaxLength(500);
 
                     b.Property<int>("Executor")
-                        .HasColumnName("EXECUTER");
+                        .HasColumnName("EXECUTOR");
 
                     b.Property<string>("Group")
                         .IsRequired()
@@ -104,6 +104,10 @@ namespace Swarm.Migrator.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnName("NAME")
+                        .HasMaxLength(120);
+
+                    b.Property<string>("Node")
+                        .HasColumnName("NODE")
                         .HasMaxLength(120);
 
                     b.Property<string>("Owner")
@@ -139,7 +143,8 @@ namespace Swarm.Migrator.Migrations
 
                     b.HasIndex("Owner");
 
-                    b.HasIndex("Name", "Group");
+                    b.HasIndex("Name", "Group")
+                        .IsUnique();
 
                     b.ToTable("SWARM_JOBS");
                 });
@@ -261,6 +266,36 @@ namespace Swarm.Migrator.Migrations
                     b.HasIndex("JobId", "TraceId");
 
                     b.ToTable("SWARM_LOGS");
+                });
+
+            modelBuilder.Entity("Swarm.Basic.Entity.Node", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnName("ID")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTimeOffset>("CreationTime")
+                        .HasColumnName("CREATION_TIME");
+
+                    b.Property<string>("Group")
+                        .IsRequired()
+                        .HasColumnName("GROUP")
+                        .HasMaxLength(250);
+
+                    b.Property<string>("Host")
+                        .IsRequired()
+                        .HasColumnName("HOST")
+                        .HasMaxLength(250);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnName("NAME")
+                        .HasMaxLength(250);
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SWARM_NODES");
                 });
 #pragma warning restore 612, 618
         }

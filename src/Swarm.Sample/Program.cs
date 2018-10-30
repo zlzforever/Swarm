@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Net;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR.Client;
 using Swarm.Basic;
 using Swarm.Basic.Entity;
 using Swarm.Client;
@@ -44,13 +39,14 @@ namespace Swarm.Sample
                 Load = 0,
                 Owner = "tester",
                 Sharding = 1,
-                ShardingParameters = null
+                ShardingParameters = null,
+                Properties = new Dictionary<string, string>
+                {
+                    {SwarmConts.CronProperty, "*/15 * * * * ?"},
+                    {SwarmConts.ClassProperty, typeof(MyJob).AssemblyQualifiedName}
+                }
             };
-            api.Create(job, new Dictionary<string, string>
-            {
-                {SwarmConts.CronProperty, "*/15 * * * * ?"},
-                {SwarmConts.ClassProperty, typeof(MyJob).AssemblyQualifiedName}
-            }).Wait();
+            api.Create(job).Wait();
         }
 
         static void CreateProcessJob()
@@ -67,15 +63,16 @@ namespace Swarm.Sample
                 Load = 0,
                 Owner = "tester",
                 Sharding = 1,
-                ShardingParameters = null
+                ShardingParameters = null,
+                Properties = new Dictionary<string, string>
+                {
+                    {SwarmConts.CronProperty, "*/15 * * * * ?"},
+                    {SwarmConts.ApplicationProperty, "echo"},
+                    {SwarmConts.LogPatternProperty, @"\[INF\]"},
+                    {SwarmConts.ArgumentsProperty, "[INF]: %JobId% %TraceId% %Sharding% %Partition% %ShardingParameter%"}
+                }
             };
-            api.Create(job, new Dictionary<string, string>
-            {
-                {SwarmConts.CronProperty, "*/15 * * * * ?"},
-                {SwarmConts.ApplicationProperty, "echo"},
-                {SwarmConts.LogPatternProperty, @"\[INF\]"},
-                {SwarmConts.ArgumentsProperty, "[INF]: %JobId% %TraceId% %Sharding% %Partition% %ShardingParameter%"}
-            }).Wait();
+            api.Create(job).Wait();
         }
     }
 }

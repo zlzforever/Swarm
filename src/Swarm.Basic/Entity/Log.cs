@@ -7,16 +7,38 @@ namespace Swarm.Basic.Entity
     [Table("SWARM_LOGS")]
     public class Log : IEntity<int>
     {
-        [Key] [Column("ID")] public int Id { get; set; }
+        /// <summary>
+        /// 主键
+        /// </summary>
+        [Key]
+        [Column("ID")]
+        public int Id { get; set; }
 
-        [Column("JOB_ID")] [StringLength(32)] public string JobId { get; set; }
+        /// <summary>
+        /// 任务编号
+        /// </summary>
+        [Column("JOB_ID")]
+        [StringLength(32)]
+        public string JobId { get; set; }
 
+        /// <summary>
+        /// 跟踪编号
+        /// </summary>
         [Column("TRACE_ID")]
         [StringLength(32)]
         public string TraceId { get; set; }
 
-        [Column("MSG")] public string Msg { get; set; }
+        /// <summary>
+        /// 日志信息
+        /// </summary>
+        [Column("MSG")]
+        public string Msg { get; set; }
 
-        [Required] [Column("CREATION_TIME")] public DateTimeOffset CreationTime { get; set; }
+        /// <summary>
+        /// 创建时间
+        /// </summary>
+        [Required]
+        [Column("CREATION_TIME")]
+        public DateTimeOffset CreationTime { get; set; }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using Newtonsoft.Json.Linq;
 
 [assembly: InternalsVisibleTo("Swarm.Core")]
 
@@ -27,7 +26,7 @@ namespace Swarm.Basic
 
         public DateTimeOffset? NextFireTimeUtc { get; set; }
 
-        public int Sharding { get; set; }
+        public int Sharding { get; set; } = 1;
 
         public string ShardingParameters { get; set; }
 

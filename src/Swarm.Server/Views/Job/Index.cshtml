@@ -64,7 +64,7 @@
                 <a class="waves-effect waves-light btn-small" :href="'/job/detail/' + job.id">Detail</a>
                 <button class="waves-effect waves-light btn-small" @@click.stop="trigger(job.id,job.state,job.concurrentExecutionDisallowed)">Trigger</button>
                 <button class="waves-effect waves-light btn-small" @@click.stop="remove(job.id)">Remove</button>
-                <button class="waves-effect waves-light btn-small" @@click.stop="exit(job.id)" :disabled="job.state != 'exit'">Exit</button>
+                <button class="waves-effect waves-light btn-small" @@click.stop="exit(job.id)" >Exit</button>
             </td>
         </tr>
         </tbody>

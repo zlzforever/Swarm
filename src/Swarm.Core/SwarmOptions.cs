@@ -6,5 +6,6 @@ namespace Swarm.Core
     {
         public string ConnectionString { get; set; }
         public HashSet<string> AccessTokens { get; set; }
+        public string Name { get; set; }
     }
 }

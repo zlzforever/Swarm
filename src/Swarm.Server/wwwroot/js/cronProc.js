@@ -1,5 +1,5 @@
 $(function () {
-    var view = new Vue({
+    new Vue({
         el: '#view',
         data: {
             job: {
@@ -24,8 +24,7 @@ $(function () {
         methods: {
             create: function () {
                 var job = this.$data.job;
-                var url = "/swarm/v1.0/job?" + "cron=" + job.cron + "&application=" + job.application + "&logpattern=" +
-                    job.logPattern.replace('+','%2B')+ "&arguments=" + job.arguments;
+                var url = "/swarm/v1.0/job";
                 hub.post(url, {
                     name: job.name,
                     group: job.group,
@@ -37,7 +36,13 @@ $(function () {
                     owner: job.owner,
                     sharding: job.sharding,
                     shardingParameters: job.shardingParameters,
-                    concurrentExecutionDisallowed: !job.concurrentExecutionDisallowed
+                    concurrentExecutionDisallowed: !job.concurrentExecutionDisallowed,
+                    properties:{
+                        "cron":job.cron,
+                        "application":job.application,
+                        "logpattern":job.logPattern,
+                        "arguments":job.arguments
+                    }
                 }, function () {
                     window.location.href = '/job';
                 });

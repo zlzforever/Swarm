@@ -8,6 +8,7 @@
             <th>TraceId</th>
             <th>State</th>
             <th>Client</th>
+            <th>Sharding</th>
             <th>Msg</th>
             <th>Time</th>
         </tr>
@@ -27,6 +28,9 @@
             </td>
             <td>
                 <span v-text="state.client"></span>
+            </td>
+            <td>
+                <span v-text="state.sharding"></span>
             </td>
             <td>
                 <span v-text="state.msg"></span>
