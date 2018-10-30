@@ -51,8 +51,8 @@ namespace Swarm
             modelBuilder.Entity<Log>().HasIndex(x => x.CreationTime);
             modelBuilder.Entity<Log>().HasIndex(x => new {x.JobId, x.TraceId});
             
-            modelBuilder.Entity<Job>().HasIndex(x => new {x.Name, x.Group}).IsUnique();
-            modelBuilder.Entity<JobState>().HasIndex(x => x.CreationTime);
+            modelBuilder.Entity<Node>().HasIndex(x => new {x.Name, x.Group}).IsUnique();
+            modelBuilder.Entity<Node>().HasIndex(x => x.CreationTime);
         }
 
         public SwarmDbContext CreateDbContext(string[] args)

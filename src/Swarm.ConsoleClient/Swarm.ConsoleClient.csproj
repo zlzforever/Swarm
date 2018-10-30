@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp2.1</TargetFramework>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <Version>0.1.1</Version>
+        <Authors>zlzforever@163.com;</Authors>
+        <AssemblyName>Swarm.ConsoleClient</AssemblyName>
+        <Copyright>Copyright 2018 Lewis Zou</Copyright>
+        <PackageId>Swarm.ConsoleClient</PackageId>
+        <Description>Swarm is a distributed scheduled job framework, based on Quartz.</Description>
+        <PackageTags>Swarm;dotnet core</PackageTags>
+        <PackageProjectUrl>https://github.com/zlzforever/Swarm</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/zlzforever/Swarm/blob/master/LICENSE</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/zlzforever/Swarm</RepositoryUrl>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <IsPackable>true</IsPackable>
+        <PackAsTool>true</PackAsTool>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+        <PackageReference Include="Serilog.Sinks.RollingFile" Version="3.3.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="2.1.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="2.1.1" />
+    </ItemGroup>
+    <ItemGroup>
+      <None Update="config.ini">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+    <ItemGroup>
+      <ProjectReference Include="..\Swarm.Client\Swarm.Client.csproj" />
+    </ItemGroup>
+</Project>

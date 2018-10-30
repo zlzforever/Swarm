@@ -1,41 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
-using Quartz;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using Swarm.Client;
 
-namespace Swarm.Server
+namespace Swarm.ConsoleClient
 {
-    public class Program
+    class Program
     {
-        public static void Main(string[] args)
+        static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .Enrich.FromLogContext()
-                .WriteTo.Console(theme: ConsoleLogTheme).WriteTo.RollingFile("swarm.log")
+                .WriteTo.Console(theme: ConsoleTheme).WriteTo.RollingFile("swarm.log")
                 .CreateLogger();
 
+            IServiceCollection services = new ServiceCollection();
+            services.AddLogging(options =>
+            {
+                options.AddSerilog();
+            });
+
+            string file;
+            if (args.Length == 1)
+            {
+                file = args[0];
+                if (File.Exists(file))
+                {                    
+                    Log.Logger.Error($"File not exists: {file}");
+                    return;
+                }
+            }else if (args.Length > 1)
+            {
+                Log.Logger.Error("Use command: Swarm.ConsoleClient {file}");
+                return;
+            }
+            else
+            {
+                file = "config.ini";
+            }
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", true)
+                .AddIniFile(file)
                 .Build();
-            
-            CreateWebHostBuilder(args).UseConfiguration(config).Build().Run();
+            services.AddSwarmClient(config.GetSection("Client"));
+
+            services.BuildServiceProvider().GetRequiredService<ISwarmClient>().Start();
+            Console.Read();
         }
-
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>().UseSerilog();
-
-        public static SystemConsoleTheme ConsoleLogTheme { get; set; } = new SystemConsoleTheme(
+        
+         public static SystemConsoleTheme ConsoleTheme { get; set; } = new SystemConsoleTheme(
             new Dictionary<ConsoleThemeStyle, SystemConsoleThemeStyle>
             {
                 [ConsoleThemeStyle.Text] = new SystemConsoleThemeStyle

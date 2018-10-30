@@ -42,6 +42,7 @@ namespace Swarm.Migrator.Sql
                     }
                 }
 
+                Console.WriteLine("Try create database: " + conn.Database);
                 masterConn.Execute($"CREATE DATABASE {conn.Database}");
                 ExecuteSql(conn);
             }

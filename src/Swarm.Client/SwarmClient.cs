@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -21,7 +23,7 @@ namespace Swarm.Client
         private int _retryTimes;
         private bool _isRunning;
         private CancellationTokenSource _cancellationTokenSource;
-        private bool _isDisconncted = true;
+        private bool _isDisconnected = true;
 
         /// <summary>
         /// 分组
@@ -40,6 +42,8 @@ namespace Swarm.Client
 
         public string AccessToken { get; }
 
+        public string Ip { get; set; }
+
         /// <summary>
         /// 服务连接重试次数
         /// </summary>
@@ -55,6 +59,27 @@ namespace Swarm.Client
             {
                 _logger = new ConsoleLogger("SwarmClient", (cat, lv) => lv > LogLevel.Debug, true);
             }
+
+            if (string.IsNullOrWhiteSpace(Ip))
+            {
+                var interf = NetworkInterface.GetAllNetworkInterfaces().FirstOrDefault(i =>
+                    (i.NetworkInterfaceType == NetworkInterfaceType.Ethernet ||
+                     i.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) &&
+                    i.OperationalStatus == OperationalStatus.Up);
+                if (interf != null)
+                {
+                    var unicastAddresses = interf.GetIPProperties().UnicastAddresses;
+                    Ip = unicastAddresses.FirstOrDefault(a =>
+                            a.IPv4Mask?.ToString() != "255.255.255.255" &&
+                            a.Address.AddressFamily == AddressFamily.InterNetwork)?.Address
+                        .ToString();
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(Ip))
+            {
+                Ip = "127.0.0.1";
+            }
         }
 
         public SwarmClient(IOptions<SwarmClientOptions> options, ILoggerFactory loggerFactory) : this()
@@ -65,6 +90,7 @@ namespace Swarm.Client
             Group = ops.Group;
             AccessToken = ops.AccessToken;
             RetryTimes = ops.RetryTimes;
+            Ip = ops.Ip;
             _logger = loggerFactory.CreateLogger<SwarmClient>();
         }
 
@@ -107,7 +133,7 @@ namespace Swarm.Client
             {
                 while (_retryTimes < RetryTimes && !token.IsCancellationRequested)
                 {
-                    if (_isDisconncted)
+                    if (_isDisconnected)
                     {
                         await CreateConnection(token);
                     }
@@ -141,7 +167,7 @@ namespace Swarm.Client
                     }).Build();
                 connection.Closed += e =>
                 {
-                    _isDisconncted = true;
+                    _isDisconnected = true;
                     _logger.LogWarning($"Disconnected from server: {e?.Message}.");
                     return Task.CompletedTask;
                 };
@@ -149,8 +175,8 @@ namespace Swarm.Client
                 AddListener(connection, token);
                 var kv = await connection.StartAsync(token)
                     .ContinueWith(t => new Tuple<bool, string>(t.IsFaulted, t.Exception?.Message), token);
-                _isDisconncted = kv.Item1;
-                if (_isDisconncted)
+                _isDisconnected = kv.Item1;
+                if (_isDisconnected)
                 {
                     _logger.LogError($"Connect server failed: {kv.Item2}.");
                     token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(DetectInterval));
@@ -239,21 +265,21 @@ namespace Swarm.Client
                         Sharding = context.Sharding,
                         Client = Name,
                         State = State.Exit,
-                        Msg =   $"Exit: {exitCode}"
-                    }, token);                   
+                        Msg = $"Exit: {exitCode}"
+                    }, token);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, $"Execute job [{context.Name}, {context.Group}] failed.");
                     await connection.SendAsync("StateChanged", new JobState
-                        {
-                            JobId = context.JobId,
-                            TraceId = context.TraceId,
-                            Sharding = context.Sharding,
-                            Client = Name,
-                            State = State.Exit,
-                            Msg = $"Failed: {ex.Message}"
-                        }, token);
+                    {
+                        JobId = context.JobId,
+                        TraceId = context.TraceId,
+                        Sharding = context.Sharding,
+                        Client = Name,
+                        State = State.Exit,
+                        Msg = $"Failed: {ex.Message}"
+                    }, token);
                 }
             });
 
