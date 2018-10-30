@@ -63,7 +63,7 @@ Quartz is a great scheduler framework, but if we have millions or more jobs or t
 ## CONSIDERATION
 
 + Client can't connect to Swarm server, but processes of jobs are still running, when the server restart, server should know those information and update job's state to database?
-+ Client down, all processes it opened will killed or still exists? if exists, make should storage process<-> job info to help rescue client.
++ Client down, all processes it opened still alive?  may be we should store process<-> job info to help rescue client.
 
 ## CONTRIBUTION
 

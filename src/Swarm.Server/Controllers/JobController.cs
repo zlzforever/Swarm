@@ -1,17 +1,20 @@
 using System;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Swarm.Basic.Entity;
+using Swarm.Core;
 using Swarm.Core.Common;
+using Swarm.Core.Controllers;
 using Swarm.Server.Models;
 
 namespace Swarm.Server.Controllers
 {
-    public class JobController : Controller
+    public class JobController : AbstractControllerBase
     {
         private readonly SwarmDbContext _dbContext;
 
-        public JobController(SwarmDbContext dbContext)
+        public JobController(SwarmDbContext dbContext, IOptions<SwarmOptions> options) : base(options)
         {
             _dbContext = dbContext;
         }

@@ -1,5 +1,6 @@
-﻿var hub = {};
-
+﻿let hub = {};
+// TODO: AFTER PERMISSION SYSTEM FINISHED
+hub.accessToken="%wTAd6IgcnQZauJKDTGdkmxyJgFxffXe";
 hub.queryString = function (name) {
     var result = location.search.match(new RegExp("[\?\&]" + name + "=([^\&]+)", "i"));
     if (result === null || result.length < 1) {
@@ -12,7 +13,7 @@ hub.post = function (url, data, success, error) {
     $.ajax({
         url: url,
         headers: {
-            'SwarmAccessToken': 'BBBBBBBB'
+            'SwarmAccessToken': hub.accessToken
         },
         data: JSON.stringify(data),
         method: 'POST',
@@ -51,7 +52,7 @@ hub.get = function (url, success, error) {
     $.ajax({
         url: url,
         headers: {
-            'SwarmAccessToken': 'BBBBBBBB'
+            'SwarmAccessToken': hub.accessToken
         },
         method: 'GET',
         success: function (result) {
@@ -87,7 +88,7 @@ hub.delete = function (url, success, error) {
     $.ajax({
         url: url,
         headers: {
-            'SwarmAccessToken': 'BBBBBBBB'
+            'SwarmAccessToken': hub.accessToken
         },
         method: 'DELETE',
         success: function (result) {
@@ -124,7 +125,7 @@ hub.put = function (url, data, success, error) {
     $.ajax({
         url: url,
         headers: {
-            'SwarmAccessToken': 'BBBBBBBB'
+            'SwarmAccessToken': hub.accessToken
         },
         data: JSON.stringify(data),
         method: 'PUT',
@@ -170,12 +171,11 @@ hub.ui.clearBusy = function () {
 
 hub.pagers = {};
 hub.ui.initPagination = function (query, option, click) {
-    var total = option.total || 1;
-    var size = option.size || 10;
-    var page = option.page || 1;
-    var totalPages = parseInt((total / size), 10) + ((total % size) > 0 ? 1 : 0) || 1;
-
-    var currOption = {
+    const total = option.total || 1;
+    const size = option.size || 10;
+    const page = option.page || 1;
+    const totalPages = parseInt((total / size), 10) + ((total % size) > 0 ? 1 : 0) || 1;
+    const currOption = {
         startPage: page,
         totalPages: totalPages,
         visiblePages: 10,
@@ -200,39 +200,37 @@ hub.ui.initPagination = function (query, option, click) {
 };
 
 hub.getFilter = function (key) {
-    var filter = hub.queryString('filter');
+    const filter = hub.queryString('filter');
     if (!filter) {
         return '';
     }
-    var kvs = filter.split('|');
-    var filters = {};
+    const kvs = filter.split('|');
+    let filters = {};
     for (i = 0; i < kvs.length; ++i) {
-        var kv = kvs[i].split('::');
+        const kv = kvs[i].split('::');
         filters[kv[0]] = kv[1];
     }
     return filters[key];
 };
 hub.formatDate = function (time, format = 'YY-MM-DD hh:mm:ss') {
-    var date = new Date(time);
+    const date = new Date(time);
 
-    var year = date.getFullYear(),
+    const year = date.getFullYear(),
         month = date.getMonth() + 1,//月份是从0开始的
         day = date.getDate(),
         hour = date.getHours(),
         min = date.getMinutes(),
         sec = date.getSeconds();
-    var preArr = Array.apply(null, Array(10)).map(function (elem, index) {
+    const preArr = Array.apply(null, Array(10)).map(function (elem, index) {
         return '0' + index;
-    });////开个长度为10的数组 格式为 00 01 02 03
+    });
 
-    var newTime = format.replace(/YY/g, year)
+    return format.replace(/YY/g, year)
         .replace(/MM/g, preArr[month] || month)
         .replace(/DD/g, preArr[day] || day)
         .replace(/hh/g, preArr[hour] || hour)
         .replace(/mm/g, preArr[min] || min)
         .replace(/ss/g, preArr[sec] || sec);
-
-    return newTime;
 };
 
 $(function () {

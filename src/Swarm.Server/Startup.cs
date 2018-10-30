@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json.Serialization;
 using Swarm.Core;
 
 namespace Swarm.Server
@@ -30,10 +31,14 @@ namespace Swarm.Server
             services.AddDbContext<SwarmDbContext>(options =>
                 options.UseSqlServer(
                     Configuration.GetSection("Swarm").GetValue<string>("ConnectionString")));
-            
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1).AddSwarm(
-                Configuration.GetSection("Swarm"),
-                configure => { configure.UseSqlServer(); });
+
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddSwarm(Configuration.GetSection("Swarm"), configure => { configure.UseSqlServer(); }).AddJsonOptions(
+                    options =>
+                    {
+                        options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+                    });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

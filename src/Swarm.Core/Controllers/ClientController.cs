@@ -2,19 +2,21 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Swarm.Core.Common;
 using Swarm.Core.SignalR;
 
 namespace Swarm.Core.Controllers
 {
     [Route("swarm/v1.0/client")]
-    public class ClientController : Controller
+    public class ClientController : AbstractControllerBase
     {
         private readonly ILogger _logger;
         private readonly IHubContext<ClientHub> _hubContext;
         private readonly ISwarmStore _store;
 
-        public ClientController(ILoggerFactory loggerFactory, ISwarmStore store, IHubContext<ClientHub> hubContext)
+        public ClientController(ILoggerFactory loggerFactory, ISwarmStore store, IHubContext<ClientHub> hubContext,
+            IOptions<SwarmOptions> options) : base(options)
         {
             _logger = loggerFactory.CreateLogger<ClientController>();
             _hubContext = hubContext;
@@ -44,7 +46,7 @@ namespace Swarm.Core.Controllers
             }
 
             await _store.RemoveClient(clientId);
-            return new JsonResult(new ApiResult ());
+            return new JsonResult(new ApiResult());
         }
     }
 }

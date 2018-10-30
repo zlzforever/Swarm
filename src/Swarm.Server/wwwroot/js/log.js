@@ -1,5 +1,5 @@
 $(function () {
-    var vue = new Vue({
+    new Vue({
         el: '#view',
         data: {
             els: [],

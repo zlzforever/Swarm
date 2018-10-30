@@ -8,17 +8,15 @@ using Swarm.Core.Common;
 namespace Swarm.Core.Controllers
 {
     [Route("swarm/v1.0/trigger")]
-    public class TriggerController : Controller
+    public class TriggerController : AbstractControllerBase
     {
         private readonly IScheduler _scheduler;
-        private readonly SwarmOptions _options;
         private readonly ILogger _logger;
         private readonly ISwarmStore _store;
 
         public TriggerController(IScheduler scheduler, ILoggerFactory loggerFactory, ISwarmStore store,
-            IOptions<SwarmOptions> options)
+            IOptions<SwarmOptions> options) : base(options)
         {
-            _options = options.Value;
             _scheduler = scheduler;
             _logger = loggerFactory.CreateLogger<JobController>();
             _store = store;

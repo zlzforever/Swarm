@@ -18,19 +18,17 @@ using Swarm.Core.SignalR;
 namespace Swarm.Core.Controllers
 {
     [Route("swarm/v1.0/job")]
-    public class JobController : Controller
+    public class JobController : AbstractControllerBase
     {
         private readonly IScheduler _scheduler;
-        private readonly SwarmOptions _options;
         private readonly ILogger _logger;
         private readonly ISwarmStore _store;
         private readonly IHubContext<ClientHub> _hubContext;
 
         public JobController(IScheduler scheduler, ILoggerFactory loggerFactory, ISwarmStore store,
             IHubContext<ClientHub> hubContext,
-            IOptions<SwarmOptions> options)
+            IOptions<SwarmOptions> options) : base(options)
         {
-            _options = options.Value;
             _scheduler = scheduler;
             _logger = loggerFactory.CreateLogger<JobController>();
             _store = store;
@@ -39,7 +37,7 @@ namespace Swarm.Core.Controllers
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            if (!context.HttpContext.Request.IsAccess(_options))
+            if (!context.HttpContext.Request.IsAccess(Options))
             {
                 throw new SwarmException("Auth dined");
             }
@@ -219,7 +217,7 @@ namespace Swarm.Core.Controllers
             // set default values
             value.State = State.Exit;
             value.RetryCount = value.RetryCount <= 0 ? 1 : value.RetryCount;
-            value.Node = string.IsNullOrWhiteSpace(_options.Name) ? SwarmConts.DefaultGroup : _options.Name;
+            value.Node = string.IsNullOrWhiteSpace(Options.Name) ? SwarmConts.DefaultGroup : Options.Name;
             return null;
         }
 

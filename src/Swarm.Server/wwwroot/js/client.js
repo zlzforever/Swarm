@@ -1,5 +1,5 @@
 $(function () {
-    var vue = new Vue({
+    let vue = new Vue({
         el: '#view',
         data: {
             els: [],
@@ -12,7 +12,7 @@ $(function () {
         },
         methods: {
             exit: function (connectionId) {
-                var that = this;
+                let that = this;
                 swal({
                     title: "Sure to exit this client?",
                     type: "warning",
@@ -24,7 +24,7 @@ $(function () {
                 });
             },
             remove: function (id) {
-                var that = this;
+                let that = this;
                 swal({
                     title: "Sure to remove this client?",
                     type: "warning",

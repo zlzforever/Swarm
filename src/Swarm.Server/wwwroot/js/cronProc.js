@@ -23,8 +23,8 @@ $(function () {
         },
         methods: {
             create: function () {
-                var job = this.$data.job;
-                var url = "/swarm/v1.0/job";
+                let job = this.$data.job;
+                const url = "/swarm/v1.0/job";
                 hub.post(url, {
                     name: job.name,
                     group: job.group,
