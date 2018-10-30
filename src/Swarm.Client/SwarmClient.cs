@@ -116,6 +116,7 @@ namespace Swarm.Client
                         Interlocked.Exchange(ref _retryTimes, 0);
                     }
 
+                    
                     token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(1500));
                 }
 
