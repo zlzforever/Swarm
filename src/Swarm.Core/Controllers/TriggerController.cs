@@ -8,7 +8,7 @@ using Swarm.Core.Common;
 namespace Swarm.Core.Controllers
 {
     [Route("swarm/v1.0/trigger")]
-    public class TriggerController : AbstractControllerBase
+    public class TriggerController : AbstractApiControllerBase
     {
         private readonly IScheduler _scheduler;
         private readonly ILogger _logger;

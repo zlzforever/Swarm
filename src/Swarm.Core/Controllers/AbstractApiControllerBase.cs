@@ -5,11 +5,11 @@ using Swarm.Core.Common;
 
 namespace Swarm.Core.Controllers
 {
-    public class AbstractControllerBase : Controller
+    public class AbstractApiControllerBase : Controller
     {
         protected readonly SwarmOptions Options;
 
-        protected AbstractControllerBase(IOptions<SwarmOptions> options)
+        protected AbstractApiControllerBase(IOptions<SwarmOptions> options)
         {
             Options = options.Value;
         }

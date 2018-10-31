@@ -1,0 +1,1 @@
+dotnet publish -c release src/Swarm.Server/Swarm.Server.csproj -o ../../output/Swarm.Server

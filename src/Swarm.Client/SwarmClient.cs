@@ -236,12 +236,12 @@ namespace Swarm.Client
                 var delay = (context.FireTimeUtc - DateTime.UtcNow).TotalSeconds;
                 if (delay > 10)
                 {
-                    _logger.LogError($"Trigger job [{context.Name}, {context.Group}] timeout: {delay}.");
+                    _logger.LogError($"Trigger job [{context.Name}, {context.Group}, {context.TraceId}, {context.CurrentSharding}] timeout: {delay}.");
                     await connection.SendAsync("StateChanged", new JobState
                         {
                             JobId = context.JobId,
                             TraceId = context.TraceId,
-                            Sharding = context.Sharding,
+                            Sharding = context.CurrentSharding,
                             State = State.Exit,
                             Client = Name,
                             Msg = "Timeout"
@@ -252,17 +252,16 @@ namespace Swarm.Client
 
                 try
                 {
-                    _logger.LogInformation($"Try execute job [{context.JobId}]");
+                    _logger.LogInformation($"Try execute job [{context.Name}, {context.Group}, {context.TraceId}, {context.CurrentSharding}]");
 
                     await connection.SendAsync("StateChanged", new JobState
                         {
                             JobId = context.JobId,
                             TraceId = context.TraceId,
-                            Sharding = context.Sharding,
+                            Sharding = context.CurrentSharding,
                             Client = Name,
                             State = State.Running
-                        }
-                        , token);
+                        }, token);
 
                     var exitCode = await ExecutorFactory.Create(context.Executor).Execute(context,
                         async (jobId, traceId, msg) =>
@@ -275,7 +274,7 @@ namespace Swarm.Client
                     {
                         JobId = context.JobId,
                         TraceId = context.TraceId,
-                        Sharding = context.Sharding,
+                        Sharding = context.CurrentSharding,
                         Client = Name,
                         State = State.Exit,
                         Msg = $"Exit: {exitCode}"
@@ -288,7 +287,7 @@ namespace Swarm.Client
                     {
                         JobId = context.JobId,
                         TraceId = context.TraceId,
-                        Sharding = context.Sharding,
+                        Sharding = context.CurrentSharding,
                         Client = Name,
                         State = State.Exit,
                         Msg = $"Failed: {ex.Message}"

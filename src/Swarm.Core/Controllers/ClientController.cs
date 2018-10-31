@@ -9,7 +9,7 @@ using Swarm.Core.SignalR;
 namespace Swarm.Core.Controllers
 {
     [Route("swarm/v1.0/client")]
-    public class ClientController : AbstractControllerBase
+    public class ClientController : AbstractApiControllerBase
     {
         private readonly ILogger _logger;
         private readonly IHubContext<ClientHub> _hubContext;

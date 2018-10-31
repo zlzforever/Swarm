@@ -18,7 +18,7 @@ using Swarm.Core.SignalR;
 namespace Swarm.Core.Controllers
 {
     [Route("swarm/v1.0/job")]
-    public class JobController : AbstractControllerBase
+    public class JobController : AbstractApiControllerBase
     {
         private readonly IScheduler _scheduler;
         private readonly ILogger _logger;
