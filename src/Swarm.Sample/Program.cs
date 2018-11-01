@@ -20,8 +20,8 @@ namespace Swarm.Sample
     {
         static void Main(string[] args)
         {
-            SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001", null);
-            client.Start();
+            //SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001", null);
+           // client.Start();
             Console.Read();
         }
 

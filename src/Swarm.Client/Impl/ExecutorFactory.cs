@@ -1,26 +1,35 @@
+using System;
 using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 using Swarm.Basic;
 
 namespace Swarm.Client.Impl
 {
-    public static class ExecutorFactory
+    public class ExecutorFactory : IExecutorFactory
     {
-        public static readonly Dictionary<Executor, IExecutor> Executors = new Dictionary<Executor, IExecutor>();
+        private readonly IServiceProvider _serviceProvider;
+
+        public static readonly Dictionary<Executor, Type> Executors = new Dictionary<Executor, Type>();
 
         static ExecutorFactory()
         {
-            Executors.Add(Executor.Reflection,new ReflectionExecutor());
-            Executors.Add(Executor.Process,new ProcessExecutor());
+            Executors.Add(Executor.Reflection, typeof(ReflectionExecutor));
+            Executors.Add(Executor.Process, typeof(ProcessExecutor));
         }
-        
-        public static IExecutor Create(Executor executor)
+
+        public ExecutorFactory(IServiceProvider provider)
+        {
+            _serviceProvider = provider;
+        }
+
+        public IExecutor Create(Executor executor)
         {
             if (!Executors.ContainsKey(executor))
             {
                 throw new SwarmClientException($"Unsupported executor: {executor}.");
             }
 
-            return Executors[executor];
+            return (IExecutor) _serviceProvider.GetRequiredService(Executors[executor]);
         }
     }
 }

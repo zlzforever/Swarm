@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,6 +13,14 @@ namespace Swarm.ConsoleClient
 {
     class Program
     {
+        private static readonly string _processIdPath;
+        private static Stream _processStream;
+
+        static Program()
+        {
+            _processIdPath = Path.Combine(AppContext.BaseDirectory, "processId");
+        }
+
         static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
@@ -20,6 +29,12 @@ namespace Swarm.ConsoleClient
                 .Enrich.FromLogContext()
                 .WriteTo.Console(theme: SerilogConsoleTheme.ConsoleTheme).WriteTo.RollingFile("swarm.log")
                 .CreateLogger();
+
+            if (CheckIfIsRunning())
+            {
+                Log.Logger.Error("Client is running.");
+                return;
+            }
 
             IServiceCollection services = new ServiceCollection();
             services.AddLogging(options => { options.AddSerilog(); });
@@ -54,7 +69,26 @@ namespace Swarm.ConsoleClient
             Console.WriteLine("Press any key to exit:");
             Console.Read();
             client.Stop();
+            Dispose();
             Console.WriteLine("Exited.");
+        }
+
+        private static bool CheckIfIsRunning()
+        {
+            try
+            {
+                _processStream = File.Open(_processIdPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+                return false;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+
+        private static void Dispose()
+        {
+            _processStream?.Dispose();
         }
     }
 }

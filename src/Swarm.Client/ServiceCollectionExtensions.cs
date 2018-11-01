@@ -1,6 +1,7 @@
 using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Swarm.Client.Impl;
 
 namespace Swarm.Client
 {
@@ -13,7 +14,7 @@ namespace Swarm.Client
         }
 
         public static IServiceCollection AddSwarmClient(this IServiceCollection services,
-            IConfigurationSection configuration)
+            IConfigurationSection configuration, Action<ISwarmClientBuilder> configure = null)
         {
             if (services == null)
                 throw new ArgumentNullException(nameof(services));
@@ -22,7 +23,15 @@ namespace Swarm.Client
                 throw new ArgumentNullException(nameof(configuration));
 
             services.Configure<SwarmClientOptions>(configuration);
-            services.AddSingleton<ISwarmClient,SwarmClient>();
+            services.AddSingleton<IProcessStore>(p => FileStore.Instance);
+            services.AddSingleton<IExecutorFactory, ExecutorFactory>();
+            services.AddTransient<ProcessExecutor>();
+            services.AddTransient<ReflectionExecutor>();
+            
+            var builder = new SwarmClientBuilder(services);
+            configure?.Invoke(builder);
+
+            services.AddSingleton<ISwarmClient, SwarmClient>();
             return services;
         }
     }

@@ -13,32 +13,12 @@ namespace Swarm.Client.Impl
 {
     public class ProcessExecutor : IExecutor
     {
-        internal class ProcessKey
-        {
-            public string JobId { get; }
-            public string TraceId { get; }
-            public int Sharding { get; }
-
-            public ProcessKey(string jobId, string traceId, int sharding)
-            {
-                JobId = jobId;
-                TraceId = traceId;
-                Sharding = sharding;
-            }
-
-            public override int GetHashCode()
-            {
-                return $"{JobId}_{TraceId}_{Sharding}".GetHashCode();
-            }
-        }
-
         private readonly ILogger _logger;
+        private readonly IProcessStore _store;
 
-        internal static readonly ConcurrentDictionary<ProcessKey, Process> Processes =
-            new ConcurrentDictionary<ProcessKey, Process>();
-
-        public ProcessExecutor()
+        public ProcessExecutor(IProcessStore store)
         {
+            _store = store;
             if (_logger == null)
             {
                 _logger = new ConsoleLogger("ProcessExecutor", (cat, lv) => lv > LogLevel.Debug, true);
@@ -48,13 +28,14 @@ namespace Swarm.Client.Impl
         public Task<int> Execute(JobContext context, Action<string, string, string> logger)
         {
             var key = new ProcessKey(context.JobId, context.TraceId, context.CurrentSharding);
-            if (Processes.ContainsKey(key))
+
+            if (_store.Exists(key))
             {
                 throw new SwarmClientException(
                     $"[{context.JobId}, {context.TraceId}, {context.CurrentSharding}] is running");
             }
 
-            if (Processes.Keys.Count(k => k.JobId == context.JobId) > 1)
+            if (_store.Count(context.JobId) > 1)
             {
                 if (context.ConcurrentExecutionDisallowed)
                 {
@@ -62,8 +43,8 @@ namespace Swarm.Client.Impl
                 }
             }
 
-            var app = context.Parameters.GetValue(SwarmConts.ApplicationProperty);
-            if (string.IsNullOrWhiteSpace(app))
+            var application = context.Parameters.GetValue(SwarmConts.ApplicationProperty);
+            if (string.IsNullOrWhiteSpace(application))
             {
                 throw new SwarmClientException("application path is null");
             }
@@ -73,7 +54,7 @@ namespace Swarm.Client.Impl
             var logPattern = context.Parameters.GetValue(SwarmConts.LogPatternProperty);
             var process = new Process
             {
-                StartInfo = new ProcessStartInfo(app, arguments)
+                StartInfo = new ProcessStartInfo(application, arguments)
                 {
                     WorkingDirectory = AppContext.BaseDirectory,
                     UseShellExecute = false,
@@ -93,18 +74,25 @@ namespace Swarm.Client.Impl
                     }
                 };
             }
-
-            Processes.TryAdd(key, process);
             process.Start();
             if (!string.IsNullOrWhiteSpace(logPattern))
             {
                 process.BeginOutputReadLine();
             }
-
+            _store.Add(new JobProcess
+            {
+                JobId = context.JobId,
+                TraceId = context.TraceId,
+                Sharding = context.CurrentSharding,
+                Application = application,
+                Arguments = arguments,
+                StartAt = DateTimeOffset.Now,
+                ProcessId = process.Id
+            });
             _logger.LogInformation(
                 $"Start process [{context.Name}, {context.Group}] PID: {process.Id}.");
             process.WaitForExit();
-            Processes.TryRemove(key, out _);
+            _store.Remove(key);
             _logger.LogInformation(
                 $"[{context.Name}, {context.Group}] PID: {process.Id} exited.");
             return Task.FromResult(process.ExitCode);
