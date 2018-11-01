@@ -14,13 +14,15 @@ namespace Swarm.Core.SignalR
         private readonly SwarmOptions _options;
         private readonly ILogger _logger;
         private readonly ISwarmStore _store;
-
+        private readonly ILogStore _logStore;
+        
         public ClientHub(IOptions<SwarmOptions> options,
-            ISwarmStore store, ILoggerFactory loggerFactory)
+            ISwarmStore store,ILogStore logStore, ILoggerFactory loggerFactory)
         {
             _options = options.Value;
             _logger = loggerFactory.CreateLogger<ClientHub>();
             _store = store;
+            _logStore = logStore;
         }
 
         public async Task StateChanged(JobState jobState)
@@ -63,7 +65,7 @@ namespace Swarm.Core.SignalR
         public async Task OnLog(Log log)
         {
             // TODO: VALIDATE LOG
-            await _store.AddLog(log);
+            await _logStore.AddLog(log);
         }
 
         public override async Task OnConnectedAsync()

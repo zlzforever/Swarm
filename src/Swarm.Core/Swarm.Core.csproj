@@ -2,6 +2,18 @@
 
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <Version>0.1.0</Version>
+        <Authors>zlzforever@163.com;</Authors>
+        <AssemblyName>Swarm.Core</AssemblyName>
+        <Copyright>Copyright 2018 Lewis Zou</Copyright>
+        <PackageId>Swarm.Core</PackageId>
+        <Description>Swarm is a distributed scheduled job framework, based on Quartz.</Description>
+        <PackageTags>Swarm;dotnet core</PackageTags>
+        <PackageProjectUrl>https://github.com/zlzforever/Swarm</PackageProjectUrl>
+        <PackageLicenseUrl>https://github.com/zlzforever/Swarm/blob/master/LICENSE</PackageLicenseUrl>
+        <RepositoryUrl>https://github.com/zlzforever/Swarm</RepositoryUrl>
     </PropertyGroup>
 
     <ItemGroup>

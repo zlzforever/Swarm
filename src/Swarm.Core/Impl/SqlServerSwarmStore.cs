@@ -11,7 +11,7 @@ using Swarm.Basic.Entity;
 
 namespace Swarm.Core.Impl
 {
-    public class SqlServerSwarmStore : ISwarmStore
+    public class SqlServerSwarmStore : ISwarmStore, ILogStore
     {
         private readonly SwarmOptions _options;
         private readonly ILogger _logger;
@@ -243,7 +243,7 @@ namespace Swarm.Core.Impl
                            new {JobId = jobId, State = State.Exit}) == 0;
             }
         }
-        
+
         public async Task ChangeJobState(string jobId, State state)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
@@ -294,6 +294,5 @@ namespace Swarm.Core.Impl
                     log);
             }
         }
-
     }
 }

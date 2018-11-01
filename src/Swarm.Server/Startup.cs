@@ -34,11 +34,11 @@ namespace Swarm.Server
 
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
-                .AddSwarm(Configuration.GetSection("Swarm"), configure => { configure.UseSqlServer(); }).AddJsonOptions(
-                    options =>
-                    {
-                        options.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
-                    });
+                .AddSwarm(Configuration.GetSection("Swarm"), configure =>
+                {
+                    configure.UseSqlServer();
+                    configure.UseSqlServerLogStore();
+                });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

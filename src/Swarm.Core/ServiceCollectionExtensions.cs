@@ -45,6 +45,12 @@ namespace Swarm.Core
         }
 
 
+        public static ISwarmBuilder UseSqlServerLogStore(this ISwarmBuilder builder)
+        {
+            builder.Services.AddSingleton<ILogStore,SqlServerSwarmStore>();           
+            return builder;
+        }
+        
         public static ISwarmBuilder UseSqlServer(this ISwarmBuilder builder)
         {
             builder.Services.AddSingleton<IJobStore>(provider =>
