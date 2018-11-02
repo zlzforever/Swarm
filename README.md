@@ -8,8 +8,8 @@ Swarm is a distributed scheduled job framework, based on Quartz.
   +------------------+      +------------+        +------------------+      +------------+ 
   |  Swarm Server 1  +------>            |        |  Swarm Server 3  +------>            |
   +------------------+      |            |        +------------------+      |            | 
-                            |Quartz DB 1 |                                  |Quartz DB 2 |
-  +------------------+      |            |        +------------------+      |            |
+                            |   Quartz   |                                  |   Quartz   |
+  +------------------+      | Scheduler 1|        +------------------+      | Scheduler 2|
   |  Swarm Server 2  +------>            |        |  Swarm Server 4  +------>            |
   +------------------+      +------------+        +------------------+      +------------+
 
@@ -19,7 +19,7 @@ Swarm is a distributed scheduled job framework, based on Quartz.
 
 --------------------------------------SHARDING MODULE---------------------------------------
                                              |
-                                 HTTP, WebSocket, Kafka, etc
+                                       HTTP, WebSocket
                                              |
                +-------------------+---------+---------+-------------------+
                |                   |                   |                   | 
@@ -65,13 +65,6 @@ Quartz is a great scheduler framework, but if we have millions or more jobs or t
 + Client can't connect to Swarm server, but processes of jobs are still running, when the server restart, server should know those information and update job's state to database?
 + Client down, all processes it opened still alive?  may be we should store process<-> job info to help rescue client.
 
-Server  |  Client  | Solution
- 
- ------------- | -------------
- 
-  Content Cell  | Content Cell
- 
-  Content Cell  | Content Cell
 
 ## CONTRIBUTION
 
