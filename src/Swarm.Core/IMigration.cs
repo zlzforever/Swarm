@@ -1,4 +1,4 @@
-namespace Swarm.Migrator
+namespace Swarm.Core
 {
     public interface IMigration
     {

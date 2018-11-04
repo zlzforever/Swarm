@@ -16,8 +16,6 @@ namespace Swarm.Basic
 
         public string Group { get; set; }
 
-        public Executor Executor { get; set; }
-
         public DateTimeOffset FireTimeUtc { get; set; }
 
         public DateTimeOffset? ScheduledFireTimeUtc { get; set; }
@@ -26,6 +24,8 @@ namespace Swarm.Basic
 
         public DateTimeOffset? NextFireTimeUtc { get; set; }
 
+        public Executor Executor { get; set; }
+        
         public int Sharding { get; set; } = 1;
 
         public string ShardingParameters { get; set; }
@@ -34,7 +34,7 @@ namespace Swarm.Basic
 
         public string CurrentShardingParameter { get; set; }
 
-        public bool ConcurrentExecutionDisallowed { get; set; }
+        public bool AllowConcurrent { get; set; }
 
         public Dictionary<string, string> Parameters { get; set; }
 

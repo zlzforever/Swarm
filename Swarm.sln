@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swarm.Basic", "src\Swarm.Ba
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swarm.Server", "src\Swarm.Server\Swarm.Server.csproj", "{2D75C655-3899-4BD9-A1C1-EA9179CCF14D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Swarm.Migrator", "src\Swarm.Migrator\Swarm.Migrator.csproj", "{982691FF-28FC-4768-B73E-30D4950B5B74}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4C365059-D491-4259-9260-6DC5DA9DEBA6}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
@@ -45,10 +43,6 @@ Global
 		{2D75C655-3899-4BD9-A1C1-EA9179CCF14D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D75C655-3899-4BD9-A1C1-EA9179CCF14D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D75C655-3899-4BD9-A1C1-EA9179CCF14D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{982691FF-28FC-4768-B73E-30D4950B5B74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{982691FF-28FC-4768-B73E-30D4950B5B74}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{982691FF-28FC-4768-B73E-30D4950B5B74}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{982691FF-28FC-4768-B73E-30D4950B5B74}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1AB17389-2BB2-4285-83B5-D29DA4F5843E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1AB17389-2BB2-4285-83B5-D29DA4F5843E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AB17389-2BB2-4285-83B5-D29DA4F5843E}.Release|Any CPU.ActiveCfg = Release|Any CPU

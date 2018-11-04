@@ -38,6 +38,7 @@ namespace Swarm.Server
                 {
                     configure.UseSqlServer();
                     configure.UseSqlServerLogStore();
+                    configure.UseDefaultSharding();
                 });
         }
 

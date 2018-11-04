@@ -16,7 +16,7 @@ namespace Swarm.Core
         Task DisconnectClient(string name, string group);
         Task<IEnumerable<Client>> GetClients(string group);
         Task DisconnectAllClients();
-        
+
         #endregion
 
         Task<bool> CheckJobExists(string jobId);
@@ -26,13 +26,15 @@ namespace Swarm.Core
         Task DeleteJob(string jobId);
         Task<Job> GetJob(string jobId);
         Task<bool> IsJobExited(string jobId);
-        Task ChangeJobState(string jobId, State state);
+        //Task ChangeJobState(string jobId, State state);
 
         Task AddJobState(JobState jobState);
         Task<JobState> GetJobState(string traceId, string client, int sharding);
         Task UpdateJobState(JobState jobState);
-        
-        Task AddLog(Log log);
-        
+
+        Task RegisterNode(Node node);
+        Task<Node> GetMinimumTriggerTimesNode();
+        Task<Node> GetNode(string nodeId);
+        Task IncreaseNodeTriggerTime(string name, string nodeId);
     }
 }

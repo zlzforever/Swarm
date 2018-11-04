@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Swarm.Basic;
+using Swarm.Basic.Common;
 using Swarm.Basic.Entity;
 using Swarm.Client.Impl;
 
@@ -25,9 +26,9 @@ namespace Swarm.Client
         private bool _isRunning;
         private CancellationTokenSource _cancellationTokenSource;
         private bool _isDisconnected = true;
-        private   IProcessStore _processStore;
+        private IProcessStore _processStore;
         private readonly IExecutorFactory _executorFactory;
-        
+
         /// <summary>
         /// 分组
         /// </summary>
@@ -60,7 +61,8 @@ namespace Swarm.Client
         /// <param name="options"></param>
         /// <param name="processStore"></param>
         /// <param name="loggerFactory"></param>
-        public SwarmClient(IOptions<SwarmClientOptions> options, IProcessStore processStore, IExecutorFactory executorFactory, ILoggerFactory loggerFactory)
+        public SwarmClient(IOptions<SwarmClientOptions> options, IProcessStore processStore,
+            IExecutorFactory executorFactory, ILoggerFactory loggerFactory)
         {
             var ops = options.Value;
             Name = ops.Name;
@@ -72,7 +74,7 @@ namespace Swarm.Client
             _logger = loggerFactory.CreateLogger<SwarmClient>();
             _processStore = processStore;
             _executorFactory = executorFactory;
-            
+
             //TODO: Validate data
             Name = string.IsNullOrWhiteSpace(Name) ? Dns.GetHostName() : Name;
 
@@ -149,7 +151,7 @@ namespace Swarm.Client
                 _cancellationTokenSource.Token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(DetectInterval));
             }
         }
-        
+
         public Task Start(CancellationToken cancellationToken = default)
         {
             if (_isRunning)
@@ -198,13 +200,15 @@ namespace Swarm.Client
                 Interlocked.Increment(ref _retryTimes);
 
                 connection = new HubConnectionBuilder()
-                    .WithUrl($"{Host}clientHub/?group={Group}&name={Name}&ip={Ip}", config =>
-                    {
-                        config.Headers = new Dictionary<string, string>
+                    .WithUrl(
+                        $"{Host}clientHub/?group={Group}&name={Name}&ip={Ip}&os={Environment.OSVersion}&coreCount={Environment.ProcessorCount}&memory=2048&userId=0",
+                        config =>
                         {
-                            {SwarmConts.AccessTokenHeader, AccessToken}
-                        };
-                    }).Build();
+                            config.Headers = new Dictionary<string, string>
+                            {
+                                {SwarmConts.AccessTokenHeader, AccessToken}
+                            };
+                        }).Build();
                 connection.Closed += e =>
                 {
                     _isDisconnected = true;
@@ -244,7 +248,8 @@ namespace Swarm.Client
                 var delay = (context.FireTimeUtc - DateTime.UtcNow).TotalSeconds;
                 if (delay > 10)
                 {
-                    _logger.LogError($"Trigger job [{context.Name}, {context.Group}, {context.TraceId}, {context.CurrentSharding}] timeout: {delay}.");
+                    _logger.LogError(
+                        $"Trigger job [{context.Name}, {context.Group}, {context.TraceId}, {context.CurrentSharding}] timeout: {delay}.");
                     await connection.SendAsync("StateChanged", new JobState
                         {
                             JobId = context.JobId,
@@ -260,18 +265,20 @@ namespace Swarm.Client
 
                 try
                 {
-                    _logger.LogInformation($"Try execute job [{context.Name}, {context.Group}, {context.TraceId}, {context.CurrentSharding}]");
+                    _logger.LogInformation(
+                        $"Try execute job [{context.Name}, {context.Group}, {context.TraceId}, {context.CurrentSharding}]");
 
                     await connection.SendAsync("StateChanged", new JobState
-                        {
-                            JobId = context.JobId,
-                            TraceId = context.TraceId,
-                            Sharding = context.CurrentSharding,
-                            Client = Name,
-                            State = State.Running
-                        }, token);
+                    {
+                        JobId = context.JobId,
+                        TraceId = context.TraceId,
+                        Sharding = context.CurrentSharding,
+                        Client = Name,
+                        State = State.Running
+                    }, token);
 
-                    var exitCode = _executorFactory .Create(context.Executor).Execute(context,
+                    Enum.TryParse(context.Parameters.GetValue(SwarmConts.ExecutorProperty), out Executor executor);
+                    var exitCode = _executorFactory.Create(executor).Execute(context,
                         async (jobId, traceId, msg) =>
                         {
                             await connection.SendAsync("OnLog", new Log {JobId = jobId, TraceId = traceId, Msg = msg},
@@ -319,7 +326,7 @@ namespace Swarm.Client
                     try
                     {
                         Process.GetProcessById(proc.ProcessId).Kill();
-                        _processStore.Remove(new ProcessKey(proc.JobId,proc.TraceId,proc.Sharding));
+                        _processStore.Remove(new ProcessKey(proc.JobId, proc.TraceId, proc.Sharding));
                     }
                     catch (Exception ex)
                     {
@@ -332,8 +339,8 @@ namespace Swarm.Client
             {
                 var key = new ProcessKey(jobId, traceId, sharding);
                 var proc = _processStore.GetProcess(key);
-                if (proc==null) return;
-  
+                if (proc == null) return;
+
                 try
                 {
                     Process.GetProcessById(proc.ProcessId).Kill();

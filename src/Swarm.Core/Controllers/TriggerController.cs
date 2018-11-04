@@ -10,16 +10,17 @@ namespace Swarm.Core.Controllers
     [Route("swarm/v1.0/trigger")]
     public class TriggerController : AbstractApiControllerBase
     {
-        private readonly IScheduler _scheduler;
         private readonly ILogger _logger;
         private readonly ISwarmStore _store;
+        private readonly ISchedulerCache _schedulerCache;
 
-        public TriggerController(IScheduler scheduler, ILoggerFactory loggerFactory, ISwarmStore store,
+        public TriggerController(ISchedulerCache schedulerCache, ILoggerFactory loggerFactory,
+            ISwarmStore store,
             IOptions<SwarmOptions> options) : base(options)
         {
-            _scheduler = scheduler;
             _logger = loggerFactory.CreateLogger<JobController>();
             _store = store;
+            _schedulerCache = schedulerCache;
         }
 
         [HttpPost("{jobId}")]
@@ -30,12 +31,16 @@ namespace Swarm.Core.Controllers
                 return new JsonResult(new ApiResult(ApiResult.Error, "Id is empty/null"));
             }
 
-            if (!await _store.CheckJobExists(jobId))
+            var job = await _store.GetJob(jobId);
+            if (job == null)
             {
                 return new JsonResult(new ApiResult(ApiResult.Error, $"Job {jobId} not exists"));
             }
 
-            await _scheduler.TriggerJob(new JobKey(jobId));
+            var node = await _store.GetNode(job.NodeId);
+            var sched = _schedulerCache.Create(node.SchedName, node.NodeId, node.Provider, node.ConnectionString);
+
+            await sched.TriggerJob(new JobKey(jobId));
             _logger.LogInformation($"Trigger job {jobId} success");
             return new JsonResult(new ApiResult(ApiResult.SuccessCode, "success"));
         }

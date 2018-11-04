@@ -1,20 +1,31 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
-using Swarm.Migrator.Sql;
 
-namespace Swarm.Migrator
+namespace Swarm.Core.Common
 {
-    class Program
+    public static class DbInitializer
     {
-        static void Main(string[] args)
+        public static void Init(string[] args)
         {
             var config = new ConfigurationBuilder().AddCommandLine(args, new Dictionary<string, string>
                 {
+                    {"--i", "init"},
                     {"--d", "db"},
                     {"--r", "re-create"}
                 }).AddJsonFile("appsettings.json")
                 .Build();
+            var init = config.GetValue<string>("init");
+            if (string.IsNullOrWhiteSpace(init))
+            {
+                return;
+            }
+
+            if (!bool.Parse(init))
+            {
+                return;
+            }
+
             var db = config.GetValue<string>("db");
             var r = config.GetValue<bool>("re-create");
             if (string.IsNullOrWhiteSpace(db))
@@ -22,8 +33,8 @@ namespace Swarm.Migrator
                 Console.WriteLine("Supply target database like: --d sqlserver");
                 return;
             }
-
-            var connectionString = config.GetConnectionString("DefaultConnection");
+            
+            var connectionString = config.GetSection("Swarm").GetValue<string>("QuartzConnectionString");
             switch (db.ToLower())
             {
                 case "sqlserver":
@@ -38,6 +49,8 @@ namespace Swarm.Migrator
                     break;
                 }
             }
+
+            Environment.Exit(0);
         }
     }
 }

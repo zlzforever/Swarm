@@ -9,7 +9,6 @@ namespace Swarm.Basic.Entity
         /// 主键
         /// </summary>
         [Key]
-        [Column("ID")]
         public T Id { get; set; }
     }
 }

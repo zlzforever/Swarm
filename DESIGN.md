@@ -44,11 +44,11 @@ SCHEDULER1 |  TRIGGER_ACCESS |
 ```
 Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5
 ```
-2. 每个 Scheduler 由 2 个以上的实例来保证稳定性, 组成一个 Swarm Sharding Node, SSN 自动注册到 Sharding 模块
-3. 实例每触发一个任务在数据库中给对应的 Scheduler 增加 1 次计数, Sharding 定时请求计算信息到以检查节点的健康状态
-4. Sharding 模块用于创建、删除、修改、触发, 同时也是对外的连接中心, 管理分布式客户端的触发, 创建任务的时候, 查询各 Scheduler 的触发计数, 取最小的一个 Scheduler 调用其 WebApi 添加任务
-5. 当 SSN 触发一个任务时, 通过消息接口传送到 Sharding 模块, Sharding 通过任务信息归属和分片信息等分发到对应的客户端
-6. 当某个 SSN 只有一个实例时, Sharding 模块提示警告信息, 当 SSN 节点完全当掉时, Sharding 模块应该把此节点的所有任务迁移到其它节点或者备用节点
+2. 每个 Scheduler 由 2 个以上的实例来保证稳定性, 组成一个 Swarm Sharding Node, SSN 通过 SignalR 组成集群, 每个 SSN 启动后把信息添加到数据库, 并定时更新心跳. 每个 SSN 定时扫描注册表, 如果发现掉线的节点(分布式锁)则触发迁移
+3. 每触发一个任务在数据库中给对应的 Scheduler 增加 1 次计数
+4. SSN 还可以创建、删除、修改、触发, 同时也是对外的连接中心, 管理分布式客户端的触发, 创建任务的时候, 查询各 Scheduler 的触发计数, 取最小的一个 Scheduler 调用其Quartz数据库接口添加任务(负载算法可调整)
+5. 当 SSN 触发一个任务时, 通过任务信息归属和分片信息等分发到对应的客户端
+6. 当某个 SSN 只有一个实例时, 提示警告信息, 当 SSN 节点完全当掉时, 集群中的其它 SSN 应该把此节点的所有任务迁移到其它节点或者备用节点
 
 ```
   +------------------+      +------------+        +------------------+      +------------+ 
@@ -75,30 +75,28 @@ Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5
 
  ```
 
-       
-
        +----------------------+  +-----------------------+  +----------------------+  +-----------------+
-       |        JOBS          |  |        SSNS           |  |      CLIENTS         |  |   CLIENT_JOBS   |
+       |        JOBS          |  |        NODES          |  |      CLIENTS         |  |   CLIENT_JOBS   |
        +----------------------+  +-----------------------+  +----------------------+  +-----------------+
-       |  TriggerType         |  |  SsnId                |  |  Name                |  |   ClientId      |
-       |  PermformerType      |  |  SchedulerName        |  |  Group               |  |   ClassName     |
-       |  UserId              |  |  InstanceId           |  |  ConnectionId        |  |   CreationTime  |
+       |  TriggerType         |  |  NodeId               |  |  Name                |  |   ClientId      |
+       |  PermformerType      |  |  SchedName            |  |  Group               |  |   ClassName     |
+       |  UserId              |  |  Provider             |  |  ConnectionId        |  |   CreationTime  |
        |  Name                |  |  TriggerTimes         |  |  Ip                  |  +-----------------+
        |  Group               |  |  LastModificationTime |  |  Os                  |
        |  SsnId               |  |  CreationTime         |  |  CoreCount           |  
-       |  Description         |  |  Host                 |  |  Memory              |
+       |  Description         |  |  ConnectString        |  |  Memory              |
        |  Owner               |  +-----------------------+  |  CreationTime        |
-       |  CreationTime        |                             |  LastModificationTime|
-       |  LastModificationTime|                             |  IsConnected         |
-       +----------------------+                             |  UseId               |
-       |  ExecutorType        |                             +----------------------+      
-       |  Load                |  
-       |  Sharding            |  
-       |  ShardingParameters  |  
-       |  AllowConcurrent     |  
-       |  Cron                |  
-       |  StartAt             |  
-       |  EndAt               |  
+       |  Load                |                             |  LastModificationTime|
+       |  Sharding            |                             |  IsConnected         |
+       |  ShardingParameters  |                             |  UseId               |
+       |  StartAt             |                             +----------------------+
+       |  EndAt               |
+       |  AllowConcurrent     |
+       |  CreationTime        |                             
+       |  LastModificationTime|                             
+       +----------------------+                             
+       |  ExecutorType        |                                                                       
+       |  Cron                |      
        |  CallbackHost        |  
        |  App                 |  
        |  AppArguments        |  
@@ -106,27 +104,38 @@ Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5
 
 实际上以上设计已经完全不关心SSN是同一个数据库还是不同的数据库了       
               
-##### SSN 注册
+##### SSN 注册: ISwarmCluster
 
-1. SSN 从配置文件只读取信息: SchedulerName, 数据库连接串, Sharding地址等
-2. 启动应用后尝试连接 Sharding, 连接成功后启动 Quartz
+1. SSN 从配置文件读取信息: SchedName, NodeId 更新心跳时间到数据库, 更新条件为 SchedName, NodeId
+2. 如果更新影响行数为 0, 则插入一条新的记录, 初始 TriggerTimes 为 0 
+2. 循环执行
 
 ##### SSN 触发任务
 
-1. 触发任务后, 触发信息推到 Sharding 中, 前期可直接用 SignalR,　后期可以考虑使用消息队列
+1. 判断任务是否在 Swarm JOBS 中存在, 如果不存在, 删除此任务
+2. 增加一次触发计算
+3. 通过 PerformerFactory 创建接口执行对应的触发任务
 
 ##### 创建任务逻辑
 
-1. 添加任务到 JOBS 表中
-2. 查询哪个 SSN 是负载最小的, 调用接口添加任务, 如果添加失败则从 JOBS 表中删除并返回创建失败的信息给前端
+1. 数据验证
+2. 查询最低负载结点, 如果没有提示没有可用节点
+3. 通过配置在节点中的 Provider, ConnectionString, SchedName, NodeId 创建 IScheduler 对象
+4. 通过 IScheduler 添加任务
+5. 添加任务到 Swarm 数据库的 JOBS 表中
+
+##### 删除任务逻辑
+
+1. 从 Swarm JOBS 表中查找到任务所在节点
+2. 通过配置在节点中的 Provider, ConnectionString, SchedName, NodeId 创建 IScheduler 对象
+3. 通过 IScheduler 删除任务
+4. 删除 Swarm 数据库中的任务信息
 
 ##### SSN 健康检查
 
-1. Sharding 每隔 5 秒请求一次已经注册的 SSN, SSN 返回它当前已经触发的任务总次数、集群实例数, 如果请求失败标识 SSN 掉线, 掉线一定时间后触发迁移, 修改 JOBS中任务对应的 SsnId
-
-##### Sharding 任务推送
-
-１. Sharding 收到触发信息后,　检测 SsnId 是否对应(发生迁移后原 SSN有可能恢复),　如果对应按不同的推送类型推送,　如果不对应,　推后消息让　SSN 下线
+1. 获取表锁
+2. 根据心跳时间取得掉线节点
+3. 迁移数据
 
 ##### 任务执行类型
 

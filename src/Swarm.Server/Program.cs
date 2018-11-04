@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using Swarm.Core.Common;
 
 namespace Swarm.Server
 {
@@ -14,6 +15,10 @@ namespace Swarm.Server
     {
         public static void Main(string[] args)
         {
+            // args = new[] {"--i", "true", "--d", "sqlserver", "--r", "true"};
+
+            DbInitializer.Init(args);
+
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
@@ -25,7 +30,7 @@ namespace Swarm.Server
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", true)
                 .Build();
-            
+
             CreateWebHostBuilder(args).UseConfiguration(config).Build().Run();
         }
 

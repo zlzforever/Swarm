@@ -37,7 +37,7 @@ namespace Swarm.Client.Impl
 
             if (_store.Count(context.JobId) > 1)
             {
-                if (context.ConcurrentExecutionDisallowed)
+                if (context.AllowConcurrent)
                 {
                     throw new SwarmClientException("job is running");
                 }

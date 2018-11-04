@@ -14,9 +14,12 @@
         <PackageProjectUrl>https://github.com/zlzforever/Swarm</PackageProjectUrl>
         <PackageLicenseUrl>https://github.com/zlzforever/Swarm/blob/master/LICENSE</PackageLicenseUrl>
         <RepositoryUrl>https://github.com/zlzforever/Swarm</RepositoryUrl>
+        <LangVersion>7.1</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="2.1.1" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.1.1" />
         <PackageReference Include="Dapper" Version="1.50.5" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1.0" />
         <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
@@ -38,6 +41,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Swarm.Basic\Swarm.Basic.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <EmbeddedResource Include="Sql\sqlserver.sql" />
     </ItemGroup>
 
 </Project>

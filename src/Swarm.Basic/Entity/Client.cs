@@ -7,7 +7,6 @@ namespace Swarm.Basic.Entity
     /// <summary>
     /// 客户端
     /// </summary>
-    [Table("SWARM_CLIENTS")]
     public class Client : EntityBase<int>
     {
         /// <summary>
@@ -15,14 +14,12 @@ namespace Swarm.Basic.Entity
         /// </summary>
         [Required]
         [StringLength(120)]
-        [Column("NAME")]
         public string Name { get; set; }
 
         /// <summary>
         /// 分组
         /// </summary>
         [StringLength(120)]
-        [Column("GROUP")]
         public string Group { get; set; }
 
         /// <summary>
@@ -30,7 +27,6 @@ namespace Swarm.Basic.Entity
         /// </summary>
         [Required]
         [StringLength(50)]
-        [Column("CONNECTION_ID")]
         public string ConnectionId { get; set; }
 
         /// <summary>
@@ -38,26 +34,48 @@ namespace Swarm.Basic.Entity
         /// </summary>
         [Required]
         [StringLength(50)]
-        [Column("IP")]
         public string Ip { get; set; }
 
         /// <summary>
+        /// 操作系统
+        /// </summary>
+        [Required]
+        [StringLength(50)]
+        public string Os { get; set; }
+        
+        /// <summary>
+        /// CPU 核心数
+        /// </summary>
+        [Required]
+        public int CoreCount { get; set; }
+        
+        /// <summary>
+        /// 内存
+        /// </summary>
+        [Required]
+        public int Memory { get; set; }
+        
+        /// <summary>
+        /// 用户编号
+        /// </summary>
+        [Required]
+        public int UserId { get; set; }
+        
+        /// <summary>
         /// 是否连接
         /// </summary>
-        [Column("IS_CONNECTED")]
+        [Required]
         public bool IsConnected { get; set; }
 
         /// <summary>
         /// 创建时间
         /// </summary>
         [Required]
-        [Column("CREATION_TIME")]
         public DateTimeOffset CreationTime { get; set; }
 
         /// <summary>
         /// 修改时间
         /// </summary>
-        [Column("LAST_MODIFICATION_TIME")]
         public DateTimeOffset? LastModificationTime { get; set; }
 
         public override string ToString()

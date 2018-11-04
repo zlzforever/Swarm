@@ -37,6 +37,8 @@ namespace Swarm.Core
             services.Configure<SwarmOptions>(configuration);
             services.AddSignalR();
 
+            services.AddSingleton<ISchedulerCache, SchedulerCache>();
+            services.AddSingleton<ISwarmCluster, SwarmCluster>();
 
             var builder = new SwarmBuilder(services);
             configure?.Invoke(builder);
@@ -47,43 +49,19 @@ namespace Swarm.Core
 
         public static ISwarmBuilder UseSqlServerLogStore(this ISwarmBuilder builder)
         {
-            builder.Services.AddSingleton<ILogStore,SqlServerSwarmStore>();           
+            builder.Services.AddSingleton<ILogStore, SqlServerSwarmStore>();
             return builder;
         }
-        
+
         public static ISwarmBuilder UseSqlServer(this ISwarmBuilder builder)
         {
-            builder.Services.AddSingleton<IJobStore>(provider =>
-            {
-                var jobStore = new JobStoreTX
-                {
-                    DataSource = "swarm",
-                    TablePrefix = "QRTZ_",
-                    InstanceId = "AUTO",
-                    DriverDelegateType = typeof(SqlServerDelegate).AssemblyQualifiedName,
-                    ObjectSerializer = new JsonObjectSerializer()
-                };
-                return jobStore;
-            });
-            builder.Services.AddSingleton(provider =>
-            {
-                var connectionString = provider.GetRequiredService<IOptions<SwarmOptions>>().Value.ConnectionString;
-                return new StdSchedulerFactory(new NameValueCollection
-                {
-                    {"schedName", "Server"},
-                    {"quartz.jobStore.type", "Quartz.Impl.AdoJobStore.JobStoreTX, Quartz"},
-                    {"quartz.jobStore.driverDelegateType", "Quartz.Impl.AdoJobStore.StdAdoDelegate, Quartz"},
-                    {"quartz.jobStore.tablePrefix", "QRTZ_"},
-                    {"quartz.jobStore.useProperties", "true"},
-                    {"quartz.serializer.type", "json"},
-                    {"quartz.jobStore.dataSource", "swarn"},
-                    {"quartz.dataSource.swarn.provider", "SqlServer"},
-                    {
-                        "quartz.dataSource.swarn.connectionString", connectionString
-                    }
-                }).GetScheduler().Result;
-            });
             builder.Services.AddSingleton<ISwarmStore, SqlServerSwarmStore>();
+            return builder;
+        }
+
+        public static ISwarmBuilder UseDefaultSharding(this ISwarmBuilder builder)
+        {
+            builder.Services.AddSingleton<ISharding, DefaultSharding>();
             return builder;
         }
 
@@ -94,16 +72,20 @@ namespace Swarm.Core
             var options = app.ApplicationServices.GetRequiredService<IOptions<SwarmOptions>>().Value;
             if (options == null)
             {
-                throw  new SwarmException("SwarmOption is empty");
+                throw new SwarmException("SwarmOption is empty");
             }
 
             if (string.IsNullOrWhiteSpace(options.Name))
             {
-                throw  new SwarmException("Name in SwarmOption is empty");
+                throw new SwarmException("Name in SwarmOption is empty");
             }
-            var sched = app.ApplicationServices.GetRequiredService<IScheduler>();
-            sched.Start();
 
+            var schedCache = app.ApplicationServices.GetRequiredService<ISchedulerCache>();
+            var sched = schedCache.Create(options.Name, options.NodeId, options.Provider, options.QuartzConnectionString);
+            sched.Start().ConfigureAwait(false);
+
+            var cluster = app.ApplicationServices.GetRequiredService<ISwarmCluster>();
+            cluster.Start().ConfigureAwait(true);
             var store = app.ApplicationServices.GetRequiredService<ISwarmStore>();
             store.DisconnectAllClients().Wait();
 

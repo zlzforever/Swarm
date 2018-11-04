@@ -3,10 +3,12 @@ namespace Swarm.Basic
     public static class SwarmConts
     {
         public const string ShardingProperty = "sharding";
+        public const string CurrentShardingProperty = "currentsharding";
+        public const string CurrentShardingShardingParametersProperty = "currentshardingparameters";
         public const string ShardingParametersProperty = "shardingparameters";
         public const string TriggerModeProperty = "triggermode";
         public const string LoadProperty = "load";
-        public const string ConcurrentExecutionDisallowedProperty = "concurrentexecutiondisallowed";
+        public const string AllowConcurrentProperty = "allowconcurrent";
         public const string CronProperty = "cron";
         public const string TimeZoneProperty = "timezone";
         public const string ProcessArgumentsProperty = "arguments";
@@ -20,5 +22,6 @@ namespace Swarm.Basic
         public const string DefaultGroup = "DEFAULT";
         public const string AccessTokenHeader = "SwarmAccessToken";
         public const string LogPatternProperty = "logpattern";
+        public const string ExecutorProperty = "executor";
     }
 }

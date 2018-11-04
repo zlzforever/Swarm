@@ -46,20 +46,6 @@ namespace Swarm.Core.SignalR
                 jobState.Id = oldJobState.Id;
                 await _store.UpdateJobState(jobState);
             }
-
-            switch (jobState.State)
-            {
-                case State.Exit:
-                    if (await _store.IsJobExited(jobState.JobId))
-                    {
-                        await _store.ChangeJobState(jobState.JobId, State.Exit);
-                    }
-
-                    break;
-                case State.Running:
-                    await _store.ChangeJobState(jobState.JobId, State.Running);
-                    break;
-            }
         }
 
         public async Task OnLog(Log log)

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Swarm;
 
-namespace Swarm.Migrator.Migrations
+namespace Swarm.Server.Migrations
 {
     [DbContext(typeof(SwarmDbContext))]
     partial class SwarmDbContextModelSnapshot : ModelSnapshot
@@ -23,36 +23,38 @@ namespace Swarm.Migrator.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("ID")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ConnectionId")
                         .IsRequired()
-                        .HasColumnName("CONNECTION_ID")
                         .HasMaxLength(50);
 
-                    b.Property<DateTimeOffset>("CreationTime")
-                        .HasColumnName("CREATION_TIME");
+                    b.Property<int>("CoreCount");
+
+                    b.Property<DateTimeOffset>("CreationTime");
 
                     b.Property<string>("Group")
-                        .HasColumnName("GROUP")
                         .HasMaxLength(120);
 
                     b.Property<string>("Ip")
                         .IsRequired()
-                        .HasColumnName("IP")
                         .HasMaxLength(50);
 
-                    b.Property<bool>("IsConnected")
-                        .HasColumnName("IS_CONNECTED");
+                    b.Property<bool>("IsConnected");
 
-                    b.Property<DateTimeOffset?>("LastModificationTime")
-                        .HasColumnName("LAST_MODIFICATION_TIME");
+                    b.Property<DateTimeOffset?>("LastModificationTime");
+
+                    b.Property<int>("Memory");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnName("NAME")
                         .HasMaxLength(120);
+
+                    b.Property<string>("Os")
+                        .IsRequired()
+                        .HasMaxLength(50);
+
+                    b.Property<int>("UserId");
 
                     b.HasKey("Id");
 
@@ -63,72 +65,53 @@ namespace Swarm.Migrator.Migrations
 
                     b.HasIndex("Name", "Group")
                         .IsUnique()
-                        .HasFilter("[GROUP] IS NOT NULL");
+                        .HasFilter("[Group] IS NOT NULL");
 
-                    b.ToTable("SWARM_CLIENTS");
+                    b.ToTable("Client");
                 });
 
             modelBuilder.Entity("Swarm.Basic.Entity.Job", b =>
                 {
                     b.Property<string>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnName("ID");
+                        .ValueGeneratedOnAdd();
 
-                    b.Property<bool>("ConcurrentExecutionDisallowed")
-                        .HasColumnName("CONCURRENT_EXECUTION_DISALLOWED");
+                    b.Property<bool>("AllowConcurrent");
 
-                    b.Property<DateTimeOffset>("CreationTime")
-                        .HasColumnName("CREATION_TIME");
+                    b.Property<DateTimeOffset>("CreationTime");
 
                     b.Property<string>("Description")
-                        .HasColumnName("DESCRIPTION")
                         .HasMaxLength(500);
 
-                    b.Property<int>("Executor")
-                        .HasColumnName("EXECUTOR");
+                    b.Property<int>("Executor");
 
                     b.Property<string>("Group")
                         .IsRequired()
-                        .HasColumnName("GROUP")
                         .HasMaxLength(120);
 
-                    b.Property<DateTimeOffset?>("LastModificationTime")
-                        .HasColumnName("LAST_MODIFICATION_TIME");
+                    b.Property<DateTimeOffset?>("LastModificationTime");
 
-                    b.Property<int>("Load")
-                        .HasColumnName("LOAD");
+                    b.Property<int>("Load");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnName("NAME")
                         .HasMaxLength(120);
 
-                    b.Property<string>("Node")
-                        .HasColumnName("NODE")
-                        .HasMaxLength(120);
+                    b.Property<string>("NodeId")
+                        .HasMaxLength(32);
 
                     b.Property<string>("Owner")
-                        .HasColumnName("OWNER")
                         .HasMaxLength(120);
 
-                    b.Property<int>("Performer")
-                        .HasColumnName("PERFORMER");
+                    b.Property<int>("Performer");
 
-                    b.Property<int>("RetryCount")
-                        .HasColumnName("RETRY_COUNT");
-
-                    b.Property<int>("Sharding")
-                        .HasColumnName("SHARDING");
+                    b.Property<int>("Sharding");
 
                     b.Property<string>("ShardingParameters")
-                        .HasColumnName("SHARDING_PARAMETERS")
                         .HasMaxLength(500);
 
-                    b.Property<int>("State")
-                        .HasColumnName("STATE");
+                    b.Property<int>("Trigger");
 
-                    b.Property<int>("Trigger")
-                        .HasColumnName("TRIGGER");
+                    b.Property<int>("UserId");
 
                     b.HasKey("Id");
 
@@ -142,29 +125,24 @@ namespace Swarm.Migrator.Migrations
 
                     b.HasIndex("Name", "Group");
 
-                    b.ToTable("SWARM_JOBS");
+                    b.ToTable("Job");
                 });
 
             modelBuilder.Entity("Swarm.Basic.Entity.JobProperty", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("ID")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<DateTimeOffset>("CreationTime")
-                        .HasColumnName("CREATION_TIME");
+                    b.Property<DateTimeOffset>("CreationTime");
 
                     b.Property<string>("JobId")
-                        .HasColumnName("JOB_ID")
                         .HasMaxLength(32);
 
                     b.Property<string>("Name")
-                        .HasColumnName("NAME")
                         .HasMaxLength(32);
 
                     b.Property<string>("Value")
-                        .HasColumnName("VALUE")
                         .HasMaxLength(250);
 
                     b.HasKey("Id");
@@ -173,44 +151,35 @@ namespace Swarm.Migrator.Migrations
 
                     b.HasIndex("JobId", "Name")
                         .IsUnique()
-                        .HasFilter("[JOB_ID] IS NOT NULL AND [NAME] IS NOT NULL");
+                        .HasFilter("[JobId] IS NOT NULL AND [Name] IS NOT NULL");
 
-                    b.ToTable("SWARM_JOB_PROPERTIES");
+                    b.ToTable("JobProperty");
                 });
 
             modelBuilder.Entity("Swarm.Basic.Entity.JobState", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("ID")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Client")
-                        .HasColumnName("CLIENT")
                         .HasMaxLength(120);
 
-                    b.Property<DateTimeOffset>("CreationTime")
-                        .HasColumnName("CREATION_TIME");
+                    b.Property<DateTimeOffset>("CreationTime");
 
                     b.Property<string>("JobId")
-                        .HasColumnName("JOB_ID")
                         .HasMaxLength(32);
 
-                    b.Property<DateTimeOffset?>("LastModificationTime")
-                        .HasColumnName("LAST_MODIFICATION_TIME");
+                    b.Property<DateTimeOffset?>("LastModificationTime");
 
                     b.Property<string>("Msg")
-                        .HasColumnName("MSG")
                         .HasMaxLength(500);
 
-                    b.Property<int>("Sharding")
-                        .HasColumnName("SHARDING");
+                    b.Property<int>("Sharding");
 
-                    b.Property<int>("State")
-                        .HasColumnName("STATE");
+                    b.Property<int>("State");
 
                     b.Property<string>("TraceId")
-                        .HasColumnName("TRACE_ID")
                         .HasMaxLength(32);
 
                     b.HasKey("Id");
@@ -223,34 +192,29 @@ namespace Swarm.Migrator.Migrations
 
                     b.HasIndex("Sharding", "TraceId", "Client")
                         .IsUnique()
-                        .HasFilter("[TRACE_ID] IS NOT NULL AND [CLIENT] IS NOT NULL");
+                        .HasFilter("[TraceId] IS NOT NULL AND [Client] IS NOT NULL");
 
                     b.HasIndex("Sharding", "JobId", "TraceId", "Client")
                         .IsUnique()
-                        .HasFilter("[JOB_ID] IS NOT NULL AND [TRACE_ID] IS NOT NULL AND [CLIENT] IS NOT NULL");
+                        .HasFilter("[JobId] IS NOT NULL AND [TraceId] IS NOT NULL AND [Client] IS NOT NULL");
 
-                    b.ToTable("SWARM_JOB_STATE");
+                    b.ToTable("JobState");
                 });
 
             modelBuilder.Entity("Swarm.Basic.Entity.Log", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("ID")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<DateTimeOffset>("CreationTime")
-                        .HasColumnName("CREATION_TIME");
+                    b.Property<DateTimeOffset>("CreationTime");
 
                     b.Property<string>("JobId")
-                        .HasColumnName("JOB_ID")
                         .HasMaxLength(32);
 
-                    b.Property<string>("Msg")
-                        .HasColumnName("MSG");
+                    b.Property<string>("Msg");
 
                     b.Property<string>("TraceId")
-                        .HasColumnName("TRACE_ID")
                         .HasMaxLength(32);
 
                     b.HasKey("Id");
@@ -261,42 +225,50 @@ namespace Swarm.Migrator.Migrations
 
                     b.HasIndex("JobId", "TraceId");
 
-                    b.ToTable("SWARM_LOGS");
+                    b.ToTable("Log");
                 });
 
             modelBuilder.Entity("Swarm.Basic.Entity.Node", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnName("ID")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<DateTimeOffset>("CreationTime")
-                        .HasColumnName("CREATION_TIME");
-
-                    b.Property<string>("Group")
+                    b.Property<string>("ConnectionString")
                         .IsRequired()
-                        .HasColumnName("GROUP")
                         .HasMaxLength(250);
 
-                    b.Property<string>("Host")
+                    b.Property<DateTimeOffset>("CreationTime");
+
+                    b.Property<DateTimeOffset?>("LastModificationTime");
+
+                    b.Property<string>("NodeId")
                         .IsRequired()
-                        .HasColumnName("HOST")
+                        .HasMaxLength(32);
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
                         .HasMaxLength(250);
 
-                    b.Property<string>("Name")
+                    b.Property<string>("SchedName")
                         .IsRequired()
-                        .HasColumnName("NAME")
                         .HasMaxLength(250);
+
+                    b.Property<long>("TriggerTimes");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CreationTime");
 
-                    b.HasIndex("Name", "Group")
+                    b.HasIndex("NodeId")
                         .IsUnique();
 
-                    b.ToTable("SWARM_NODES");
+                    b.HasIndex("SchedName");
+
+                    b.HasIndex("SchedName", "NodeId")
+                        .IsUnique();
+
+                    b.ToTable("Node");
                 });
 #pragma warning restore 612, 618
         }

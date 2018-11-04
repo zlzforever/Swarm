@@ -21,7 +21,7 @@ namespace Swarm.Sample
         static void Main(string[] args)
         {
             //SwarmClient client = new SwarmClient("http://127.0.0.1:8000", "BBBBBBBB", "client001", null);
-           // client.Start();
+            // client.Start();
             Console.Read();
         }
 
@@ -32,18 +32,17 @@ namespace Swarm.Sample
             {
                 Name = "test2",
                 Group = "DEFAULT",
-                RetryCount = 1,
                 Performer = Performer.SignalR,
-                Executor = Executor.Reflection,
                 Description = "iam a test job",
-                Load = 0,
                 Owner = "tester",
-                Sharding = 1,
-                ShardingParameters = null,
                 Properties = new Dictionary<string, string>
                 {
                     {SwarmConts.CronProperty, "*/15 * * * * ?"},
-                    {SwarmConts.ClassProperty, typeof(MyJob).AssemblyQualifiedName}
+                    {SwarmConts.ExecutorProperty, Executor.Reflection.ToString()},
+                    {SwarmConts.ClassProperty, typeof(MyJob).AssemblyQualifiedName},
+                    {SwarmConts.ShardingProperty, "1"},
+                    {SwarmConts.LoadProperty, "1"},
+                    {SwarmConts.ShardingParametersProperty, null},
                 }
             };
             api.Create(job).Wait();
@@ -56,14 +55,9 @@ namespace Swarm.Sample
             {
                 Name = "process",
                 Group = "DEFAULT",
-                RetryCount = 1,
                 Performer = Performer.SignalR,
-                Executor = Executor.Process,
                 Description = "iam a test job",
-                Load = 0,
                 Owner = "tester",
-                Sharding = 1,
-                ShardingParameters = null,
                 Properties = new Dictionary<string, string>
                 {
                     {SwarmConts.CronProperty, "*/15 * * * * ?"},
@@ -72,7 +66,11 @@ namespace Swarm.Sample
                     {
                         SwarmConts.ArgumentsProperty,
                         "[INF]: %JobId% %TraceId% %Sharding% %Partition% %ShardingParameter%"
-                    }
+                    },
+                    {SwarmConts.ShardingProperty, "1"},
+                    {SwarmConts.LoadProperty, "1"},
+                    {SwarmConts.ShardingParametersProperty, null},
+                    {SwarmConts.ExecutorProperty, Executor.Process.ToString()},
                 }
             };
             api.Create(job).Wait();

@@ -14,7 +14,7 @@ namespace Swarm.Core.Impl
     public class SignalRPerformer : IPerformer
     {
         private readonly int _retryTimes = 5;
-
+        
         public async Task<bool> Perform(JobContext jobContext)
         {
             var store = Ioc.GetRequiredService<ISwarmStore>();

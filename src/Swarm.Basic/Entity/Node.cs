@@ -3,11 +3,10 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Swarm.Basic.Entity
-{ 
+{
     /// <summary>
     /// Swarm 节点
     /// </summary>
-    [Table("SWARM_NODES")]
     public class Node : EntityBase<int>
     {
         /// <summary>
@@ -15,30 +14,43 @@ namespace Swarm.Basic.Entity
         /// </summary>
         [StringLength(250)]
         [Required]
-        [Column("HOST")]
-        public string Host { get; set; }
-        
+        public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// 数据库
+        /// </summary>
+        [StringLength(250)]
+        [Required]
+        public string Provider { get; set; }
+
         /// <summary>
         /// 节点名称
         /// </summary>
         [StringLength(250)]
         [Required]
-        [Column("NAME")]
-        public string Name { get; set; }
-        
+        public string SchedName { get; set; }
+
+        /// <summary>
+        /// 历史总触发次数
+        /// </summary>
+        public long TriggerTimes { get; set; }
+
         /// <summary>
         /// 节点分组
         /// </summary>
-        [StringLength(250)]
+        [StringLength(32)]
         [Required]
-        [Column("GROUP")]
-        public string Group { get; set; }
-        
+        public string NodeId { get; set; }
+
         /// <summary>
         /// 创建时间
         /// </summary>
         [Required]
-        [Column("CREATION_TIME")]
         public DateTimeOffset CreationTime { get; set; }
+
+        /// <summary>
+        /// 修改时间
+        /// </summary>
+        public DateTimeOffset? LastModificationTime { get; set; }
     }
 }

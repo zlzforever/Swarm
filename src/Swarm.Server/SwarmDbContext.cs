@@ -14,7 +14,7 @@ namespace Swarm
         public DbSet<JobState> JobState { get; set; }
         public DbSet<Log> Log { get; set; }
         public DbSet<Node> Node { get; set; }
-        
+
         public SwarmDbContext()
         {
         }
@@ -50,8 +50,10 @@ namespace Swarm
             modelBuilder.Entity<Log>().HasIndex(x => x.JobId);
             modelBuilder.Entity<Log>().HasIndex(x => x.CreationTime);
             modelBuilder.Entity<Log>().HasIndex(x => new {x.JobId, x.TraceId});
-            
-            modelBuilder.Entity<Node>().HasIndex(x => new {x.Name, x.Group}).IsUnique();
+
+            modelBuilder.Entity<Node>().HasIndex(x => new {x.SchedName});
+            modelBuilder.Entity<Node>().HasIndex(x => new {x.SchedName, x.NodeId}).IsUnique();
+            modelBuilder.Entity<Node>().HasIndex(x => new {x.NodeId}).IsUnique();
             modelBuilder.Entity<Node>().HasIndex(x => x.CreationTime);
         }
 
@@ -69,7 +71,7 @@ namespace Swarm
 
             var configuration = builder.Build();
 
-            return configuration.GetConnectionString("DefaultConnection");
+            return configuration.GetSection("Swarm").GetValue<string>("ConnectionString");
         }
     }
 }

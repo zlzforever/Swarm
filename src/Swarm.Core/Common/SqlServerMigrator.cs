@@ -3,9 +3,8 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using Dapper;
-using Microsoft.EntityFrameworkCore;
 
-namespace Swarm.Migrator.Sql
+namespace Swarm.Core.Common
 {
     public class SqlServerMigrator : IMigration
     {
@@ -46,14 +45,12 @@ namespace Swarm.Migrator.Sql
                 masterConn.Execute($"CREATE DATABASE {conn.Database}");
                 ExecuteSql(conn);
             }
-
-            new SwarmDbContext().CreateDbContext(new string[0]).Database.Migrate();
         }
 
         private void ExecuteSql(IDbConnection conn)
         {
             using (var reader =
-                new StreamReader(GetType().Assembly.GetManifestResourceStream("Swarm.Migrator.Sql.sqlserver.sql") ??
+                new StreamReader(GetType().Assembly.GetManifestResourceStream("Swarm.Core.Sql.sqlserver.sql") ??
                                  throw new Exception("Sql resource unfounded")))
             {
                 var sqls = reader.ReadToEnd();
