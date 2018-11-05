@@ -1,10 +1,10 @@
 $(function () {
-    new Vue({
+    var vue = new Vue({
         el: '#view',
         data: {
             els: [],
             page: hub.queryString('page') || 1,
-            size: hub.queryString('size') || 10,
+            size: hub.queryString('size') || 40,
             total: 0,
             jobId: decodeURIComponent(hub.queryString('jobId') || '')
         },
@@ -12,6 +12,8 @@ $(function () {
             loadView(this);
         }
     });
+
+    setInterval(loadView, 2000, vue);
 
     function loadView(vue) {
         const url = '/swarm/v1.0/log?jobId=' + vue.$data.jobId + '&page=' + vue.$data.page + '&size=' + vue.$data.size;

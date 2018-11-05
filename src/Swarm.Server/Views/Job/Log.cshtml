@@ -1,38 +1,13 @@
-<h4>
-    JOB LOG
-</h4>
-<div id="view" class="row">
-    <table class="card bordered highlight responsive-table centered">
-        <thead>
-        <tr>
-            <th width="80">#</th>
-            <th width="200">TraceId</th>
-            <th>Msg</th>
-            <th width="200">Time</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-show="els.length==0">
-            <td colspan="13">
-                No data to display...
-            </td>
-        </tr>
-        <tr v-for="el in els">
-            <td>
-                <span v-text="el.id"></span>
-            </td>
-            <td>
-                <span v-text="el.traceId"></span>
-            </td>
-            <td>
-                <span v-text="el.msg"></span>
-            </td>
-            <td>
-                <span v-text="hub.formatDate(el.creationTime)"></span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+<div id="view">
+    <div class="row">
+        <div class="log-body">
+            <div v-for="el in els" class="log-line">
+                <a v-text="el.id"></a>
+                <span v-text="el.traceId　+ '  ' + el.msg +'  ' + hub.formatDate(el.creationTime)"></span>
+            </div>
+        </div>
+    </div>
+    <br/>
     <div class="row">
         <div class="col s12 m6 left">
             <div v-show="total>size" id="pagination">

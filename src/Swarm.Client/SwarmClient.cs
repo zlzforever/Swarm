@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
@@ -208,7 +209,7 @@ namespace Swarm.Client
                             {
                                 {SwarmConts.AccessTokenHeader, AccessToken}
                             };
-                        }).Build();
+                        }).AddMessagePackProtocol().Build();
                 connection.Closed += e =>
                 {
                     _isDisconnected = true;
@@ -278,7 +279,7 @@ namespace Swarm.Client
                     }, token);
 
                     Enum.TryParse(context.Parameters.GetValue(SwarmConts.ExecutorProperty), out Executor executor);
-                    var exitCode = _executorFactory.Create(executor).Execute(context,
+                    var exitCode =　await _executorFactory.Create(executor).Execute(context,
                         async (jobId, traceId, msg) =>
                         {
                             await connection.SendAsync("OnLog", new Log {JobId = jobId, TraceId = traceId, Msg = msg},

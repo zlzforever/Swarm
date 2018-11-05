@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -35,7 +36,7 @@ namespace Swarm.Core
                 throw new ArgumentNullException(nameof(configuration));
 
             services.Configure<SwarmOptions>(configuration);
-            services.AddSignalR();
+            services.AddSignalR().AddMessagePackProtocol();
 
             services.AddSingleton<ISchedulerCache, SchedulerCache>();
             services.AddSingleton<ISwarmCluster, SwarmCluster>();
@@ -81,7 +82,8 @@ namespace Swarm.Core
             }
 
             var schedCache = app.ApplicationServices.GetRequiredService<ISchedulerCache>();
-            var sched = schedCache.Create(options.Name, options.NodeId, options.Provider, options.QuartzConnectionString);
+            var sched = schedCache.Create(options.Name, options.NodeId, options.Provider,
+                options.QuartzConnectionString);
             sched.Start().ConfigureAwait(false);
 
             var cluster = app.ApplicationServices.GetRequiredService<ISwarmCluster>();

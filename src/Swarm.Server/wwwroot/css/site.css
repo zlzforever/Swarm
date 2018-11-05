@@ -64,3 +64,20 @@ p {
 footer.page-footer {
     margin: 0;
 }
+
+/* LOG */
+.log-body {
+    clear: left;
+    min-height: 42px;
+    padding: 15px 0;
+    color: #f1f1f1;
+    font-family: Cousine,monospace;
+    font-size: 12px;
+    line-height: 19px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    background-color: black;
+    counter-reset: line-numbering;
+    margin-top: 0;
+    margin-bottom: -45px;
+}
