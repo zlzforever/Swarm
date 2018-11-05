@@ -14,18 +14,17 @@ namespace Swarm.Core
         Task ConnectClient(string name, string group, string connectionId);
         Task<Client> GetClient(string name, string group);
         Task DisconnectClient(string name, string group);
-        Task<IEnumerable<Client>> GetClients(string group);
+        Task<IEnumerable<Client>> GetAvailableClients(string group);
         Task DisconnectAllClients();
+        Task ClientHeartbeat(string name, string group);
 
         #endregion
 
-        Task<bool> CheckJobExists(string jobId);
-        Task<bool> IsJobExists(string name, string group);
+        Task<Job> GetJob(string name, string group);
         Task<string> AddJob(Job job);
         Task UpdateJob(Job job);
         Task DeleteJob(string jobId);
         Task<Job> GetJob(string jobId);
-        Task<bool> IsJobExited(string jobId);
         //Task ChangeJobState(string jobId, State state);
 
         Task AddJobState(JobState jobState);
@@ -35,6 +34,6 @@ namespace Swarm.Core
         Task RegisterNode(Node node);
         Task<Node> GetMinimumTriggerTimesNode();
         Task<Node> GetNode(string nodeId);
-        Task IncreaseNodeTriggerTime(string name, string nodeId);
+        Task IncreaseTriggerTime(string name, string nodeId);
     }
 }

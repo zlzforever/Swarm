@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Threading;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -69,11 +71,13 @@ namespace Swarm.Core
         public static IApplicationBuilder UseSwarm(this IApplicationBuilder app)
         {
             Ioc.ServiceProvider = app.ApplicationServices;
+            var cancellationToken =
+                app.ApplicationServices.GetRequiredService<IApplicationLifetime>().ApplicationStopping;
 
             var options = app.ApplicationServices.GetRequiredService<IOptions<SwarmOptions>>().Value;
             if (options == null)
             {
-                throw new SwarmException("SwarmOption is empty");
+                throw new SwarmException("Can't get SwarmOption, please make sure your configuration file is correct");
             }
 
             if (string.IsNullOrWhiteSpace(options.Name))
@@ -81,15 +85,19 @@ namespace Swarm.Core
                 throw new SwarmException("Name in SwarmOption is empty");
             }
 
-            var schedCache = app.ApplicationServices.GetRequiredService<ISchedulerCache>();
-            var sched = schedCache.Create(options.Name, options.NodeId, options.Provider,
+            if (string.IsNullOrWhiteSpace(options.NodeId))
+            {
+                throw new SwarmException("NodeId in SwarmOption is empty");
+            }
+            
+            // Start quartz instance
+            var sched = app.ApplicationServices.GetRequiredService<ISchedulerCache>().Create(options.Name, options.NodeId, options.Provider,
                 options.QuartzConnectionString);
-            sched.Start().ConfigureAwait(false);
-
+            sched.Start(cancellationToken).ConfigureAwait(false);
+            
+            // Start swarm sharding node
             var cluster = app.ApplicationServices.GetRequiredService<ISwarmCluster>();
-            cluster.Start().ConfigureAwait(true);
-            var store = app.ApplicationServices.GetRequiredService<ISwarmStore>();
-            store.DisconnectAllClients().Wait();
+            cluster.Start(cancellationToken).ConfigureAwait(true);           
 
             app.UseSignalR(routes => { routes.MapHub<ClientHub>("/clienthub"); });
 

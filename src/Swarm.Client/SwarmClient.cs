@@ -179,7 +179,16 @@ namespace Swarm.Client
                 {
                     if (_isDisconnected)
                     {
-                        await CreateConnection(token);
+                        var conn = await CreateConnection(token);
+                        Task.Factory.StartNew(async () =>
+                        {
+                            while (true)
+                            {
+                                cancellationToken.ThrowIfCancellationRequested();
+                                await conn.SendAsync("Heartbeat", cancellationToken);
+                                token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(4500));
+                            }
+                        }, TaskCreationOptions.LongRunning).ConfigureAwait(false);
                     }
                     else
                     {
@@ -279,7 +288,7 @@ namespace Swarm.Client
                     }, token);
 
                     Enum.TryParse(context.Parameters.GetValue(SwarmConts.ExecutorProperty), out Executor executor);
-                    var exitCode =　await _executorFactory.Create(executor).Execute(context,
+                    var exitCode = await _executorFactory.Create(executor).Execute(context,
                         async (jobId, traceId, msg) =>
                         {
                             await connection.SendAsync("OnLog", new Log {JobId = jobId, TraceId = traceId, Msg = msg},

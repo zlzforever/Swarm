@@ -16,7 +16,8 @@ namespace Swarm.Core.Impl
         {
             var store = Ioc.GetRequiredService<ISwarmStore>();
             var logger = Ioc.GetRequiredService<ILoggerFactory>().CreateLogger<TriggerJob>();
-            await Ioc.GetRequiredService<ISwarmCluster>().IncreaseTriggerTime();
+            await Ioc.GetRequiredService<ISharding>().AdjustLoad();
+            
             var jobId = context.JobDetail.Key.Name;
             try
             {

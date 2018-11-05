@@ -21,22 +21,11 @@ namespace Swarm.Core.Controllers
     [Route("swarm/v1.0/jo")]
     public class JobController : AbstractApiControllerBase
     {
-        private readonly ISharding _sharding;
-        private readonly ILogger _logger;
-        private readonly ISwarmStore _store;
-        private readonly IHubContext<ClientHub> _hubContext;
-        private readonly ISchedulerCache _schedulerCache;
+        private readonly IJobService _jobService;
 
-        public JobController(ISharding sharding, ISchedulerCache schedulerCache, ILoggerFactory loggerFactory,
-            ISwarmStore store,
-            IHubContext<ClientHub> hubContext,
-            IOptions<SwarmOptions> options) : base(options)
+        public JobController(IJobService jobService,IOptions<SwarmOptions> options) : base(options)
         {
-            _sharding = sharding;
-            _logger = loggerFactory.CreateLogger<JobController>();
-            _store = store;
-            _hubContext = hubContext;
-            _schedulerCache = schedulerCache;
+            _jobService = jobService;
         }
 
         public override void OnActionExecuting(ActionExecutingContext context)
@@ -52,19 +41,7 @@ namespace Swarm.Core.Controllers
         [HttpGet("{jobId}")]
         public async Task<IActionResult> GetJobInfo(string jobId)
         {
-            if (string.IsNullOrWhiteSpace(jobId))
-            {
-                return new JsonResult(new ApiResult(ApiResult.ModelNotValid, "The id is required"));
-            }
-
-            var job = await _store.GetJob(jobId);
-            if (job == null)
-            {
-                return new JsonResult(new ApiResult(ApiResult.ModelNotValid, $"Job {jobId} is not exists"));
-            }
-
-            var result = job.ToPropertyArray();
-            return new JsonResult(new ApiResult(ApiResult.SuccessCode, null, result));
+            return new JsonResult(await _jobService.Get(jobId));
         }
 
         /// <summary>
@@ -76,41 +53,7 @@ namespace Swarm.Core.Controllers
         {
             if (ModelState.IsValid)
             {
-                var apiResult = ValidateProperties(value);
-                if (apiResult != null)
-                {
-                    return apiResult;
-                }
-
-                if (await _store.IsJobExists(value.Name, value.Group))
-                {
-                    return new JsonResult(new ApiResult(ApiResult.Error, $"Job [{value.Name}, {value.Group}] exists"));
-                }
-
-                var node = await _sharding.GetShardingNode();
-                if (node == null)
-                {
-                    return new JsonResult(new ApiResult(ApiResult.Error, $"Swarm cluster has no available node"));
-                }
-
-                var qzJob = value.ToQuartzJob();
-                var trigger = TriggerFactory.Create(value.Trigger, value.Id, value.Properties);
-                var sched = _schedulerCache.Create(node.SchedName, node.NodeId, node.Provider, node.ConnectionString);
-                await sched.ScheduleJob(qzJob, trigger);
-                value.NodeId = node.NodeId;
-                // TODO: 以后实现用户
-                value.UserId = 0;
-                await _store.AddJob(value);
-                if (string.IsNullOrWhiteSpace(value.Id))
-                {
-                    await sched.DeleteJob(qzJob.Key);
-                    await sched.UnscheduleJob(trigger.Key);
-                    return new JsonResult(new ApiResult(ApiResult.DbError, "Save job failed"));
-                }
-
-                _logger.LogInformation(
-                    $"Create job {JsonConvert.SerializeObject(value)} success");
-                return new JsonResult(new ApiResult(ApiResult.SuccessCode, null, value.Id));
+                return new JsonResult(await _jobService.Create(value));
             }
 
             return new JsonResult(new ApiResult(ApiResult.ModelNotValid, GetModelStateErrorMsg()));
@@ -121,22 +64,22 @@ namespace Swarm.Core.Controllers
         {
             if (ModelState.IsValid)
             {
-                if (string.IsNullOrWhiteSpace(jobId))
-                {
-                    return new JsonResult(new ApiResult(ApiResult.Error, "Id is empty/null"));
-                }
-
-                if (!await _store.CheckJobExists(jobId))
-                {
-                    return new JsonResult(new ApiResult(ApiResult.Error, $"Job {jobId} not exists"));
-                }
-
-                var qzJob = value.ToQuartzJob();
-                var trigger = TriggerFactory.Create(value.Trigger, jobId, value.Properties);
-
-                // TODO: need test if need delete qzJob firstly?
-                value.Id = jobId;
-                await _store.UpdateJob(value);
+//                if (string.IsNullOrWhiteSpace(jobId))
+//                {
+//                    return new JsonResult(new ApiResult(ApiResult.Error, "Id is empty/null"));
+//                }
+//
+//                if (!await _store.CheckJobExists(jobId))
+//                {
+//                    return new JsonResult(new ApiResult(ApiResult.Error, $"Job {jobId} not exists"));
+//                }
+//
+//                var qzJob = value.ToQuartzJob();
+//                var trigger = TriggerFactory.Create(value.Trigger, jobId, value.Properties);
+//
+//                // TODO: need test if need delete qzJob firstly?
+//                value.Id = jobId;
+//                await _store.UpdateJob(value);
                 // TODO: new implement
                 //await _scheduler.UnscheduleJob(new TriggerKey(jobId));
                 //await _scheduler.ScheduleJob(qzJob, trigger);
@@ -150,89 +93,13 @@ namespace Swarm.Core.Controllers
         [HttpDelete("{jobId}")]
         public async Task<IActionResult> Delete(string jobId)
         {
-            if (string.IsNullOrWhiteSpace(jobId))
-            {
-                return new JsonResult(new ApiResult(ApiResult.Error, "Id is empty/null"));
-            }
-
-            var job = await _store.GetJob(jobId);
-            if (job == null)
-            {
-                return new JsonResult(new ApiResult(ApiResult.Error, $"Job {jobId} not exists"));
-            }
-
-            var node = await _store.GetNode(job.NodeId);
-            var sched = _schedulerCache.Create(node.SchedName, node.NodeId, node.Provider, node.ConnectionString);
-
-            // Remove from quartz firstly, then remove from swarm
-            await sched.DeleteJob(new JobKey(jobId));
-            await sched.UnscheduleJob(new TriggerKey(jobId));
-            await _store.DeleteJob(jobId);
-            return new JsonResult(new ApiResult(ApiResult.SuccessCode, "success"));
+            return new JsonResult(await _jobService.Delete(jobId));
         }
 
         [HttpPost("{jobId}")]
         public async Task<IActionResult> Exit(string jobId)
         {
-            if (string.IsNullOrWhiteSpace(jobId))
-            {
-                return new JsonResult(new ApiResult(ApiResult.Error, "Id is empty/null"));
-            }
-
-            var job = await _store.GetJob(jobId);
-            if (job == null)
-            {
-                return new JsonResult(new ApiResult(ApiResult.Error, $"Job {jobId} not exists"));
-            }
-
-            ApiResult result;
-            switch (job.Performer)
-            {
-                case Performer.SignalR:
-                {
-                    await _hubContext.Clients.All.SendAsync("Kill", jobId);
-                    result = new ApiResult(ApiResult.SuccessCode, "success");
-                    break;
-                }
-                default:
-                {
-                    result = new ApiResult(ApiResult.Error, $"Performer {job.Performer} is not support to exit");
-                    break;
-                }
-            }
-
-            return new JsonResult(result);
-        }
-
-        private IActionResult ValidateProperties(Job value)
-        {
-            //TODO: VALID PROPERTIES
-            switch (value.Executor)
-            {
-                case Executor.Process:
-                {
-                    if (string.IsNullOrWhiteSpace(value.Properties.GetValue(SwarmConts.ApplicationProperty)))
-                    {
-                        return new JsonResult(new ApiResult(ApiResult.ModelNotValid,
-                            "The Application field is required"));
-                    }
-
-                    break;
-                }
-                case Executor.Reflection:
-                {
-                    if (string.IsNullOrWhiteSpace(value.Properties.GetValue(SwarmConts.ClassProperty)))
-                    {
-                        return new JsonResult(
-                            new ApiResult(ApiResult.ModelNotValid, "The ClassName field is required"));
-                    }
-
-                    break;
-                }
-            }
-
-            // TODO: value.Node = string.IsNullOrWhiteSpace(Options.Name) ? SwarmConts.DefaultGroup : Options.Name;
-            return null;
+            return new JsonResult(await _jobService.Exit(jobId));
         }
 
         private string GetModelStateErrorMsg()

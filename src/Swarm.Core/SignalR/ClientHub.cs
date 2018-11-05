@@ -15,9 +15,9 @@ namespace Swarm.Core.SignalR
         private readonly ILogger _logger;
         private readonly ISwarmStore _store;
         private readonly ILogStore _logStore;
-        
+
         public ClientHub(IOptions<SwarmOptions> options,
-            ISwarmStore store,ILogStore logStore, ILoggerFactory loggerFactory)
+            ISwarmStore store, ILogStore logStore, ILoggerFactory loggerFactory)
         {
             _options = options.Value;
             _logger = loggerFactory.CreateLogger<ClientHub>();
@@ -30,14 +30,15 @@ namespace Swarm.Core.SignalR
             //TODO: Validate jobState
             if (jobState == null)
             {
-                var ci= Context.GetClient();
+                var ci = Context.GetClient();
                 _logger.LogError($"{nameof(jobState)} is null from {ci}");
                 return;
             }
-            var oldJobState = await _store.GetJobState(jobState.TraceId,jobState.Client, jobState.Sharding);
+
+            var oldJobState = await _store.GetJobState(jobState.TraceId, jobState.Client, jobState.Sharding);
             if (oldJobState == null)
             {
-                var ci= Context.GetClient();
+                var ci = Context.GetClient();
                 _logger.LogError($"{ci} {jobState.TraceId}, {jobState.Client}, {jobState.Sharding} is not exists");
                 return;
             }
@@ -52,6 +53,12 @@ namespace Swarm.Core.SignalR
         {
             // TODO: VALIDATE LOG
             await _logStore.AddLog(log);
+        }
+
+        public async Task Heartbeat()
+        {
+            var ci = Context.GetClient();
+            await _store.ClientHeartbeat(ci.Name, ci.Group);
         }
 
         public override async Task OnConnectedAsync()
@@ -82,24 +89,25 @@ namespace Swarm.Core.SignalR
                     var client = await _store.GetClient(ci.Name, ci.Group);
                     if (client == null)
                     {
-                        ci.IsConnected = true;
                         await _store.AddClient(ci);
                         _logger.LogInformation(
                             $"{ci} register success");
                         return;
                     }
 
-                    if (client.IsConnected)
-                    {
-                        _logger.LogInformation(
-                            $"{ci} is connected");
-                    }
-                    else
+                    // SSN 崩溃导致没有设置 IsConnected 为 false, 所以需要检测心跳
+                    if (!client.IsConnected ||
+                        (DateTime.Now - (client.LastModificationTime ?? client.CreationTime)).Seconds < 7)
                     {
                         await _store.ConnectClient(ci.Name, ci.Group, ci.ConnectionId);
                         _logger.LogInformation(
                             $"{ci} register success");
                         return;
+                    }
+                    else
+                    {
+                        _logger.LogInformation(
+                            $"[{ci.Name}, {ci.Group}] is connected already");
                     }
                 }
                 catch (Exception ex)

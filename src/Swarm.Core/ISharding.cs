@@ -6,5 +6,7 @@ namespace Swarm.Core
     public interface ISharding
     {
         Task<Node> GetShardingNode();
+
+        Task AdjustLoad();
     }
 }

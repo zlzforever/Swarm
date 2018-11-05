@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Swarm.Basic.Entity;
 
@@ -17,29 +18,24 @@ namespace Swarm.Core.Impl
             _store = store;
         }
 
-        public async Task Start(CancellationToken token = default)
+        public async Task Start(CancellationToken cancellationToken = default)
         {
-            do
-            {
-                token.ThrowIfCancellationRequested();
+            // Clean all old client connect information
+            await _store.DisconnectAllClients();
 
-                await _store.RegisterNode(new Node
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var node = new Node
                 {
                     ConnectionString = _options.QuartzConnectionString,
                     NodeId = _options.NodeId,
                     Provider = _options.Provider,
                     SchedName = _options.Name,
                     TriggerTimes = 0
-                });
-                await Task.Delay(TimeSpan.FromMilliseconds(5000), token).ConfigureAwait(false);
-            } while (true);
-
-            // ReSharper disable once FunctionNeverReturns
-        }
-
-        public async Task IncreaseTriggerTime()
-        {
-            await _store.IncreaseNodeTriggerTime(_options.Name, _options.NodeId);
+                };
+                await _store.RegisterNode(node);
+                await Task.Delay(TimeSpan.FromMilliseconds(5000), cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 }

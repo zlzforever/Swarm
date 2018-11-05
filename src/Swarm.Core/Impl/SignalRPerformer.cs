@@ -21,7 +21,7 @@ namespace Swarm.Core.Impl
             var logger = Ioc.GetRequiredService<ILoggerFactory>().CreateLogger<SignalRPerformer>();
             var hubContext = Ioc.GetRequiredService<IHubContext<ClientHub>>();
 
-            var clients = (await store.GetClients(jobContext.Group)).Where(c => c.IsConnected).ToList();
+            var clients = (await store.GetAvailableClients(jobContext.Group)).ToList();
             if (clients.Any())
             {
                 // TODO: 实现分片算法

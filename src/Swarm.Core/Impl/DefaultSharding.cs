@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
 using Swarm.Basic.Entity;
 
 namespace Swarm.Core.Impl
@@ -6,15 +7,22 @@ namespace Swarm.Core.Impl
     public class DefaultSharding : ISharding
     {
         private readonly ISwarmStore _store;
-
-        public DefaultSharding(ISwarmStore store)
+        private readonly SwarmOptions _options;
+        
+        public DefaultSharding(ISwarmStore store, IOptions<SwarmOptions> options)
         {
             _store = store;
+            _options = options.Value;
         }
 
         public async Task<Node> GetShardingNode()
         {
            return await _store.GetMinimumTriggerTimesNode();
+        }
+
+        public async Task AdjustLoad()
+        {
+            await _store.IncreaseTriggerTime(_options.Name, _options.NodeId);
         }
     }
 }

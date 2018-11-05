@@ -1,18 +1,10 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Swarm.Basic.Entity
 {
-    /// <summary>
-    /// 客户端
-    /// </summary>
-    public class Client : EntityBase<int>
+    public class ClientProcess : EntityBase<int>
     {
-        [Required]
-        [StringLength(32)]
-        public string NodeId { get; set; }
-        
         /// <summary>
         /// 名称
         /// </summary>
@@ -27,49 +19,48 @@ namespace Swarm.Basic.Entity
         public string Group { get; set; }
 
         /// <summary>
-        /// 连接标识
+        /// 任务编号
         /// </summary>
         [Required]
-        [StringLength(50)]
-        public string ConnectionId { get; set; }
+        [StringLength(120)]
+        public string JobId { get; set; }
 
         /// <summary>
-        /// IP 地址
+        /// 跟踪编号
         /// </summary>
-        [Required]
-        [StringLength(50)]
-        public string Ip { get; set; }
+        [StringLength(32)]
+        public string TraceId { get; set; }
+        
+        /// <summary>
+        /// 信息
+        /// </summary>
+        [StringLength(500)]
+        public string Msg { get; set; }
 
         /// <summary>
-        /// 操作系统
+        /// 分片
         /// </summary>
         [Required]
-        [StringLength(50)]
-        public string Os { get; set; }
+        public int Sharding { get; set; }
         
         /// <summary>
-        /// CPU 核心数
+        /// 跟踪编号
         /// </summary>
-        [Required]
-        public int CoreCount { get; set; }
+        [StringLength(32)]
+        public string State { get; set; }
         
         /// <summary>
-        /// 内存
+        /// 应用程序
         /// </summary>
         [Required]
-        public int Memory { get; set; }
-        
+        [StringLength(120)]
+        public string App { get; set; }
+
         /// <summary>
-        /// 用户编号
+        /// 执行参数
         /// </summary>
         [Required]
-        public int UserId { get; set; }
-        
-        /// <summary>
-        /// 是否连接
-        /// </summary>
-        [Required]
-        public bool IsConnected { get; set; }
+        public string AppArguments { get; set; }
 
         /// <summary>
         /// 创建时间
@@ -81,10 +72,5 @@ namespace Swarm.Basic.Entity
         /// 修改时间
         /// </summary>
         public DateTimeOffset? LastModificationTime { get; set; }
-
-        public override string ToString()
-        {
-            return $"[{ConnectionId}, {Name}, {Group}, {Ip}]";
-        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -31,7 +32,8 @@ namespace Swarm.Server
                 .AddJsonFile("appsettings.json", true)
                 .Build();
 
-            CreateWebHostBuilder(args).UseConfiguration(config).Build().Run();
+            var host = CreateWebHostBuilder(args).UseConfiguration(config).Build();            
+            host.Run();
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>

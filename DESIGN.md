@@ -81,8 +81,8 @@ Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5, ...
        |  TriggerType         |  |  NodeId               |  |  Name                |  |   Name          |  |  Name                |
        |  PermformerType      |  |  SchedName            |  |  Group               |  |   Group         |  |  Group               |
        |  UserId              |  |  Provider             |  |  ConnectionId        |  |   ClassName     |  |  ProcessId           |
-       |  Name                |  |  TriggerTimes         |  |  Ip                  |  |   CreationTime  |  |  JobName             |
-       |  Group               |  |  LastModificationTime |  |  Os                  |  +-----------------+  |  JobGroup            |
+       |  Name                |  |  TriggerTimes         |  |  Ip                  |  |   CreationTime  |  |  JobId               |
+       |  Group               |  |  LastModificationTime |  |  Os                  |  +-----------------+  |                      |
        |  SsnId               |  |  CreationTime         |  |  CoreCount           |                       |  UserId              | 
        |  Description         |  |  ConnectString        |  |  Memory              |                       |  App                 |
        |  Owner               |  +-----------------------+  |  CreationTime        |                       |  AppArguments        |

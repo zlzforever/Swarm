@@ -75,12 +75,13 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task<IEnumerable<Client>> GetClients(string group)
+        public async Task<IEnumerable<Client>> GetAvailableClients(string group)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return (await conn.QueryAsync<Client>(
-                    "SELECT [Id], [Name], [Group], [ConnectionId], [Ip], [Os], [CoreCount], [Memory], [UserId], [IsConnected], [CreationTime], [LastModificationTime] FROM [Client] WHERE [Group] = @Group",
+                    @"SELECT [Id], [Name], [Group], [ConnectionId], [Ip], [Os], [CoreCount], [Memory], [UserId], [IsConnected], [CreationTime], [LastModificationTime] FROM [Client]
+ WHERE [Group] = @Group AND DATEDIFF(SECOND, [LastModificationTime], CURRENT_TIMESTAMP) < 6　AND [IsConnected] = 'true'",
                     new {Group = group}));
             }
         }
@@ -95,23 +96,14 @@ namespace Swarm.Core.Impl
 
         #endregion
 
-        public async Task<bool> CheckJobExists(string id)
+        public async Task<Job> GetJob(string name, string group)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
-                return await conn.QuerySingleAsync<int>(
-                           "SELECT COUNT(*) FROM [Job] WHERE [Id] = @Id",
-                           new {Id = id}) > 0;
-            }
-        }
-
-        public async Task<bool> IsJobExists(string name, string group)
-        {
-            using (var conn = new SqlConnection(_options.ConnectionString))
-            {
-                return await conn.QuerySingleAsync<int>(
-                           "SELECT COUNT(*) FROM [Job] WHERE [Name] = @Name AND [Group] = @Group",
-                           new {Name = name, Group = group}) > 0;
+                return await conn.QuerySingleAsync<Job>(
+                           @"SELECT [Id], [UserId], [Trigger], [Performer], [Executor], [Name], [Group], [NodeId], [Load], [Sharding],
+                        [ShardingParameters], [Description], [Owner], [AllowConcurrent], [CreationTime], [LastModificationTime] FROM [Job] WHERE [Name] = @Name AND [Group] = @Group",
+                           new {Name = name, Group = group});
             }
         }
 
@@ -233,16 +225,6 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task<bool> IsJobExited(string jobId)
-        {
-            using (var conn = new SqlConnection(_options.ConnectionString))
-            {
-                return await conn.QuerySingleAsync<int>(
-                           "SELECT COUNT(*) FROM [JobState] WHERE [JobId] = @JobId AND [State] != @State",
-                           new {JobId = jobId, State = State.Exit}) == 0;
-            }
-        }
-
         public async Task AddJobState(JobState jobState)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
@@ -312,7 +294,7 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task IncreaseNodeTriggerTime(string name, string NodeId)
+        public async Task IncreaseTriggerTime(string name, string NodeId)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
@@ -320,6 +302,16 @@ namespace Swarm.Core.Impl
                     "UPDATE [Node] SET [TriggerTimes] = [TriggerTimes] + 1  WHERE [NodeId] = @NodeId AND [SchedName] = @SchedName",
                     new {NodeId = NodeId, SchedName = name});
             }
+        }
+
+        public　async Task ClientHeartbeat(string name, string group)
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                await conn.ExecuteAsync(
+                    "UPDATE [Client] SET [LastModificationTime] = CURRENT_TIMESTAMP  WHERE [Name] = @Name AND [Group] = @Group",
+                    new {Name = name, Group = group});
+            } 　
         }
 
         public async Task<JobState> GetJobState(string traceId, string client, int Sharding)
