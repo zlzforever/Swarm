@@ -54,7 +54,13 @@ namespace Swarm.Server.Migrations
                         .IsRequired()
                         .HasMaxLength(50);
 
-                    b.Property<int>("UserId");
+                    b.Property<string>("SchedInstanceId")
+                        .IsRequired()
+                        .HasMaxLength(32);
+
+                    b.Property<string>("SchedName")
+                        .IsRequired()
+                        .HasMaxLength(250);
 
                     b.HasKey("Id");
 
@@ -68,6 +74,54 @@ namespace Swarm.Server.Migrations
                         .HasFilter("[Group] IS NOT NULL");
 
                     b.ToTable("Client");
+                });
+
+            modelBuilder.Entity("Swarm.Basic.Entity.ClientProcess", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("App")
+                        .IsRequired()
+                        .HasMaxLength(120);
+
+                    b.Property<string>("AppArguments")
+                        .IsRequired();
+
+                    b.Property<DateTimeOffset>("CreationTime");
+
+                    b.Property<string>("Group")
+                        .HasMaxLength(120);
+
+                    b.Property<string>("JobId")
+                        .IsRequired()
+                        .HasMaxLength(120);
+
+                    b.Property<DateTimeOffset?>("LastModificationTime");
+
+                    b.Property<string>("Msg")
+                        .HasMaxLength(500);
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120);
+
+                    b.Property<int>("Sharding");
+
+                    b.Property<int>("State")
+                        .HasMaxLength(32);
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(32);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreationTime");
+
+                    b.HasIndex("Name", "Group");
+
+                    b.ToTable("ClientProcess");
                 });
 
             modelBuilder.Entity("Swarm.Basic.Entity.Job", b =>
@@ -110,8 +164,6 @@ namespace Swarm.Server.Migrations
                         .HasMaxLength(500);
 
                     b.Property<int>("Trigger");
-
-                    b.Property<int>("UserId");
 
                     b.HasKey("Id");
 
@@ -242,13 +294,13 @@ namespace Swarm.Server.Migrations
 
                     b.Property<DateTimeOffset?>("LastModificationTime");
 
-                    b.Property<string>("NodeId")
-                        .IsRequired()
-                        .HasMaxLength(32);
-
                     b.Property<string>("Provider")
                         .IsRequired()
                         .HasMaxLength(250);
+
+                    b.Property<string>("SchedInstanceId")
+                        .IsRequired()
+                        .HasMaxLength(32);
 
                     b.Property<string>("SchedName")
                         .IsRequired()
@@ -260,12 +312,12 @@ namespace Swarm.Server.Migrations
 
                     b.HasIndex("CreationTime");
 
-                    b.HasIndex("NodeId")
+                    b.HasIndex("SchedInstanceId")
                         .IsUnique();
 
                     b.HasIndex("SchedName");
 
-                    b.HasIndex("SchedName", "NodeId")
+                    b.HasIndex("SchedName", "SchedInstanceId")
                         .IsUnique();
 
                     b.ToTable("Node");

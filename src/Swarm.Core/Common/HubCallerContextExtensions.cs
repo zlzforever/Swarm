@@ -13,7 +13,7 @@ namespace Swarm.Core.Common
             return context.GetHttpContext().Request;
         }
 
-        public static Client GetClient(this HubCallerContext context)
+        public static Client GetClient(this HubCallerContext context, SwarmOptions options)
         {
             var name = context.GetHttpRequest().Query["name"].FirstOrDefault();
             var group = context.GetHttpRequest().Query["group"].FirstOrDefault();
@@ -29,7 +29,7 @@ namespace Swarm.Core.Common
             return new Client
             {
                 Name = name, Group = group, Ip = ip, ConnectionId = context.ConnectionId, Memory = memory, Os = os,
-                CoreCount = coreCount, UserId = userId
+                CoreCount = coreCount, SchedName = options.SchedName, SchedInstanceId = options.SchedInstanceId
             };
         }
     }

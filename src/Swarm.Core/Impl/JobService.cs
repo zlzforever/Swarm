@@ -1,6 +1,4 @@
-using System.Collections;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,10 +19,10 @@ namespace Swarm.Core.Impl
         private readonly ILogger _logger;
         private readonly ISwarmStore _store;
         private readonly IHubContext<ClientHub> _hubContext;
-        private readonly ISchedulerCache _schedCache;
+        private readonly ISchedCache _schedCache;
         private readonly SwarmOptions _options;
 
-        public JobService(ISharding sharding, ISchedulerCache schedulerCache, ILoggerFactory loggerFactory,
+        public JobService(ISharding sharding, ISchedCache schedulerCache, ILoggerFactory loggerFactory,
             ISwarmStore store,
             IHubContext<ClientHub> hubContext,
             IOptions<SwarmOptions> options)
@@ -57,17 +55,15 @@ namespace Swarm.Core.Impl
                 return new ApiResult(ApiResult.Error, "Swarm cluster has no available node");
             }
 
-            var sched = _schedCache.Create(node.SchedName, node.NodeId, node.Provider, node.ConnectionString);
-            
+            var sched = _schedCache.GetOrCreate(node.SchedName, node.SchedInstanceId, node.Provider, node.ConnectionString);
+
             var qzJob = job.ToQuartzJob();
-            var trigger = TriggerFactory.Create(job.Trigger, job.Id, job.Properties);           
+            var trigger = TriggerFactory.Create(job.Trigger, job.Id, job.Properties);
             await sched.ScheduleJob(qzJob, trigger);
-            
-            job.NodeId = node.NodeId;
-            // TODO: 以后实现用户
-            job.UserId = 0;
+
+            job.NodeId = node.SchedInstanceId;
             await _store.AddJob(job);
-            
+
             if (string.IsNullOrWhiteSpace(job.Id))
             {
                 await sched.DeleteJob(qzJob.Key);
@@ -94,12 +90,13 @@ namespace Swarm.Core.Impl
             }
 
             var node = await _store.GetNode(job.NodeId);
-            var sched = _schedCache.Create(node.SchedName, node.NodeId, node.Provider, node.ConnectionString);
+            var sched = _schedCache.GetOrCreate(node.SchedName, node.SchedInstanceId, node.Provider, node.ConnectionString);
 
             // Remove from quartz firstly, then remove from swarm
             await sched.DeleteJob(new JobKey(jobId));
             await sched.UnscheduleJob(new TriggerKey(jobId));
             await _store.DeleteJob(jobId);
+            _logger.LogInformation($"Delete job {jobId} success");
             return new ApiResult(ApiResult.SuccessCode, "success");
         }
 
@@ -131,6 +128,8 @@ namespace Swarm.Core.Impl
                     break;
                 }
             }
+            
+            _logger.LogInformation($"Exit job {jobId} success");
 
             return result;
         }
@@ -150,6 +149,27 @@ namespace Swarm.Core.Impl
 
             var result = job.ToPropertyArray();
             return new ApiResult(ApiResult.SuccessCode, null, result);
+        }
+
+        public async Task<ApiResult> Trigger(string jobId)
+        {
+            if (string.IsNullOrWhiteSpace(jobId))
+            {
+                return new ApiResult(ApiResult.Error, "Id is empty/null");
+            }
+
+            var job = await _store.GetJob(jobId);
+            if (job == null)
+            {
+                return new ApiResult(ApiResult.Error, $"Job {jobId} not exists");
+            }
+
+            var node = await _store.GetNode(job.NodeId);
+            var sched = _schedCache.GetOrCreate(node.SchedName, node.SchedInstanceId, node.Provider, node.ConnectionString);
+
+            await sched.TriggerJob(new JobKey(jobId));
+            _logger.LogInformation($"Trigger job {jobId} success");
+            return new ApiResult(ApiResult.SuccessCode, "success");
         }
 
         private ApiResult ValidateProperties(Job value)

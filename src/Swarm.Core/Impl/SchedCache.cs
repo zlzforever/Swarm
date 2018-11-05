@@ -5,12 +5,12 @@ using Quartz.Impl;
 
 namespace Swarm.Core.Impl
 {
-    public class SchedulerCache : ISchedulerCache
+    public class SchedCache : ISchedCache
     {
         private static readonly ConcurrentDictionary<string, IScheduler> Scheds =
             new ConcurrentDictionary<string, IScheduler>();
 
-        public IScheduler Create(string name, string nodeId, string provider, string connectionString)
+        public IScheduler GetOrCreate(string name, string nodeId, string provider, string connectionString)
         {
             var key = $"{name}_{nodeId}_{provider}_{connectionString}";
             if (Scheds.ContainsKey(key))

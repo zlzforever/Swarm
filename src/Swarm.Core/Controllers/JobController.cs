@@ -1,20 +1,11 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
-using Quartz;
-using Swarm.Basic;
-using Swarm.Basic.Common;
 using Swarm.Basic.Entity;
 using Swarm.Core.Common;
-using Swarm.Core.Impl;
-using Swarm.Core.SignalR;
 
 namespace Swarm.Core.Controllers
 {
@@ -23,7 +14,7 @@ namespace Swarm.Core.Controllers
     {
         private readonly IJobService _jobService;
 
-        public JobController(IJobService jobService,IOptions<SwarmOptions> options) : base(options)
+        public JobController(IJobService jobService, IOptions<SwarmOptions> options) : base(options)
         {
             _jobService = jobService;
         }

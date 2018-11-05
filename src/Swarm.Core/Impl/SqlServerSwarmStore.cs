@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Swarm.Basic;
 using Swarm.Basic.Entity;
 
 namespace Swarm.Core.Impl
@@ -14,12 +13,10 @@ namespace Swarm.Core.Impl
     public class SqlServerSwarmStore : ISwarmStore, ILogStore
     {
         private readonly SwarmOptions _options;
-        private readonly ILogger _logger;
 
-        public SqlServerSwarmStore(IOptions<SwarmOptions> options, ILoggerFactory loggerFactory)
+        public SqlServerSwarmStore(IOptions<SwarmOptions> options)
         {
             _options = options.Value;
-            _logger = loggerFactory.CreateLogger<SqlServerSwarmStore>();
         }
 
         #region Client
@@ -29,7 +26,7 @@ namespace Swarm.Core.Impl
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return await conn.ExecuteAsync(
-                           "INSERT INTO [Client] ([Name], [Group], [ConnectionId], [Ip], [Os], [CoreCount], [Memory], [UserId], [IsConnected], [CreationTime], [LastModificationTime]) VALUES (@Name, @Group, @ConnectionId, @Ip, @Os, @CoreCount, @Memory, @UserId, @IsConnected, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                           "INSERT INTO [Client] ([SchedName], [SchedInstanceId], [Name], [Group], [ConnectionId], [Ip], [Os], [CoreCount], [Memory], [IsConnected], [CreationTime], [LastModificationTime]) VALUES (@SchedName, @SchedInstanceId, @Name, @Group, @ConnectionId, @Ip, @Os, @CoreCount, @Memory, @IsConnected, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
                            client) > 0;
             }
         }
@@ -49,7 +46,7 @@ namespace Swarm.Core.Impl
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 var client = await conn.QuerySingleOrDefaultAsync<Client>(
-                    "SELECT TOP 1 [Id], [Name], [Group], [ConnectionId], [Ip], [Os], [CoreCount], [Memory], [UserId], [IsConnected], [CreationTime], [LastModificationTime] FROM [Client] WHERE [Name] = @Name AND [Group] = @Group",
+                    "SELECT TOP 1 [Id], [Name], [Group], [ConnectionId], [Ip], [Os], [CoreCount], [Memory], [IsConnected], [CreationTime], [LastModificationTime] FROM [Client] WHERE [Name] = @Name AND [Group] = @Group",
                     new {Name = name, Group = group});
                 return client;
             }
@@ -101,9 +98,9 @@ namespace Swarm.Core.Impl
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return await conn.QuerySingleAsync<Job>(
-                           @"SELECT [Id], [UserId], [Trigger], [Performer], [Executor], [Name], [Group], [NodeId], [Load], [Sharding],
+                    @"SELECT [Id], [UserId], [Trigger], [Performer], [Executor], [Name], [Group], [NodeId], [Load], [Sharding],
                         [ShardingParameters], [Description], [Owner], [AllowConcurrent], [CreationTime], [LastModificationTime] FROM [Job] WHERE [Name] = @Name AND [Group] = @Group",
-                           new {Name = name, Group = group});
+                    new {Name = name, Group = group});
             }
         }
 
@@ -127,11 +124,10 @@ namespace Swarm.Core.Impl
                         trans);
                     trans.Commit();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    _logger.LogError(ex, $"Save job failed: {ex.Message}");
                     trans.Rollback();
-                    job.Id = null;
+                    throw;
                 }
             }
 
@@ -161,10 +157,10 @@ namespace Swarm.Core.Impl
                         trans);
                     trans.Commit();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    _logger.LogError(ex, $"Update job failed: {ex.Message}");
                     trans.Rollback();
+                    throw;
                 }
             }
         }
@@ -191,10 +187,10 @@ namespace Swarm.Core.Impl
                         new {Id = id}, trans);
                     trans.Commit();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    _logger.LogError(ex, $"Add job failed: {ex.Message}");
                     trans.Rollback();
+                    throw;
                 }
             }
         }
@@ -246,7 +242,7 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task RegisterNode(Node Node)
+        public async Task RegisterNode(Node node)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
@@ -255,22 +251,22 @@ namespace Swarm.Core.Impl
                 try
                 {
                     var exists = await conn.ExecuteAsync(
-                                     "UPDATE [Node] SET [LastModificationTime] = CURRENT_TIMESTAMP WHERE [NodeId] = @NodeId AND [SchedName] = @SchedName",
-                                     new {Node.NodeId, Node.SchedName}, trans) > 0;
+                                     "UPDATE [Node] SET [LastModificationTime] = CURRENT_TIMESTAMP WHERE [SchedInstanceId] = @SchedInstanceId AND [SchedName] = @SchedName",
+                                     new {node.SchedInstanceId, node.SchedName}, trans) > 0;
                     if (!exists)
                     {
                         await conn.ExecuteAsync(
-                            @"INSERT INTO [Node] ([NodeId], [SchedName], [Provider], [ConnectionString], [TriggerTimes], [CreationTime], 
-[LastModificationTime]) VALUES (@NodeId, @SchedName, @Provider, @ConnectionString, @TriggerTimes, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-                            Node, trans);
+                            @"INSERT INTO [Node] ([SchedInstanceId], [SchedName], [Provider], [ConnectionString], [TriggerTimes], [CreationTime], 
+[LastModificationTime]) VALUES (@SchedInstanceId, @SchedName, @Provider, @ConnectionString, @TriggerTimes, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                            node, trans);
                     }
 
                     trans.Commit();
                 }
-                catch (Exception ex)
+                catch
                 {
-                    _logger.LogError(ex, $"Register Node failed: {ex.Message}");
                     trans.Rollback();
+                    throw;
                 }
             }
         }
@@ -284,13 +280,13 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task<Node> GetNode(string NodeId)
+        public async Task<Node> GetNode(string nodeId)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return await conn.QuerySingleOrDefaultAsync<Node>(
                     "SELECT TOP 1 [Id], [NodeId], [SchedName], [Provider], [TriggerTimes], [ConnectionString] FROM [Node] WHERE [NodeId] = @Id",
-                    new {Id = NodeId});
+                    new {Id = nodeId});
             }
         }
 
@@ -304,14 +300,14 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public　async Task ClientHeartbeat(string name, string group)
+        public async Task ClientHeartbeat(string name, string group)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 await conn.ExecuteAsync(
                     "UPDATE [Client] SET [LastModificationTime] = CURRENT_TIMESTAMP  WHERE [Name] = @Name AND [Group] = @Group",
                     new {Name = name, Group = group});
-            } 　
+            }
         }
 
         public async Task<JobState> GetJobState(string traceId, string client, int Sharding)

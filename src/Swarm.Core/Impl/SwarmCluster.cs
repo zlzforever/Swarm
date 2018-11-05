@@ -1,7 +1,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Options;
 using Swarm.Basic.Entity;
 
@@ -28,9 +27,9 @@ namespace Swarm.Core.Impl
                 var node = new Node
                 {
                     ConnectionString = _options.QuartzConnectionString,
-                    NodeId = _options.NodeId,
+                    SchedInstanceId = _options.SchedInstanceId,
                     Provider = _options.Provider,
-                    SchedName = _options.Name,
+                    SchedName = _options.SchedName,
                     TriggerTimes = 0
                 };
                 await _store.RegisterNode(node);

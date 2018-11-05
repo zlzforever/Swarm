@@ -1,17 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Quartz;
-using Quartz.Impl;
-using Quartz.Impl.AdoJobStore;
-using Quartz.Simpl;
-using Quartz.Spi;
 using Swarm.Core.Common.Internal;
 using Swarm.Core.Impl;
 using Swarm.Core.SignalR;
@@ -40,8 +32,9 @@ namespace Swarm.Core
             services.Configure<SwarmOptions>(configuration);
             services.AddSignalR().AddMessagePackProtocol();
 
-            services.AddSingleton<ISchedulerCache, SchedulerCache>();
+            services.AddSingleton<ISchedCache, SchedCache>();
             services.AddSingleton<ISwarmCluster, SwarmCluster>();
+            services.AddSingleton<IJobService, JobService>();
 
             var builder = new SwarmBuilder(services);
             configure?.Invoke(builder);
@@ -80,24 +73,25 @@ namespace Swarm.Core
                 throw new SwarmException("Can't get SwarmOption, please make sure your configuration file is correct");
             }
 
-            if (string.IsNullOrWhiteSpace(options.Name))
+            if (string.IsNullOrWhiteSpace(options.SchedName))
             {
                 throw new SwarmException("Name in SwarmOption is empty");
             }
 
-            if (string.IsNullOrWhiteSpace(options.NodeId))
+            if (string.IsNullOrWhiteSpace(options.SchedInstanceId))
             {
                 throw new SwarmException("NodeId in SwarmOption is empty");
             }
-            
+
             // Start quartz instance
-            var sched = app.ApplicationServices.GetRequiredService<ISchedulerCache>().Create(options.Name, options.NodeId, options.Provider,
+            var sched = app.ApplicationServices.GetRequiredService<ISchedCache>().GetOrCreate(options.SchedName,
+                options.SchedInstanceId, options.Provider,
                 options.QuartzConnectionString);
             sched.Start(cancellationToken).ConfigureAwait(false);
-            
+
             // Start swarm sharding node
             var cluster = app.ApplicationServices.GetRequiredService<ISwarmCluster>();
-            cluster.Start(cancellationToken).ConfigureAwait(true);           
+            cluster.Start(cancellationToken).ConfigureAwait(true);
 
             app.UseSignalR(routes => { routes.MapHub<ClientHub>("/clienthub"); });
 

@@ -47,7 +47,7 @@ namespace Swarm.Basic.Entity
         /// 跟踪编号
         /// </summary>
         [StringLength(32)]
-        public string State { get; set; }
+        public State State { get; set; }
         
         /// <summary>
         /// 应用程序

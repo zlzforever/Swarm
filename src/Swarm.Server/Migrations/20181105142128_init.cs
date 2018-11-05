@@ -14,6 +14,8 @@ namespace Swarm.Server.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    SchedName = table.Column<string>(maxLength: 250, nullable: false),
+                    SchedInstanceId = table.Column<string>(maxLength: 32, nullable: false),
                     Name = table.Column<string>(maxLength: 120, nullable: false),
                     Group = table.Column<string>(maxLength: 120, nullable: true),
                     ConnectionId = table.Column<string>(maxLength: 50, nullable: false),
@@ -21,7 +23,6 @@ namespace Swarm.Server.Migrations
                     Os = table.Column<string>(maxLength: 50, nullable: false),
                     CoreCount = table.Column<int>(nullable: false),
                     Memory = table.Column<int>(nullable: false),
-                    UserId = table.Column<int>(nullable: false),
                     IsConnected = table.Column<bool>(nullable: false),
                     CreationTime = table.Column<DateTimeOffset>(nullable: false),
                     LastModificationTime = table.Column<DateTimeOffset>(nullable: true)
@@ -32,6 +33,29 @@ namespace Swarm.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ClientProcess",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Name = table.Column<string>(maxLength: 120, nullable: false),
+                    Group = table.Column<string>(maxLength: 120, nullable: true),
+                    JobId = table.Column<string>(maxLength: 120, nullable: false),
+                    TraceId = table.Column<string>(maxLength: 32, nullable: true),
+                    Msg = table.Column<string>(maxLength: 500, nullable: true),
+                    Sharding = table.Column<int>(nullable: false),
+                    State = table.Column<int>(maxLength: 32, nullable: false),
+                    App = table.Column<string>(maxLength: 120, nullable: false),
+                    AppArguments = table.Column<string>(nullable: false),
+                    CreationTime = table.Column<DateTimeOffset>(nullable: false),
+                    LastModificationTime = table.Column<DateTimeOffset>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ClientProcess", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Job",
                 columns: table => new
                 {
@@ -39,7 +63,6 @@ namespace Swarm.Server.Migrations
                     Trigger = table.Column<int>(nullable: false),
                     Performer = table.Column<int>(nullable: false),
                     Executor = table.Column<int>(nullable: false),
-                    UserId = table.Column<int>(nullable: false),
                     NodeId = table.Column<string>(maxLength: 32, nullable: true),
                     Name = table.Column<string>(maxLength: 120, nullable: false),
                     Group = table.Column<string>(maxLength: 120, nullable: false),
@@ -115,11 +138,11 @@ namespace Swarm.Server.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    ConnectionString = table.Column<string>(maxLength: 250, nullable: false),
-                    Provider = table.Column<string>(maxLength: 250, nullable: false),
                     SchedName = table.Column<string>(maxLength: 250, nullable: false),
+                    SchedInstanceId = table.Column<string>(maxLength: 32, nullable: false),
+                    Provider = table.Column<string>(maxLength: 250, nullable: false),
+                    ConnectionString = table.Column<string>(maxLength: 250, nullable: false),
                     TriggerTimes = table.Column<long>(nullable: false),
-                    NodeId = table.Column<string>(maxLength: 32, nullable: false),
                     CreationTime = table.Column<DateTimeOffset>(nullable: false),
                     LastModificationTime = table.Column<DateTimeOffset>(nullable: true)
                 },
@@ -145,6 +168,16 @@ namespace Swarm.Server.Migrations
                 columns: new[] { "Name", "Group" },
                 unique: true,
                 filter: "[Group] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ClientProcess_CreationTime",
+                table: "ClientProcess",
+                column: "CreationTime");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ClientProcess_Name_Group",
+                table: "ClientProcess",
+                columns: new[] { "Name", "Group" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Job_CreationTime",
@@ -233,9 +266,9 @@ namespace Swarm.Server.Migrations
                 column: "CreationTime");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Node_NodeId",
+                name: "IX_Node_SchedInstanceId",
                 table: "Node",
-                column: "NodeId",
+                column: "SchedInstanceId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -244,9 +277,9 @@ namespace Swarm.Server.Migrations
                 column: "SchedName");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Node_SchedName_NodeId",
+                name: "IX_Node_SchedName_SchedInstanceId",
                 table: "Node",
-                columns: new[] { "SchedName", "NodeId" },
+                columns: new[] { "SchedName", "SchedInstanceId" },
                 unique: true);
         }
 
@@ -254,6 +287,9 @@ namespace Swarm.Server.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Client");
+
+            migrationBuilder.DropTable(
+                name: "ClientProcess");
 
             migrationBuilder.DropTable(
                 name: "Job");

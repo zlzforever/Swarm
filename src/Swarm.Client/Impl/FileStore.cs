@@ -15,10 +15,8 @@ namespace Swarm.Client.Impl
     /// </summary>
     public class FileStore : IProcessStore
     {
-        private readonly string _folder;
-        //   private readonly Dictionary<ProcessKey, JobProcess> _dic = new Dictionary<ProcessKey, JobProcess>();
-
-        public static FileStore Instance = new FileStore();
+        private static string _folder;
+        public static readonly FileStore Instance = new FileStore();
 
         private FileStore()
         {

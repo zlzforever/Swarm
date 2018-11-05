@@ -22,7 +22,7 @@ namespace Swarm.Core.Impl
 
         public async Task AdjustLoad()
         {
-            await _store.IncreaseTriggerTime(_options.Name, _options.NodeId);
+            await _store.IncreaseTriggerTime(_options.SchedName, _options.SchedInstanceId);
         }
     }
 }

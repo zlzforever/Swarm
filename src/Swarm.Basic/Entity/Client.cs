@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Swarm.Basic.Entity
 {
@@ -9,10 +8,24 @@ namespace Swarm.Basic.Entity
     /// </summary>
     public class Client : EntityBase<int>
     {
+        #region Node FK
+
+        /// <summary>
+        /// Sched 名称
+        /// </summary>
+        [StringLength(250)]
         [Required]
+        public string SchedName { get; set; }
+
+        /// <summary>
+        /// Sched 实例标识
+        /// </summary>
         [StringLength(32)]
-        public string NodeId { get; set; }
-        
+        [Required]
+        public string SchedInstanceId { get; set; }
+
+        #endregion
+
         /// <summary>
         /// 名称
         /// </summary>
@@ -46,25 +59,19 @@ namespace Swarm.Basic.Entity
         [Required]
         [StringLength(50)]
         public string Os { get; set; }
-        
+
         /// <summary>
         /// CPU 核心数
         /// </summary>
         [Required]
         public int CoreCount { get; set; }
-        
+
         /// <summary>
         /// 内存
         /// </summary>
         [Required]
         public int Memory { get; set; }
-        
-        /// <summary>
-        /// 用户编号
-        /// </summary>
-        [Required]
-        public int UserId { get; set; }
-        
+
         /// <summary>
         /// 是否连接
         /// </summary>

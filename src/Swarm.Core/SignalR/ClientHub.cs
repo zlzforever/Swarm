@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Swarm.Basic;
 using Swarm.Basic.Entity;
 using Swarm.Core.Common;
 
@@ -30,7 +29,7 @@ namespace Swarm.Core.SignalR
             //TODO: Validate jobState
             if (jobState == null)
             {
-                var ci = Context.GetClient();
+                var ci = Context.GetClient(_options);
                 _logger.LogError($"{nameof(jobState)} is null from {ci}");
                 return;
             }
@@ -38,7 +37,7 @@ namespace Swarm.Core.SignalR
             var oldJobState = await _store.GetJobState(jobState.TraceId, jobState.Client, jobState.Sharding);
             if (oldJobState == null)
             {
-                var ci = Context.GetClient();
+                var ci = Context.GetClient(_options);
                 _logger.LogError($"{ci} {jobState.TraceId}, {jobState.Client}, {jobState.Sharding} is not exists");
                 return;
             }
@@ -57,13 +56,13 @@ namespace Swarm.Core.SignalR
 
         public async Task Heartbeat()
         {
-            var ci = Context.GetClient();
+            var ci = Context.GetClient(_options);
             await _store.ClientHeartbeat(ci.Name, ci.Group);
         }
 
         public override async Task OnConnectedAsync()
         {
-            var ci = Context.GetClient();
+            var ci = Context.GetClient(_options);
 
             var skip = false;
             if (!Context.GetHttpRequest().IsAccess(_options))
@@ -122,12 +121,13 @@ namespace Swarm.Core.SignalR
 
         public override async Task OnDisconnectedAsync(Exception exception)
         {
-            var ci = Context.GetClient();
+            var ci = Context.GetClient(_options);
 
             try
             {
                 await _store.DisconnectClient(ci.Name, ci.Group);
                 await base.OnDisconnectedAsync(exception);
+                
                 _logger.LogInformation($"{ci} disconnected");
             }
             catch (Exception ex)

@@ -1,8 +1,6 @@
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Swarm.Core.Common;
 
 namespace Swarm.Core

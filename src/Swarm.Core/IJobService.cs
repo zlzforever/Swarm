@@ -10,5 +10,6 @@ namespace Swarm.Core
         Task<ApiResult> Delete(string jobId);
         Task<ApiResult> Exit(string jobId);
         Task<ApiResult> Get(string jobId);
+        Task<ApiResult> Trigger(string jobId);
     }
 }

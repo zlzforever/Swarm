@@ -2,6 +2,7 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Swarm.Client.Impl;
+using Swarm.Client.Listener;
 
 namespace Swarm.Client
 {
@@ -27,7 +28,11 @@ namespace Swarm.Client
             services.AddSingleton<IExecutorFactory, ExecutorFactory>();
             services.AddTransient<ProcessExecutor>();
             services.AddTransient<ReflectionExecutor>();
-            
+            services.AddSingleton<KillAllListener>();
+            services.AddSingleton<KillListener>();
+            services.AddSingleton<TriggerListener>();
+            services.AddSingleton<ExitListener>();
+
             var builder = new SwarmClientBuilder(services);
             configure?.Invoke(builder);
 

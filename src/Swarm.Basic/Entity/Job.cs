@@ -35,12 +35,7 @@ namespace Swarm.Basic.Entity
         /// 任务的执行器: 进程, 反射
         /// </summary>
         [Required]
-        public Executor Executor { get; set; }
-        
-        /// <summary>
-        /// 用户编号
-        /// </summary>
-        public int UserId { get; set; }
+        public Executor Executor { get; set; }       
 
         [StringLength(32)]
         public string NodeId { get; set; }
