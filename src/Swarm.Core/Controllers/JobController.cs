@@ -18,7 +18,7 @@ using Swarm.Core.SignalR;
 
 namespace Swarm.Core.Controllers
 {
-    [Route("swarm/v1.0/job")]
+    [Route("swarm/v1.0/jo")]
     public class JobController : AbstractApiControllerBase
     {
         private readonly ISharding _sharding;

@@ -39,10 +39,10 @@ SCHEDULER1 |  TRIGGER_ACCESS |
 
 #### 解决思路
 
-1. 直接依赖 Quartz 默认支持的多个 Scheduler, 如对一个数据库默认分配 5 个 Scheduler:
+1. 直接依赖 Quartz 默认支持的多个 Scheduler, 如对一个数据库默认分配多个 Scheduler:
 
 ```
-Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5
+Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5, ...
 ```
 2. 每个 Scheduler 由 2 个以上的实例来保证稳定性, 组成一个 Swarm Sharding Node, SSN 通过 SignalR 组成集群, 每个 SSN 启动后把信息添加到数据库, 并定时更新心跳. 每个 SSN 定时扫描注册表, 如果发现掉线的节点(分布式锁)则触发迁移
 3. 每触发一个任务在数据库中给对应的 Scheduler 增加 1 次计数
@@ -75,22 +75,22 @@ Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5
 
  ```
 
-       +----------------------+  +-----------------------+  +----------------------+  +-----------------+
-       |        JOBS          |  |        NODES          |  |      CLIENTS         |  |   CLIENT_JOBS   |
-       +----------------------+  +-----------------------+  +----------------------+  +-----------------+
-       |  TriggerType         |  |  NodeId               |  |  Name                |  |   ClientId      |
-       |  PermformerType      |  |  SchedName            |  |  Group               |  |   ClassName     |
-       |  UserId              |  |  Provider             |  |  ConnectionId        |  |   CreationTime  |
-       |  Name                |  |  TriggerTimes         |  |  Ip                  |  +-----------------+
-       |  Group               |  |  LastModificationTime |  |  Os                  |
-       |  SsnId               |  |  CreationTime         |  |  CoreCount           |  
-       |  Description         |  |  ConnectString        |  |  Memory              |
-       |  Owner               |  +-----------------------+  |  CreationTime        |
-       |  Load                |                             |  LastModificationTime|
-       |  Sharding            |                             |  IsConnected         |
-       |  ShardingParameters  |                             |  UseId               |
-       |  StartAt             |                             +----------------------+
-       |  EndAt               |
+       +----------------------+  +-----------------------+  +----------------------+  +-----------------+  +----------------------+
+       |        JOBS          |  |        NODES          |  |      CLIENTS         |  |   CLIENT_JOBS   |  |   CLIENT_PROCESSES   |
+       +----------------------+  +-----------------------+  +----------------------+  +-----------------+  +----------------------+
+       |  TriggerType         |  |  NodeId               |  |  Name                |  |   Name          |  |  Name                |
+       |  PermformerType      |  |  SchedName            |  |  Group               |  |   Group         |  |  Group               |
+       |  UserId              |  |  Provider             |  |  ConnectionId        |  |   ClassName     |  |  ProcessId           |
+       |  Name                |  |  TriggerTimes         |  |  Ip                  |  |   CreationTime  |  |  JobName             |
+       |  Group               |  |  LastModificationTime |  |  Os                  |  +-----------------+  |  JobGroup            |
+       |  SsnId               |  |  CreationTime         |  |  CoreCount           |                       |  UserId              | 
+       |  Description         |  |  ConnectString        |  |  Memory              |                       |  App                 |
+       |  Owner               |  +-----------------------+  |  CreationTime        |                       |  AppArguments        |
+       |  Load                |                             |  LastModificationTime|                       |  LastModificationTime|
+       |  Sharding            |                             |  IsConnected         |                       |  CreationTime        |
+       |  ShardingParameters  |                             |  UseId               |                       |  Sharding            |
+       |  StartAt             |                             +----------------------+                       |  Msg                 |
+       |  EndAt               |                                                                            +----------------------+　
        |  AllowConcurrent     |
        |  CreationTime        |                             
        |  LastModificationTime|                             
@@ -102,42 +102,24 @@ Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5
        |  AppArguments        |  
        +----------------------+  
 
-实际上以上设计已经完全不关心SSN是同一个数据库还是不同的数据库了       
-              
-##### SSN 注册: ISwarmCluster
+实际上以上设计已经完全不关心SSN是同一个数据库还是不同的数据库了
 
-1. SSN 从配置文件读取信息: SchedName, NodeId 更新心跳时间到数据库, 更新条件为 SchedName, NodeId
-2. 如果更新影响行数为 0, 则插入一条新的记录, 初始 TriggerTimes 为 0 
-2. 循环执行
-
-##### SSN 触发任务
-
-1. 判断任务是否在 Swarm JOBS 中存在, 如果不存在, 删除此任务
-2. 增加一次触发计算
-3. 通过 PerformerFactory 创建接口执行对应的触发任务
-
-##### 创建任务逻辑
-
-1. 数据验证
-2. 查询最低负载结点, 如果没有提示没有可用节点
-3. 通过配置在节点中的 Provider, ConnectionString, SchedName, NodeId 创建 IScheduler 对象
-4. 通过 IScheduler 添加任务
-5. 添加任务到 Swarm 数据库的 JOBS 表中
-
-##### 删除任务逻辑
-
-1. 从 Swarm JOBS 表中查找到任务所在节点
-2. 通过配置在节点中的 Provider, ConnectionString, SchedName, NodeId 创建 IScheduler 对象
-3. 通过 IScheduler 删除任务
-4. 删除 Swarm 数据库中的任务信息
-
-##### SSN 健康检查
-
-1. 获取表锁
-2. 根据心跳时间取得掉线节点
-3. 迁移数据
-
-##### 任务执行类型
-
-1. 依赖接口的, 客户端扫描固定目录下的　DLL, 加载并反射得到所有实现　Job　接口的类, 注册类型到服务端， 服务端触发任务后可匹配到类型后发送到正常的客户端
-2. 不依赖接口的, 用户自己通过　Client 的 Group　来配置,　一切由用户自己控制,　配置出错可由 Sharding　平台查看日志
+Module | Feature | Interface | Description |Compelete | Unit Tests |
+-------|-------|-------|-------|-------|  -------|
+SSN | Heartbeat | ISwarmCluster| 从配置文件读取信息: SchedName, NodeId, 以此为条件更新心跳时间到数据库. 如果更新影响行数为 0, 则插入一条新的记录, 初始 TriggerTimes 为 0. 循环执行   |   ☑    |  ☐   |
+SSN | Sharding | ISharding  | 从数据库中取出负载最小的节点　|    ☑    |  ☐   |
+SSN | Health Check | ISwarmCluster | 每隔一定时间查询心跳超时节点, 发现警告信息或邮件给管理员, 严重的自动迁移数据, 需要分布式锁　|    ☐    |  ☐   |
+SSN | Client Process Timeout Check | ISwarmCluster | 每隔一定时间查询客户端进程表, 发现超时的标识为超时　|    ☐    |  ☐   |
+SSN | Create Job | IJobService | 参数验证 -> 判断任务是否存在 -> 通过分片接查询节点 -> 创建 Sched -> 添加任务到节点 ->　任务更新节点编号, 保存任务到 Swarm　数据库, 保存失败需要从节点中删除  　|    ☑    |  ☐   |
+SSN | Delete Job | IJobService | 参数验证 -> 判断任务是否存在 -> 通过任务中的节点编号查询节点 -> 创建节点对应的 Sched ->　删除任务, 删除触发器 ->　从 Swarm 数据库中删除任务信息  　|    ☑    |  ☐   |
+SSN | Update Job | IJobService | 参数验证 -> 判断任务是否存在 -> ...  　|    ☐    |  ☐   |
+SSN | Trigger Job | IJobService | 参数验证 -> 判断任务是否存在 -> 通过任务中的节点编号查询节点 -> 创建节点对应的 Sched ->　触发任务 　|    ☑    |  ☐   |
+SSN | Exit All | IJobService | 参数验证 -> 判断任务是否存在 -> 通知所有节点根据任务编号退出此任务所有进程(Http触发任务无法退出) 　|    ☑    |  ☐   |
+SSN | Exit  | IJobService | 参数验证 -> 判断任务是否存在 -> 根据任务编号, 批次, 分片查询客户端连接信息, 通知对应节点退出对应任务 　|    ☐    |  ☐   |
+Client | Loop Connect | IClient | 配置重试次数, 如果连接失败或者连接被断开则重试　|    ☑     |  ☐   |
+Client | Register Jobs | IClient | 递归扫描　/{base}/jobs/下所有 DLLs, 扫描得到继承 ISwarmJob 的类型, 并注册到　SSN中　|    ☐     |  ☐   |
+Client | ExecutorFactory | IExecutorFactory | 通过名字创建对应的任务执行器　|    ☑     |  ☐   |
+Client | Process Executor | IExecutor | 启动一个新进程, 执行配置好的任务　|    ☑     |  ☐   |
+Client | Reflection Executor | IExecutor | 反射任务类型, 执行配置好的任务　|    ☑     |  ☐   |
+Client | Process Storage | IProcessStorage | 存储正在执行的任务, 一旦客户端崩溃重启依据本地存储信息检测还在跑的进程有哪些和SSN同步状态, 执行存储操作前先同步到 SSN　|    ☐    |  ☐   |
+Client | Log Filter | ILogFilter | 筛选用户需要的日志上传到 SSN, 默认是全部上传　|    ☐     |  ☐   |

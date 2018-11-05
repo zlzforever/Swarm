@@ -35,7 +35,7 @@ Swarm is a distributed scheduled job framework, based on Quartz.
  ##### SHARDING MODULE
 
 + Sharding request server load, database load, job count from Swarm servers every 5 second
-+ Sharding choose a Swarm server to create/update/delete job
++ Sharding choose a Scheduler to create/update/delete job
 
  ##### EXECUTE JOB TYPE
 
