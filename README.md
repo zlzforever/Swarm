@@ -110,25 +110,25 @@ Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5, ...
 5. 当 SSN 触发一个任务时, 通过任务信息归属和分片信息等分发到对应的客户端
 6. 当某个 SSN 只有一个实例时, 提示警告信息, 当 SSN 节点完全当掉时, 集群中的其它 SSN 应该把此节点的所有任务迁移到其它节点或者备用节点
 
-       +----------------------+  +-----------------------+  +----------------------+  +-----------------+  +----------------------+
-       |        JOBS          |  |        NODES          |  |      CLIENTS         |  |   CLIENT_JOBS   |  |   CLIENT_PROCESSES   |
-       +----------------------+  +-----------------------+  +----------------------+  +-----------------+  +----------------------+
-       |  TriggerType         |  |  NodeId               |  |  Name                |  |   Name          |  |  Name                |
-       |  PermformerType      |  |  SchedName            |  |  Group               |  |   Group         |  |  Group               |
-       |  UserId              |  |  Provider             |  |  ConnectionId        |  |   ClassName     |  |  ProcessId           |
-       |  Name                |  |  TriggerTimes         |  |  Ip                  |  |   CreationTime  |  |  JobId               |
-       |  Group               |  |  LastModificationTime |  |  Os                  |  +-----------------+  |                      |
-       |  SsnId               |  |  CreationTime         |  |  CoreCount           |                       |  UserId              | 
-       |  Description         |  |  ConnectString        |  |  Memory              |                       |  App                 |
-       |  Owner               |  +-----------------------+  |  CreationTime        |                       |  AppArguments        |
-       |  Load                |                             |  LastModificationTime|                       |  LastModificationTime|
-       |  Sharding            |                             |  IsConnected         |                       |  CreationTime        |
-       |  ShardingParameters  |                             |  UseId               |                       |  Sharding            |
-       |  StartAt             |                             +----------------------+                       |  Msg                 |
-       |  EndAt               |                                                                            +----------------------+　
-       |  AllowConcurrent     |
-       |  CreationTime        |                             
-       |  LastModificationTime|                             
+       +----------------------+  +-----------------------+  +----------------------+ 
+       |        JOBS          |  |        NODES          |  |      CLIENTS         | 
+       +----------------------+  +-----------------------+  +----------------------+ 
+       |  TriggerType         |  |  SchedInstanceId      |  |  Name                | 
+       |  PermformerType      |  |  SchedName            |  |  Group               | 
+       |  LastModificationTime|  |  Provider             |  |  ConnectionId        | 
+       |  Name                |  |  TriggerTimes         |  |  Ip                  | 
+       |  Group               |  |  LastModificationTime |  |  Os                  | 
+       |  CreationTime        |  |  CreationTime         |  |  CoreCount           |  
+       |  Description         |  |  ConnectString        |  |  Memory              | 
+       |  Owner               |  +-----------------------+  |  CreationTime        | 
+       |  Load                |                             |  LastModificationTime| 
+       |  Sharding            |                             |  IsConnected         | 
+       |  ShardingParameters  |                             |  SchedName           | 
+       |  StartAt             |                             |  SchedInstanceId     | 
+       |  EndAt               |                             |  IsConnected         |                           　
+       |  AllowConcurrent     |                             +----------------------+                
+       |  SchedInstanceId     |
+       |  SchedName           |                             
        +----------------------+                             
        |  ExecutorType        |                                                                       
        |  Cron                |      
@@ -137,6 +137,25 @@ Scheduler1, Scheduler2, Scheduler3, Scheduler4, Scheduler5, ...
        |  AppArguments        |  
        +----------------------+  
 
+       +----------------------+  +----------------------+  +----------------------+
+       |   CLIENT_JOBS        |  |   CLIENT_PROCESSES   |  |         LOG          |
+       +----------------------+  +----------------------+  +----------------------+
+       |   Name               |  |  Name                |  |  ClientName          |
+       |   Group              |  |  Group               |  |  ClientGroup         |
+       |   ClassName          |  |  ProcessId           |  |  TraceId             |
+       |   CreationTime       |  |  JobId               |  |  JobId               |
+       +----------------------+  |  App                 |  |  Sharding            |
+                                 |  AppArguments        |  |  Msg                 |
+                                 |  LastModificationTime|  |  CreationTime        |
+                                 |  CreationTime        |  +----------------------+
+                                 |  Sharding            |   
+                                 |  Msg                 |  
+                                 |  TraceId             | 
+                                 |  State               |
+                                 +----------------------+  
+                                  
+                                       
+       
 实际上以上设计已经完全不关心SSN是同一个数据库还是不同的数据库了
 
 Module | Feature | Interface | Description |Compelete | Unit Tests |
