@@ -10,10 +10,10 @@ namespace Swarm.Core.Impl
     {
         public ITrigger Build(string id, Dictionary<string, string> properties)
         {
-            return TriggerBuilder.Create().WithCronSchedule(properties.GetValue(SwarmConts.CronProperty),
+            return TriggerBuilder.Create().WithCronSchedule(properties.GetValue(SwarmConsts.CronProperty),
                     bd =>
                     {
-                        var tzpStr = properties.GetValue(SwarmConts.TimeZoneProperty);
+                        var tzpStr = properties.GetValue(SwarmConsts.TimeZoneProperty);
                         if (string.IsNullOrWhiteSpace(tzpStr)) return;
                         try
                         {

@@ -188,7 +188,7 @@ namespace Swarm.Client
                         {
                             config.Headers = new Dictionary<string, string>
                             {
-                                {SwarmConts.AccessTokenHeader, AccessToken}
+                                {SwarmConsts.AccessTokenHeader, AccessToken}
                             };
                         }).AddMessagePackProtocol().Build();
                 connection.Closed +=  e =>
@@ -222,7 +222,10 @@ namespace Swarm.Client
         private void AddListener(HubConnection connection, CancellationToken token)
         {
             connection.On<JobContext>("Trigger",
-                async context => { await _triggerListener.Handle(connection, context); });
+                async context =>
+                {
+                    await _triggerListener.Handle(connection, context);
+                });
 
             connection.On("Exit", _exitListener.Handle);
             connection.On<string>("Kill", _killAllListener.Handle);

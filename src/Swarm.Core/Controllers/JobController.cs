@@ -9,7 +9,7 @@ using Swarm.Core.Common;
 
 namespace Swarm.Core.Controllers
 {
-    [Route("swarm/v1.0/jo")]
+    [Route("swarm/v1.0/job")]
     public class JobController : AbstractApiControllerBase
     {
         private readonly IJobService _jobService;

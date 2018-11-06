@@ -4,7 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Quartz;
 using Swarm.Basic;
+using Swarm.Basic.Common;
 using Swarm.Basic.Entity;
 using Swarm.Core.Common.Internal;
 using Swarm.Core.SignalR;
@@ -14,12 +17,13 @@ namespace Swarm.Core.Impl
     public class SignalRPerformer : IPerformer
     {
         private readonly int _retryTimes = 5;
-        
+
         public async Task<bool> Perform(JobContext jobContext)
         {
             var store = Ioc.GetRequiredService<ISwarmStore>();
             var logger = Ioc.GetRequiredService<ILoggerFactory>().CreateLogger<SignalRPerformer>();
             var hubContext = Ioc.GetRequiredService<IHubContext<ClientHub>>();
+            var options = Ioc.GetRequiredService<IOptions<SwarmOptions>>().Value;
 
             var clients = (await store.GetAvailableClients(jobContext.Group)).ToList();
             if (clients.Any())
@@ -53,20 +57,9 @@ namespace Swarm.Core.Impl
                         jc.CurrentSharding = i + 1;
                         jc.CurrentShardingParameter = shardingParameter;
 
-                        await store.AddJobState(new JobState
-                            {
-                                JobId = jc.JobId,
-                                TraceId = jc.TraceId,
-                                Client = client.Name,
-                                Sharding = jc.CurrentSharding,
-                                State = State.Performing,
-                                Msg = $"Performing on {client}"
-                            }
-                        );
-
-                        if (jc.Parameters.ContainsKey(SwarmConts.ArgumentsProperty))
+                        if (jc.Parameters.ContainsKey(SwarmConsts.ArgumentsProperty))
                         {
-                            var arguments = jc.Parameters[SwarmConts.ArgumentsProperty];
+                            var arguments = jc.Parameters[SwarmConsts.ArgumentsProperty];
                             if (!string.IsNullOrWhiteSpace(arguments))
                             {
                                 arguments = arguments.Replace("%jobid%", jc.JobId);
@@ -80,22 +73,27 @@ namespace Swarm.Core.Impl
                                 arguments = arguments.Replace("%firetime%",
                                     jc.FireTimeUtc.ToString("yyyy-MM-dd hh:mm:ss"));
 
-                                jc.Parameters[SwarmConts.ArgumentsProperty] = arguments;
+                                jc.Parameters[SwarmConsts.ArgumentsProperty] = arguments;
                             }
                         }
 
                         await hubContext.Clients.Client(client.ConnectionId).SendAsync("Trigger", jc);
 
-                        await store.UpdateJobState(new JobState
+                        await store.AddOrUpdateClientProcess(new ClientProcess
                             {
-                                TraceId = jc.TraceId,
-                                Client = client.Name,
-                                Sharding = jc.CurrentSharding,
+                                Name = client.Name,
+                                Group = client.Group,
                                 JobId = jc.JobId,
+                                TraceId = jc.TraceId,
+                                Sharding = jc.CurrentSharding,
                                 State = State.Performed,
-                                Msg = $"Perform on {client} success"
+                                Msg = $"Performed on {client}",
+                                App = jc.Parameters.GetValue(SwarmConsts.ApplicationProperty),
+                                AppArguments = jc.Parameters.GetValue(SwarmConsts.ArgumentsProperty),
+                                ProcessId = 0
                             }
                         );
+
                         logger.LogInformation($"Perform {jobContext.JobId} on {client} success");
                         i++;
                         j++;
@@ -107,15 +105,6 @@ namespace Swarm.Core.Impl
                     catch (Exception ex)
                     {
                         logger.LogError($"Perform {jobContext.JobId} on {client} failed: {ex.Message}");
-                        await store.UpdateJobState(new JobState
-                        {
-                            TraceId = jc.TraceId,
-                            Client = client.Name,
-                            Sharding = jc.CurrentSharding,
-                            JobId = jc.JobId,
-                            State = State.Exit,
-                            Msg = $"Perform on {client} failed"
-                        });
                         dic[i]++;
                         // 分片不增加, 尝试其它节点
                         j++;
@@ -131,14 +120,18 @@ namespace Swarm.Core.Impl
             else
             {
                 logger.LogError($"Unfounded available client for job {jobContext.JobId}");
-                await store.AddJobState(new JobState
+                await store.AddOrUpdateClientProcess(new ClientProcess
                     {
+                        Name = options.SchedInstanceId,
+                        Group = options.SchedName,
                         JobId = jobContext.JobId,
                         TraceId = jobContext.TraceId,
-                        Client = "Swarm",
                         Sharding = 1,
                         State = State.Exit,
-                        Msg = "Unfounded available client"
+                        Msg = "Unfounded available client",
+                        App = jobContext.Parameters.GetValue(SwarmConsts.ApplicationProperty),
+                        AppArguments = jobContext.Parameters.GetValue(SwarmConsts.ArgumentsProperty),
+                        ProcessId = 0
                     }
                 );
                 return false;

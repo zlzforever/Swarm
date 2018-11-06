@@ -24,31 +24,20 @@ namespace Swarm.Core.SignalR
             _logStore = logStore;
         }
 
-        public async Task StateChanged(JobState jobState)
+        public async Task StateChanged(ClientProcess clientProcess)
         {
             //TODO: Validate jobState
-            if (jobState == null)
+            if (clientProcess == null)
             {
                 var ci = Context.GetClient(_options);
-                _logger.LogError($"{nameof(jobState)} is null from {ci}");
+                _logger.LogError($"{nameof(clientProcess)} is null from {ci}");
                 return;
             }
 
-            var oldJobState = await _store.GetJobState(jobState.TraceId, jobState.Client, jobState.Sharding);
-            if (oldJobState == null)
-            {
-                var ci = Context.GetClient(_options);
-                _logger.LogError($"{ci} {jobState.TraceId}, {jobState.Client}, {jobState.Sharding} is not exists");
-                return;
-            }
-            else
-            {
-                jobState.Id = oldJobState.Id;
-                await _store.UpdateJobState(jobState);
-            }
+            await _store.AddOrUpdateClientProcess(clientProcess);
         }
 
-        public async Task OnLog(Log log)
+        public async Task Log(Log log)
         {
             // TODO: VALIDATE LOG
             await _logStore.AddLog(log);
@@ -127,7 +116,7 @@ namespace Swarm.Core.SignalR
             {
                 await _store.DisconnectClient(ci.Name, ci.Group);
                 await base.OnDisconnectedAsync(exception);
-                
+
                 _logger.LogInformation($"{ci} disconnected");
             }
             catch (Exception ex)

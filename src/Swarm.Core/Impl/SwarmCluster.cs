@@ -30,11 +30,18 @@ namespace Swarm.Core.Impl
                     SchedInstanceId = _options.SchedInstanceId,
                     Provider = _options.Provider,
                     SchedName = _options.SchedName,
+                    IsConnected = true,
                     TriggerTimes = 0
                 };
                 await _store.RegisterNode(node);
                 await Task.Delay(TimeSpan.FromMilliseconds(5000), cancellationToken).ConfigureAwait(false);
             }
+        }
+
+        public async Task Shutdown()
+        {
+            Console.WriteLine("DISCONNECTED");
+            await _store.DisconnectNode(_options.SchedName, _options.SchedInstanceId);
         }
     }
 }

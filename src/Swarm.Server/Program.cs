@@ -23,7 +23,7 @@ namespace Swarm.Server
                 .MinimumLevel.Information()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
                 .Enrich.FromLogContext()
-                .WriteTo.Console(theme: ConsoleLogTheme).WriteTo.RollingFile("swarm.log")
+                .WriteTo.Console(theme: SerilogConsoleTheme.ConsoleTheme).WriteTo.RollingFile("swarm.log")
                 .CreateLogger();
 
             var config = new ConfigurationBuilder()
@@ -31,7 +31,7 @@ namespace Swarm.Server
                 .AddJsonFile("appsettings.json", true)
                 .Build();
 
-            var host = CreateWebHostBuilder(args).UseConfiguration(config).Build();            
+            var host = CreateWebHostBuilder(args).UseConfiguration(config).Build();
             host.Run();
         }
 

@@ -18,7 +18,7 @@ namespace Swarm.Core.Common
             var name = context.GetHttpRequest().Query["name"].FirstOrDefault();
             var group = context.GetHttpRequest().Query["group"].FirstOrDefault();
             var ip = context.GetHttpRequest().Query["ip"].FirstOrDefault();
-            group = string.IsNullOrWhiteSpace(group) ? SwarmConts.DefaultGroup : group;
+            group = string.IsNullOrWhiteSpace(group) ? SwarmConsts.DefaultGroup : group;
             var userId = int.Parse(context.GetHttpRequest().Query["userId"].First());
             var os = context.GetHttpRequest().Query["os"].FirstOrDefault();
             var coreCount = int.Parse(context.GetHttpRequest().Query["coreCount"].First());

@@ -17,9 +17,9 @@ namespace Swarm.Core.Common
                 return true;
             }
 
-            if (request.Headers.ContainsKey(SwarmConts.AccessTokenHeader))
+            if (request.Headers.ContainsKey(SwarmConsts.AccessTokenHeader))
             {
-                var token = request.Headers[SwarmConts.AccessTokenHeader].ToString();
+                var token = request.Headers[SwarmConsts.AccessTokenHeader].ToString();
                 return options.AccessTokens.Contains(token);
             }
 

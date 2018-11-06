@@ -11,7 +11,6 @@ namespace Swarm
         public DbSet<Job> Job { get; set; }
         public DbSet<JobProperty> JobProperty { get; set; }
         public DbSet<Client> Client { get; set; }
-        public DbSet<JobState> JobState { get; set; }
         public DbSet<Log> Log { get; set; }
         public DbSet<Node> Node { get; set; }
         public DbSet<ClientProcess> ClientProcess { get; set; }
@@ -41,12 +40,6 @@ namespace Swarm
             modelBuilder.Entity<Client>().HasIndex(x => new {x.Name, x.Group}).IsUnique();
             modelBuilder.Entity<Client>().HasIndex(x => x.ConnectionId).IsUnique();
             modelBuilder.Entity<Client>().HasIndex(x => x.CreationTime);
-
-            modelBuilder.Entity<JobState>().HasIndex(x => new {x.Sharding, x.JobId, x.TraceId, x.Client}).IsUnique();
-            modelBuilder.Entity<JobState>().HasIndex(x => x.JobId);
-            modelBuilder.Entity<JobState>().HasIndex(x => new {x.JobId, x.TraceId});
-            modelBuilder.Entity<JobState>().HasIndex(x => new {x.Sharding, x.TraceId, x.Client}).IsUnique();
-            modelBuilder.Entity<JobState>().HasIndex(x => x.CreationTime);
 
             modelBuilder.Entity<Log>().HasIndex(x => x.JobId);
             modelBuilder.Entity<Log>().HasIndex(x => x.CreationTime);

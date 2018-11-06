@@ -3,7 +3,7 @@
         <div class="log-body">
             <div v-for="el in els" class="log-line">
                 <a v-text="el.id"></a>
-                <span v-text="el.traceId　+ '  ' + el.msg +'  ' + hub.formatDate(el.creationTime)"></span>
+                <span v-text="el.clientName + '  '+ el.clientGroup + '  ' + el.jobId + '  ' + el.traceId + '  ' + el.sharding 　+ '  ' + el.msg +'  ' + hub.formatDate(el.creationTime)"></span>
             </div>
         </div>
     </div>

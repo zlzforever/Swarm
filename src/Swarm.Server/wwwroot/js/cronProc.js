@@ -37,12 +37,14 @@ $(function () {
                     sharding: job.sharding,
                     shardingParameters: job.shardingParameters,
                     concurrentExecutionDisallowed: !job.concurrentExecutionDisallowed,
-                    properties:{
-                        "cron":job.cron,
-                        "application":job.application,
-                        "logpattern":job.logPattern,
-                        "arguments":job.arguments
-                    }
+                    properties: {
+                        "cron": job.cron,
+                        "application": job.application,
+                        "logpattern": job.logPattern,
+                        "arguments": job.arguments
+                    },
+                    schedName: 'auto',
+                    schedInstanceId: 'auto'
                 }, function () {
                     window.location.href = '/job';
                 });

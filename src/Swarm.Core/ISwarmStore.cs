@@ -19,20 +19,31 @@ namespace Swarm.Core
 
         #endregion
 
+        #region Job
+
         Task<Job> GetJob(string name, string group);
         Task<string> AddJob(Job job);
         Task UpdateJob(Job job);
         Task DeleteJob(string jobId);
+
         Task<Job> GetJob(string jobId);
-        //Task ChangeJobState(string jobId, State state);
 
-        Task AddJobState(JobState jobState);
-        Task<JobState> GetJobState(string traceId, string client, int sharding);
-        Task UpdateJobState(JobState jobState);
+        #endregion
 
+        #region ClientProcess
+
+        Task AddOrUpdateClientProcess(ClientProcess clientProcess);
+
+        #endregion
+
+        #region Node
+
+        Task DisconnectNode(string schedName, string schedInstanceId);
         Task RegisterNode(Node node);
         Task<Node> GetMinimumTriggerTimesNode();
-        Task<Node> GetNode(string nodeId);
-        Task IncreaseTriggerTime(string name, string nodeId);
+        Task<Node> GetAvailableNode(string schedName, string schedInstanceId);
+        Task IncreaseTriggerTime(string schedName, string schedInstanceId);
+
+        #endregion
     }
 }

@@ -28,19 +28,19 @@ namespace Swarm.Server.Api
         }
 
         [HttpGet]
-        [Route("swarm/v1.0/jobState")]
-        public IActionResult QueryState([FromQuery] JobStatePaginationQueryInput input)
+        [Route("swarm/v1.0/jobProcess")]
+        public IActionResult QueryProcess([FromQuery] JobProcessPaginationQueryInput input)
         {
             var id = input.JobId;
 
-            Expression<Func<JobState, bool>> where = j => j.JobId == id;
+            Expression<Func<ClientProcess, bool>> where = j => j.JobId == id;
             if (input.State != null)
             {
                 where = t => t.State == input.State;
             }
             //TODO: 更多的条件
 
-            var output = _dbContext.JobState.PageList<JobState, int, int>(input, where, d => d.Id);
+            var output = _dbContext.ClientProcess.PageList<ClientProcess, int, int>(input, where, d => d.Id);
             return new JsonResult(new ApiResult(ApiResult.SuccessCode, null, output));
         }
 

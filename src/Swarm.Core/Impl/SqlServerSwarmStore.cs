@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Swarm.Basic;
 using Swarm.Basic.Entity;
 
 namespace Swarm.Core.Impl
@@ -77,7 +78,7 @@ namespace Swarm.Core.Impl
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return (await conn.QueryAsync<Client>(
-                    @"SELECT [Id], [Name], [Group], [ConnectionId], [Ip], [Os], [CoreCount], [Memory], [UserId], [IsConnected], [CreationTime], [LastModificationTime] FROM [Client]
+                    @"SELECT [Id], [Name], [Group], [ConnectionId], [Ip], [Os], [CoreCount], [Memory], [IsConnected], [CreationTime], [LastModificationTime] FROM [Client]
  WHERE [Group] = @Group AND DATEDIFF(SECOND, [LastModificationTime], CURRENT_TIMESTAMP) < 6　AND [IsConnected] = 'true'",
                     new {Group = group}));
             }
@@ -93,14 +94,58 @@ namespace Swarm.Core.Impl
 
         #endregion
 
+        #region Job
+
         public async Task<Job> GetJob(string name, string group)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
-                return await conn.QuerySingleAsync<Job>(
-                    @"SELECT [Id], [UserId], [Trigger], [Performer], [Executor], [Name], [Group], [NodeId], [Load], [Sharding],
+                var job = await conn.QuerySingleOrDefaultAsync<Job>(
+                    @"SELECT TOP 1 [Id], [Trigger], [Performer], [Executor], [Name], [Group], [SchedName], [SchedInstanceId], [Load], [Sharding],
                         [ShardingParameters], [Description], [Owner], [AllowConcurrent], [CreationTime], [LastModificationTime] FROM [Job] WHERE [Name] = @Name AND [Group] = @Group",
                     new {Name = name, Group = group});
+
+                if (job != null)
+                {
+                    var properties = await conn.QueryAsync<JobProperty>(
+                        "SELECT [Id], [JobId], [Name], [Value], [CreationTime] FROM [JobProperty] WHERE [JobId] = @Id",
+                        new {Id = job.Id});
+                    foreach (var property in properties)
+                    {
+                        if (!job.Properties.ContainsKey(property.Name))
+                        {
+                            job.Properties.Add(property.Name, property.Value);
+                        }
+                    }
+                }
+
+                return job;
+            }
+        }
+
+        public async Task<Job> GetJob(string jobId)
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                var job = await conn.QuerySingleOrDefaultAsync<Job>(
+                    @"SELECT TOP 1 [Id], [Trigger], [Performer], [Executor], [Name], [Group], [SchedName], [SchedInstanceId],[SchedName], [SchedInstanceId], [Load], [Sharding],
+ [ShardingParameters], [Description], [Owner], [AllowConcurrent], [CreationTime], [LastModificationTime] FROM [Job] WHERE [Id] = @Id",
+                    new {Id = jobId});
+                if (job != null)
+                {
+                    var properties = await conn.QueryAsync<JobProperty>(
+                        "SELECT [Id], [JobId], [Name], [Value], [CreationTime] FROM [JobProperty] WHERE [JobId] = @Id",
+                        new {Id = jobId});
+                    foreach (var property in properties)
+                    {
+                        if (!job.Properties.ContainsKey(property.Name))
+                        {
+                            job.Properties.Add(property.Name, property.Value);
+                        }
+                    }
+                }
+
+                return job;
             }
         }
 
@@ -114,8 +159,8 @@ namespace Swarm.Core.Impl
                 try
                 {
                     await conn.ExecuteAsync(
-                        @"INSERT INTO [Job] ([Id], [Trigger], [Performer], [Executor], [Name], [Group], [UserId], [NodeId], [Load], [Sharding],
- [ShardingParameters], [Description], [Owner], [AllowConcurrent], [CreationTime]) VALUES (@Id, @Trigger, @Performer, @Executor, @Name, @Group, @UserId, @NodeId, @Load, @Sharding,
+                        @"INSERT INTO [Job] ([Id], [Trigger], [Performer], [Executor], [Name], [Group], [SchedName], [SchedInstanceId], [Load], [Sharding],
+ [ShardingParameters], [Description], [Owner], [AllowConcurrent], [CreationTime]) VALUES (@Id, @Trigger, @Performer, @Executor, @Name, @Group, @SchedName, @SchedInstanceId, @Load, @Sharding,
 @ShardingParameters, @Description, @Owner, @AllowConcurrent, CURRENT_TIMESTAMP)",
                         job, trans);
                     await conn.ExecuteAsync(
@@ -165,7 +210,7 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task DeleteJob(string id)
+        public async Task DeleteJob(string jobId)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
@@ -175,16 +220,16 @@ namespace Swarm.Core.Impl
                 {
                     await conn.ExecuteAsync(
                         "DELETE FROM [JobProperty] WHERE [JobId] = @Id",
-                        new {Id = id}, trans);
+                        new {Id = jobId}, trans);
                     await conn.ExecuteAsync(
                         "DELETE FROM [Job] WHERE Id = @Id",
-                        new {Id = id}, trans);
+                        new {Id = jobId}, trans);
                     await conn.ExecuteAsync(
                         "DELETE FROM [JobState] WHERE [JobId] = @Id",
-                        new {Id = id}, trans);
+                        new {Id = jobId}, trans);
                     await conn.ExecuteAsync(
                         "DELETE FROM [Log] WHERE [JobId] = @Id",
-                        new {Id = id}, trans);
+                        new {Id = jobId}, trans);
                     trans.Commit();
                 }
                 catch
@@ -195,52 +240,9 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task<Job> GetJob(string id)
-        {
-            using (var conn = new SqlConnection(_options.ConnectionString))
-            {
-                var job = await conn.QuerySingleOrDefaultAsync<Job>(
-                    @"SELECT [Id], [UserId], [Trigger], [Performer], [Executor], [Name], [Group], [NodeId], [Load], [Sharding],
- [ShardingParameters], [Description], [Owner], [AllowConcurrent], [CreationTime], [LastModificationTime] FROM [Job] WHERE ID = @Id",
-                    new {Id = id});
-                if (job != null)
-                {
-                    var properties = await conn.QueryAsync<JobProperty>(
-                        "SELECT [Id], [JobId], [Name], [Value], [CreationTime] FROM [JobProperty] WHERE [JobId] = @Id",
-                        new {Id = id});
-                    foreach (var property in properties)
-                    {
-                        if (!job.Properties.ContainsKey(property.Name))
-                        {
-                            job.Properties.Add(property.Name, property.Value);
-                        }
-                    }
-                }
+        #endregion
 
-                return job;
-            }
-        }
-
-        public async Task AddJobState(JobState jobState)
-        {
-            using (var conn = new SqlConnection(_options.ConnectionString))
-            {
-                await conn.ExecuteAsync(
-                    @"INSERT [JobState] ([JobId], [TraceId], [State], [Client], [Sharding], [Msg], [CreationTime], [LastModificationTime]) VALUES (
-@JobId, @TraceId, @State, @Client, @Sharding, @Msg, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);",
-                    jobState);
-            }
-        }
-
-        public async Task UpdateJobState(JobState jobState)
-        {
-            using (var conn = new SqlConnection(_options.ConnectionString))
-            {
-                await conn.ExecuteAsync(
-                    "UPDATE [JobState] SET [JobId] = @JobId, [TraceId] = @TraceId, [State] = @State, [Client] = @Client, [Sharding] = @Sharding, [Msg] = @Msg, [LastModificationTime] = CURRENT_TIMESTAMP WHERE [Id] = @Id;",
-                    jobState);
-            }
-        }
+        #region  Node
 
         public async Task RegisterNode(Node node)
         {
@@ -251,13 +253,13 @@ namespace Swarm.Core.Impl
                 try
                 {
                     var exists = await conn.ExecuteAsync(
-                                     "UPDATE [Node] SET [LastModificationTime] = CURRENT_TIMESTAMP WHERE [SchedInstanceId] = @SchedInstanceId AND [SchedName] = @SchedName",
+                                     "UPDATE [Node] SET [IsConnected] = 'true', [LastModificationTime] = CURRENT_TIMESTAMP WHERE [SchedInstanceId] = @SchedInstanceId AND [SchedName] = @SchedName",
                                      new {node.SchedInstanceId, node.SchedName}, trans) > 0;
                     if (!exists)
                     {
                         await conn.ExecuteAsync(
-                            @"INSERT INTO [Node] ([SchedInstanceId], [SchedName], [Provider], [ConnectionString], [TriggerTimes], [CreationTime], 
-[LastModificationTime]) VALUES (@SchedInstanceId, @SchedName, @Provider, @ConnectionString, @TriggerTimes, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                            @"INSERT INTO [Node] ([SchedInstanceId], [SchedName], [Provider], [ConnectionString], [TriggerTimes], [IsConnected], [CreationTime], 
+[LastModificationTime]) VALUES (@SchedInstanceId, @SchedName, @Provider, @ConnectionString, @TriggerTimes, @IsConnected, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
                             node, trans);
                     }
 
@@ -271,32 +273,42 @@ namespace Swarm.Core.Impl
             }
         }
 
+        public async Task DisconnectNode(string schedName, string schedInstanceId)
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                await conn.ExecuteAsync(
+                    "UPDATE [Node] SET [IsConnected] = 'false', [LastModificationTime] = CURRENT_TIMESTAMP WHERE [SchedInstanceId] = @SchedInstanceId AND [SchedName] = @SchedName",
+                    new {SchedInstanceId = schedInstanceId, SchedName = schedName});
+            }
+        }
+
         public async Task<Node> GetMinimumTriggerTimesNode()
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return await conn.QuerySingleOrDefaultAsync<Node>(
-                    "SELECT TOP 1 [Id], [NodeId], [SchedName], [Provider], [TriggerTimes], [ConnectionString] FROM [Node] WHERE DATEDIFF(SECOND, [LastModificationTime], CURRENT_TIMESTAMP) < 6  ORDER BY [TriggerTimes]");
+                    $"SELECT TOP 1 [Id], [SchedName], [SchedInstanceId], [Provider], [TriggerTimes], [IsConnected], [ConnectionString], [CreationTime], [LastModificationTime] FROM [Node] WHERE [IsConnected] = 'true' AND DATEDIFF(SECOND, [LastModificationTime], CURRENT_TIMESTAMP) < {SwarmConsts.NodeOfflineInterval}  ORDER BY [TriggerTimes]");
             }
         }
 
-        public async Task<Node> GetNode(string nodeId)
+        public async Task<Node> GetAvailableNode(string schedName, string schedInstanceId)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return await conn.QuerySingleOrDefaultAsync<Node>(
-                    "SELECT TOP 1 [Id], [NodeId], [SchedName], [Provider], [TriggerTimes], [ConnectionString] FROM [Node] WHERE [NodeId] = @Id",
-                    new {Id = nodeId});
+                    "SELECT TOP 1 [Id], [SchedName], [SchedInstanceId], [Provider], [TriggerTimes], [IsConnected], [ConnectionString], [CreationTime], [LastModificationTime] FROM [Node] WHERE [IsConnected] = 'true' AND [SchedName] = @SchedName AND [SchedInstanceId] = @SchedInstanceId",
+                    new {SchedName = schedName, SchedInstanceId = schedInstanceId});
             }
         }
 
-        public async Task IncreaseTriggerTime(string name, string NodeId)
+        public async Task IncreaseTriggerTime(string schedName, string schedInstanceId)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 await conn.ExecuteAsync(
-                    "UPDATE [Node] SET [TriggerTimes] = [TriggerTimes] + 1  WHERE [NodeId] = @NodeId AND [SchedName] = @SchedName",
-                    new {NodeId = NodeId, SchedName = name});
+                    "UPDATE [Node] SET [TriggerTimes] = [TriggerTimes] + 1  WHERE [SchedInstanceId] = @SchedInstanceId AND [SchedName] = @SchedName",
+                    new {SchedInstanceId = schedInstanceId, SchedName = schedName});
             }
         }
 
@@ -305,29 +317,48 @@ namespace Swarm.Core.Impl
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 await conn.ExecuteAsync(
-                    "UPDATE [Client] SET [LastModificationTime] = CURRENT_TIMESTAMP  WHERE [Name] = @Name AND [Group] = @Group",
+                    "UPDATE [Client] SET [LastModificationTime] = CURRENT_TIMESTAMP, [IsConnected] = 'true'  WHERE [Name] = @Name AND [Group] = @Group",
                     new {Name = name, Group = group});
             }
         }
 
-        public async Task<JobState> GetJobState(string traceId, string client, int Sharding)
-        {
-            using (var conn = new SqlConnection(_options.ConnectionString))
-            {
-                return await conn.QuerySingleOrDefaultAsync<JobState>(
-                    "SELECT [Id], [JobId], [TraceId], [State], [Client], [Sharding], [Msg], [CreationTime], [LastModificationTime] FROM [JobState] WHERE [TraceId] = @TraceId AND [Client] = @Client AND [Sharding] = @Sharding;",
-                    new {TraceId = traceId, Client = client, Sharding = Sharding});
-            }
-        }
+        #endregion
+
+        #region Log
 
         public async Task AddLog(Log log)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 await conn.ExecuteAsync(
-                    @"INSERT [Log] ([JobId], [TraceId], [Msg], [CreationTime]) VALUES (@JobId, @TraceId, @Msg, CURRENT_TIMESTAMP);",
+                    @"INSERT [Log] ([ClientName], [ClientGroup], [JobId], [TraceId], [Sharding], [Msg], [CreationTime]) VALUES (@ClientName, @ClientGroup, @JobId, @TraceId, @Sharding, @Msg, CURRENT_TIMESTAMP);",
                     log);
             }
         }
+
+        #endregion
+
+        #region ClientProcess
+
+        public async Task AddOrUpdateClientProcess(ClientProcess clientProcess)
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                await conn.OpenAsync();
+                var exists = await conn.ExecuteAsync(
+                                 @"UPDATE [ClientProcess] SET [State] = @State, [Msg] = @Msg, [App] = @App, [AppArguments] = @AppArguments, [LastModificationTime] = CURRENT_TIMESTAMP WHERE
+ [Name] = @Name AND [Group] = @Group AND [JobId] = @JobId AND [TraceId] = @TraceId AND [Sharding] = @Sharding AND [ProcessId] = @ProcessId",
+                                 clientProcess) > 0;
+                if (!exists)
+                {
+                    await conn.ExecuteAsync(
+                        @"INSERT INTO [ClientProcess] ([Name], [Group], [JobId], [TraceId], [Sharding], [ProcessId], [State], [App], 
+[AppArguments], [Msg], [CreationTime], [LastModificationTime]) VALUES (@Name, @Group, @JobId, @TraceId, @Sharding, @ProcessId, @State, @App, @AppArguments, @Msg, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+                        clientProcess);
+                }
+            }
+        }
+
+        #endregion
     }
 }

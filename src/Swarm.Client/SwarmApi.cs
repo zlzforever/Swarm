@@ -106,7 +106,7 @@ namespace Swarm.Client
         {
             if (!string.IsNullOrWhiteSpace(_token))
             {
-                msg.Headers.Add(SwarmConts.AccessTokenHeader, _token);
+                msg.Headers.Add(SwarmConsts.AccessTokenHeader, _token);
             }
         }
     }

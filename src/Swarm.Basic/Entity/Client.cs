@@ -37,6 +37,7 @@ namespace Swarm.Basic.Entity
         /// 分组
         /// </summary>
         [StringLength(120)]
+        [Required]
         public string Group { get; set; }
 
         /// <summary>

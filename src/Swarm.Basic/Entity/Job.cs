@@ -19,26 +19,23 @@ namespace Swarm.Basic.Entity
             PropertyInfos = typeof(Job).GetProperties().Where(p => p.Name != "Properties" && p.CanWrite).ToList();
         }
 
-        /// <summary>
-        /// 触发器类型: Cron, Simple, etc
-        /// </summary>
-        [Required]
-        public Trigger Trigger { get; set; }
+        #region Node FK
 
         /// <summary>
-        /// 回调类型: Http, WebSocket, Mq
+        /// Sched 名称
         /// </summary>
+        [StringLength(250)]
         [Required]
-        public Performer Performer { get; set; }
+        public string SchedName { get; set; }
 
         /// <summary>
-        /// 任务的执行器: 进程, 反射
+        /// Sched 实例标识
         /// </summary>
-        [Required]
-        public Executor Executor { get; set; }       
-
         [StringLength(32)]
-        public string NodeId { get; set; }
+        [Required]
+        public string SchedInstanceId { get; set; }
+
+        #endregion             
 
         /// <summary>
         /// 任务名称
@@ -56,6 +53,24 @@ namespace Swarm.Basic.Entity
         [MinLength(4)]
         public string Group { get; set; }
 
+        /// <summary>
+        /// 触发器类型: Cron, Simple, etc
+        /// </summary>
+        [Required]
+        public Trigger Trigger { get; set; }
+
+        /// <summary>
+        /// 回调类型: Http, WebSocket, Mq
+        /// </summary>
+        [Required]
+        public Performer Performer { get; set; }
+
+        /// <summary>
+        /// 任务的执行器: 进程, 反射
+        /// </summary>
+        [Required]
+        public Executor Executor { get; set; } 
+        
         /// <summary>
         /// 任务负载
         /// </summary>

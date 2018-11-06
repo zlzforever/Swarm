@@ -1,6 +1,6 @@
 namespace Swarm.Basic
 {
-    public static class SwarmConts
+    public static class SwarmConsts
     {
         public const string ShardingProperty = "sharding";
         public const string CurrentShardingProperty = "currentsharding";
@@ -23,5 +23,6 @@ namespace Swarm.Basic
         public const string AccessTokenHeader = "SwarmAccessToken";
         public const string LogPatternProperty = "logpattern";
         public const string ExecutorProperty = "executor";
+        public static int NodeOfflineInterval = 7;
     }
 }

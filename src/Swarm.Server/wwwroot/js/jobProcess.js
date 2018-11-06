@@ -15,7 +15,7 @@ $(function () {
     });
 
     function loadView(vue) {
-        const url = '/swarm/v1.0/jobstate?jobId=' + vue.$data.jobId + '&state=' + vue.$data.state + '&page=' + vue.$data.page + '&size=' + vue.$data.size;
+        const url = '/swarm/v1.0/jobProcess?jobId=' + vue.$data.jobId + '&state=' + vue.$data.state + '&page=' + vue.$data.page + '&size=' + vue.$data.size;
         hub.get(url, function (result) {
             vue.$data.states = result.data.result;
             vue.$data.total = result.data.total;
@@ -23,7 +23,7 @@ $(function () {
             vue.$data.size = result.data.size;
 
             hub.ui.initPagination('#pagination', result.data, function (page) {
-                window.location.href = '/job/state?jobId=' + vue.$data.jobId + '&state=' + vue.$data.state + '&page=' + page + '&size=' + vue.$data.size;
+                window.location.href = '/job/jobProcess?jobId=' + vue.$data.jobId + '&state=' + vue.$data.state + '&page=' + page + '&size=' + vue.$data.size;
             });
         });
     }

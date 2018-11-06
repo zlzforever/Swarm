@@ -14,7 +14,7 @@ namespace Swarm.Server.Controllers
             return View();
         }
 
-        public IActionResult State()
+        public IActionResult Process()
         {
             return View();
         }

@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Dynamic;
 
 namespace Swarm.Basic.Entity
 {
@@ -15,6 +16,7 @@ namespace Swarm.Basic.Entity
         /// <summary>
         /// 分组
         /// </summary>
+        [Required]
         [StringLength(120)]
         public string Group { get; set; }
 
@@ -29,19 +31,19 @@ namespace Swarm.Basic.Entity
         /// 跟踪编号
         /// </summary>
         [StringLength(32)]
-        public string TraceId { get; set; }
-        
-        /// <summary>
-        /// 信息
-        /// </summary>
-        [StringLength(500)]
-        public string Msg { get; set; }
+        public string TraceId { get; set; }       
 
         /// <summary>
         /// 分片
         /// </summary>
         [Required]
         public int Sharding { get; set; }
+        
+        /// <summary>
+        /// 进程编号
+        /// </summary>
+        [Required]
+        public int ProcessId { get; set; }
         
         /// <summary>
         /// 跟踪编号
@@ -61,6 +63,12 @@ namespace Swarm.Basic.Entity
         /// </summary>
         [Required]
         public string AppArguments { get; set; }
+        
+        /// <summary>
+        /// 信息
+        /// </summary>
+        [StringLength(500)]
+        public string Msg { get; set; }
 
         /// <summary>
         /// 创建时间

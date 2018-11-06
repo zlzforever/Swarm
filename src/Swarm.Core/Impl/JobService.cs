@@ -55,13 +55,16 @@ namespace Swarm.Core.Impl
                 return new ApiResult(ApiResult.Error, "Swarm cluster has no available node");
             }
 
-            var sched = _schedCache.GetOrCreate(node.SchedName, node.SchedInstanceId, node.Provider, node.ConnectionString);
+            var sched = _schedCache.GetOrCreate(node.SchedName, node.SchedInstanceId, node.Provider,
+                node.ConnectionString);
 
             var qzJob = job.ToQuartzJob();
             var trigger = TriggerFactory.Create(job.Trigger, job.Id, job.Properties);
             await sched.ScheduleJob(qzJob, trigger);
 
-            job.NodeId = node.SchedInstanceId;
+            job.SchedInstanceId = node.SchedInstanceId;
+            job.SchedName = node.SchedName;
+
             await _store.AddJob(job);
 
             if (string.IsNullOrWhiteSpace(job.Id))
@@ -89,8 +92,16 @@ namespace Swarm.Core.Impl
                 return new ApiResult(ApiResult.Error, $"Job {jobId} not exists");
             }
 
-            var node = await _store.GetNode(job.NodeId);
-            var sched = _schedCache.GetOrCreate(node.SchedName, node.SchedInstanceId, node.Provider, node.ConnectionString);
+            var node = await _store.GetAvailableNode(job.SchedName, job.SchedInstanceId);
+
+            if (node == null)
+            {
+                return new ApiResult(ApiResult.Error,
+                    $"Sharding node [{job.SchedName}, {job.SchedInstanceId}] is offline");
+            }
+
+            var sched = _schedCache.GetOrCreate(node.SchedName, node.SchedInstanceId, node.Provider,
+                node.ConnectionString);
 
             // Remove from quartz firstly, then remove from swarm
             await sched.DeleteJob(new JobKey(jobId));
@@ -128,7 +139,7 @@ namespace Swarm.Core.Impl
                     break;
                 }
             }
-            
+
             _logger.LogInformation($"Exit job {jobId} success");
 
             return result;
@@ -164,8 +175,16 @@ namespace Swarm.Core.Impl
                 return new ApiResult(ApiResult.Error, $"Job {jobId} not exists");
             }
 
-            var node = await _store.GetNode(job.NodeId);
-            var sched = _schedCache.GetOrCreate(node.SchedName, node.SchedInstanceId, node.Provider, node.ConnectionString);
+            var node = await _store.GetAvailableNode(job.SchedName, job.SchedInstanceId);
+
+            if (node == null)
+            {
+                return new ApiResult(ApiResult.Error,
+                    $"Sharding node [{job.SchedName}, {job.SchedInstanceId}] is offline");
+            }
+
+            var sched = _schedCache.GetOrCreate(node.SchedName, node.SchedInstanceId, node.Provider,
+                node.ConnectionString);
 
             await sched.TriggerJob(new JobKey(jobId));
             _logger.LogInformation($"Trigger job {jobId} success");
@@ -179,7 +198,7 @@ namespace Swarm.Core.Impl
             {
                 case Executor.Process:
                 {
-                    if (string.IsNullOrWhiteSpace(value.Properties.GetValue(SwarmConts.ApplicationProperty)))
+                    if (string.IsNullOrWhiteSpace(value.Properties.GetValue(SwarmConsts.ApplicationProperty)))
                     {
                         return new ApiResult(ApiResult.ModelNotValid,
                             "The Application field is required");
@@ -189,7 +208,7 @@ namespace Swarm.Core.Impl
                 }
                 case Executor.Reflection:
                 {
-                    if (string.IsNullOrWhiteSpace(value.Properties.GetValue(SwarmConts.ClassProperty)))
+                    if (string.IsNullOrWhiteSpace(value.Properties.GetValue(SwarmConsts.ClassProperty)))
                     {
                         return new ApiResult(ApiResult.ModelNotValid, "The ClassName field is required");
                     }

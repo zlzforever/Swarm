@@ -17,7 +17,7 @@ namespace Swarm.Server.Migrations
                     SchedName = table.Column<string>(maxLength: 250, nullable: false),
                     SchedInstanceId = table.Column<string>(maxLength: 32, nullable: false),
                     Name = table.Column<string>(maxLength: 120, nullable: false),
-                    Group = table.Column<string>(maxLength: 120, nullable: true),
+                    Group = table.Column<string>(maxLength: 120, nullable: false),
                     ConnectionId = table.Column<string>(maxLength: 50, nullable: false),
                     Ip = table.Column<string>(maxLength: 50, nullable: false),
                     Os = table.Column<string>(maxLength: 50, nullable: false),
@@ -39,14 +39,15 @@ namespace Swarm.Server.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Name = table.Column<string>(maxLength: 120, nullable: false),
-                    Group = table.Column<string>(maxLength: 120, nullable: true),
+                    Group = table.Column<string>(maxLength: 120, nullable: false),
                     JobId = table.Column<string>(maxLength: 120, nullable: false),
                     TraceId = table.Column<string>(maxLength: 32, nullable: true),
-                    Msg = table.Column<string>(maxLength: 500, nullable: true),
                     Sharding = table.Column<int>(nullable: false),
+                    ProcessId = table.Column<int>(nullable: false),
                     State = table.Column<int>(maxLength: 32, nullable: false),
                     App = table.Column<string>(maxLength: 120, nullable: false),
                     AppArguments = table.Column<string>(nullable: false),
+                    Msg = table.Column<string>(maxLength: 500, nullable: true),
                     CreationTime = table.Column<DateTimeOffset>(nullable: false),
                     LastModificationTime = table.Column<DateTimeOffset>(nullable: true)
                 },
@@ -60,12 +61,13 @@ namespace Swarm.Server.Migrations
                 columns: table => new
                 {
                     Id = table.Column<string>(nullable: false),
+                    SchedName = table.Column<string>(maxLength: 250, nullable: false),
+                    SchedInstanceId = table.Column<string>(maxLength: 32, nullable: false),
+                    Name = table.Column<string>(maxLength: 120, nullable: false),
+                    Group = table.Column<string>(maxLength: 120, nullable: false),
                     Trigger = table.Column<int>(nullable: false),
                     Performer = table.Column<int>(nullable: false),
                     Executor = table.Column<int>(nullable: false),
-                    NodeId = table.Column<string>(maxLength: 32, nullable: true),
-                    Name = table.Column<string>(maxLength: 120, nullable: false),
-                    Group = table.Column<string>(maxLength: 120, nullable: false),
                     Load = table.Column<int>(nullable: false),
                     Sharding = table.Column<int>(nullable: false),
                     ShardingParameters = table.Column<string>(maxLength: 500, nullable: true),
@@ -97,33 +99,16 @@ namespace Swarm.Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "JobState",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    JobId = table.Column<string>(maxLength: 32, nullable: true),
-                    TraceId = table.Column<string>(maxLength: 32, nullable: true),
-                    State = table.Column<int>(nullable: false),
-                    Client = table.Column<string>(maxLength: 120, nullable: true),
-                    Msg = table.Column<string>(maxLength: 500, nullable: true),
-                    Sharding = table.Column<int>(nullable: false),
-                    CreationTime = table.Column<DateTimeOffset>(nullable: false),
-                    LastModificationTime = table.Column<DateTimeOffset>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_JobState", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Log",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
-                    JobId = table.Column<string>(maxLength: 32, nullable: true),
-                    TraceId = table.Column<string>(maxLength: 32, nullable: true),
+                    ClientName = table.Column<string>(maxLength: 120, nullable: false),
+                    ClientGroup = table.Column<string>(maxLength: 120, nullable: false),
+                    JobId = table.Column<string>(maxLength: 32, nullable: false),
+                    TraceId = table.Column<string>(maxLength: 32, nullable: false),
+                    Sharding = table.Column<int>(nullable: false),
                     Msg = table.Column<string>(nullable: true),
                     CreationTime = table.Column<DateTimeOffset>(nullable: false)
                 },
@@ -142,6 +127,7 @@ namespace Swarm.Server.Migrations
                     SchedInstanceId = table.Column<string>(maxLength: 32, nullable: false),
                     Provider = table.Column<string>(maxLength: 250, nullable: false),
                     ConnectionString = table.Column<string>(maxLength: 250, nullable: false),
+                    IsConnected = table.Column<bool>(nullable: false),
                     TriggerTimes = table.Column<long>(nullable: false),
                     CreationTime = table.Column<DateTimeOffset>(nullable: false),
                     LastModificationTime = table.Column<DateTimeOffset>(nullable: true)
@@ -166,8 +152,7 @@ namespace Swarm.Server.Migrations
                 name: "IX_Client_Name_Group",
                 table: "Client",
                 columns: new[] { "Name", "Group" },
-                unique: true,
-                filter: "[Group] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ClientProcess_CreationTime",
@@ -215,35 +200,6 @@ namespace Swarm.Server.Migrations
                 columns: new[] { "JobId", "Name" },
                 unique: true,
                 filter: "[JobId] IS NOT NULL AND [Name] IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_JobState_CreationTime",
-                table: "JobState",
-                column: "CreationTime");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_JobState_JobId",
-                table: "JobState",
-                column: "JobId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_JobState_JobId_TraceId",
-                table: "JobState",
-                columns: new[] { "JobId", "TraceId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_JobState_Sharding_TraceId_Client",
-                table: "JobState",
-                columns: new[] { "Sharding", "TraceId", "Client" },
-                unique: true,
-                filter: "[TraceId] IS NOT NULL AND [Client] IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_JobState_Sharding_JobId_TraceId_Client",
-                table: "JobState",
-                columns: new[] { "Sharding", "JobId", "TraceId", "Client" },
-                unique: true,
-                filter: "[JobId] IS NOT NULL AND [TraceId] IS NOT NULL AND [Client] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Log_CreationTime",
@@ -296,9 +252,6 @@ namespace Swarm.Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "JobProperty");
-
-            migrationBuilder.DropTable(
-                name: "JobState");
 
             migrationBuilder.DropTable(
                 name: "Log");

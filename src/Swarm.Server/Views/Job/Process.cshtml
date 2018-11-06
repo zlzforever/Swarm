@@ -5,10 +5,15 @@
     <table class="card bordered highlight responsive-table centered">
         <thead>
         <tr>
+            <th>ClientName</th>
+            <th>ClientGroup</th>
+            <th>JobId</th>
             <th>TraceId</th>
-            <th>State</th>
-            <th>Client</th>
             <th>Sharding</th>
+            <th>ProcessId</th>
+            <th>State</th>
+            <th>App</th>
+            <th>AppArguments</th>
             <th>Msg</th>
             <th>Time</th>
         </tr>
@@ -21,16 +26,31 @@
         </tr>
         <tr v-for="state in states">
             <td>
+                <span v-text="state.name"></span>
+            </td>
+            <td>
+                <span v-text="state.group"></span>
+            </td>
+            <td>
+                <span v-text="state.jobId"></span>
+            </td>
+            <td>
                 <span v-text="state.traceId"></span>
+            </td>
+            <td>
+                <span v-text="state.sharding"></span>
+            </td>
+            <td>
+                <span v-text="state.processId"></span>
             </td>
             <td>
                 <span v-text="state.state"></span>
             </td>
             <td>
-                <span v-text="state.client"></span>
+                <span v-text="state.app"></span>
             </td>
             <td>
-                <span v-text="state.sharding"></span>
+                <span v-text="state.appArguments"></span>
             </td>
             <td>
                 <span v-text="state.msg"></span>
@@ -53,5 +73,5 @@
 </div>
 
 @section scripts{
-    <script src="~/js/jobState.js" asp-append-version="true"></script>
+    <script src="~/js/jobProcess.js" asp-append-version="true"></script>
 }

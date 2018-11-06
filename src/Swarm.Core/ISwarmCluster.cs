@@ -6,5 +6,6 @@ namespace Swarm.Core
     public interface ISwarmCluster
     {
         Task Start(CancellationToken cancellationToken = default);
+        Task Shutdown();
     }
 }

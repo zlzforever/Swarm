@@ -30,12 +30,8 @@ Swarm is a distributed scheduled job framework, based on Quartz.
  ```
  ##### SWARM SHARDING NODE
 
-+ 2 or more Swarm Server as a quartz cluster node to make sure triggers will be performed. SSN use a independent DB.
-
- ##### SHARDING MODULE
-
-+ Sharding request server load, database load, job count from Swarm servers every 5 second
-+ Sharding choose a Scheduler to create/update/delete job
++ 2 or more Swarm Server as a quartz cluster node to make sure triggers will be performed.
++ Via ISharding to choose a Scheduler to create/update/delete job
 
  ##### EXECUTE JOB TYPE
 
@@ -59,6 +55,8 @@ Swarm is a distributed scheduled job framework, based on Quartz.
 ## WHY SWARM?
 
 Quartz is a great scheduler framework, but if we have millions or more jobs or trigger very frequent, one database can't load this scenario. So we want to implement a distributed scheduler system can scheudler millions jobs, millions clients
+
+## LET'S MAKE A BRAIN STORM
 
 #### Quartz 定时系统的基本原理
 

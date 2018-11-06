@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Swarm.Basic;
 using Swarm.Basic.Common;
 using Swarm.Basic.Entity;
+using Swarm.Client.Impl;
 
 namespace Swarm.Client.Listener
 {
@@ -32,21 +33,21 @@ namespace Swarm.Client.Listener
                 return;
             }
 
+            Enum.TryParse(context.Parameters.GetValue(SwarmConsts.ExecutorProperty), out Executor executor);
+            var executorInstance = _executorFactory.Create(executor);
+            if (executorInstance == null)
+            {
+                _logger.LogError($"Executor {executor} is not support yet");
+                return;
+            }
+
             var delay = (context.FireTimeUtc - DateTime.UtcNow).TotalSeconds;
             if (delay > 10)
             {
                 _logger.LogError(
                     $"Trigger job [{context.Name}, {context.Group}, {context.TraceId}, {context.CurrentSharding}] timeout: {delay}.");
-                await connection.SendAsync("StateChanged", new JobState
-                    {
-                        JobId = context.JobId,
-                        TraceId = context.TraceId,
-                        Sharding = context.CurrentSharding,
-                        State = State.Exit,
-                        Client = _options.Name,
-                        Msg = "Timeout"
-                    }
-                    , token);
+
+                await executorInstance.OnExited(context, connection, 0, "Timeout from server");
                 return;
             }
 
@@ -54,46 +55,13 @@ namespace Swarm.Client.Listener
             {
                 _logger.LogInformation(
                     $"Try execute job [{context.Name}, {context.Group}, {context.TraceId}, {context.CurrentSharding}]");
-
-                await connection.SendAsync("StateChanged", new JobState
-                {
-                    JobId = context.JobId,
-                    TraceId = context.TraceId,
-                    Sharding = context.CurrentSharding,
-                    Client = _options.Name,
-                    State = State.Running
-                }, token);
-
-                Enum.TryParse(context.Parameters.GetValue(SwarmConts.ExecutorProperty), out Executor executor);
-                var exitCode = await _executorFactory.Create(executor).Execute(context,
-                    async (jobId, traceId, msg) =>
-                    {
-                        await connection.SendAsync("OnLog", new Log {JobId = jobId, TraceId = traceId, Msg = msg},
-                            token);
-                    });
-
-                await connection.SendAsync("StateChanged", new JobState
-                {
-                    JobId = context.JobId,
-                    TraceId = context.TraceId,
-                    Sharding = context.CurrentSharding,
-                    Client = _options.Name,
-                    State = State.Exit,
-                    Msg = $"Exit: {exitCode}"
-                }, token);
+                await executorInstance.Execute(context, connection);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, $"Execute job [{context.Name}, {context.Group}] failed.");
-                await connection.SendAsync("StateChanged", new JobState
-                {
-                    JobId = context.JobId,
-                    TraceId = context.TraceId,
-                    Sharding = context.CurrentSharding,
-                    Client = _options.Name,
-                    State = State.Exit,
-                    Msg = $"Failed: {ex.Message}"
-                }, token);
+
+                await executorInstance.OnExited(context, connection, 0, $"Failed: {ex.Message}");
             }
         }
     }
