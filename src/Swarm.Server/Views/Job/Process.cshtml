@@ -1,13 +1,13 @@
-<h4>
-    JOB STATE
-</h4>
+
 <div id="view" class="row">
+    <h4>
+        JOB PROCESS:  <span v-text="jobId"></span>
+    </h4>
     <table class="card bordered highlight responsive-table centered">
         <thead>
         <tr>
-            <th>ClientName</th>
-            <th>ClientGroup</th>
-            <th>JobId</th>
+            <th>Name</th>
+            <th>Group</th>
             <th>TraceId</th>
             <th>Sharding</th>
             <th>ProcessId</th>
@@ -32,9 +32,6 @@
                 <span v-text="state.group"></span>
             </td>
             <td>
-                <span v-text="state.jobId"></span>
-            </td>
-            <td>
                 <span v-text="state.traceId"></span>
             </td>
             <td>
@@ -50,7 +47,7 @@
                 <span v-text="state.app"></span>
             </td>
             <td>
-                <span v-text="state.appArguments"></span>
+                <span v-text="state.arguments"></span>
             </td>
             <td>
                 <span v-text="state.msg"></span>

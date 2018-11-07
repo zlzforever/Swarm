@@ -4,7 +4,6 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Swarm.Basic;
 using Swarm.Basic.Entity;
@@ -22,6 +21,16 @@ namespace Swarm.Core.Impl
 
         #region Client
 
+        public async Task ClientHeartbeat(string name, string group)
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                await conn.ExecuteAsync(
+                    "UPDATE [Client] SET [LastModificationTime] = CURRENT_TIMESTAMP, [IsConnected] = 'true'  WHERE [Name] = @Name AND [Group] = @Group",
+                    new {Name = name, Group = group});
+            }
+        }
+        
         public async Task<bool> AddClient(Client client)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
@@ -225,7 +234,7 @@ namespace Swarm.Core.Impl
                         "DELETE FROM [Job] WHERE Id = @Id",
                         new {Id = jobId}, trans);
                     await conn.ExecuteAsync(
-                        "DELETE FROM [JobState] WHERE [JobId] = @Id",
+                        "DELETE FROM [ClientProcess] WHERE [JobId] = @Id",
                         new {Id = jobId}, trans);
                     await conn.ExecuteAsync(
                         "DELETE FROM [Log] WHERE [JobId] = @Id",
@@ -292,12 +301,12 @@ namespace Swarm.Core.Impl
             }
         }
 
-        public async Task<Node> GetAvailableNode(string schedName, string schedInstanceId)
+        public async Task<Node> GetNode(string schedName, string schedInstanceId)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
             {
                 return await conn.QuerySingleOrDefaultAsync<Node>(
-                    "SELECT TOP 1 [Id], [SchedName], [SchedInstanceId], [Provider], [TriggerTimes], [IsConnected], [ConnectionString], [CreationTime], [LastModificationTime] FROM [Node] WHERE [IsConnected] = 'true' AND [SchedName] = @SchedName AND [SchedInstanceId] = @SchedInstanceId",
+                    "SELECT TOP 1 [Id], [SchedName], [SchedInstanceId], [Provider], [TriggerTimes], [IsConnected], [ConnectionString], [CreationTime], [LastModificationTime] FROM [Node] WHERE [SchedName] = @SchedName AND [SchedInstanceId] = @SchedInstanceId",
                     new {SchedName = schedName, SchedInstanceId = schedInstanceId});
             }
         }
@@ -309,16 +318,6 @@ namespace Swarm.Core.Impl
                 await conn.ExecuteAsync(
                     "UPDATE [Node] SET [TriggerTimes] = [TriggerTimes] + 1  WHERE [SchedInstanceId] = @SchedInstanceId AND [SchedName] = @SchedName",
                     new {SchedInstanceId = schedInstanceId, SchedName = schedName});
-            }
-        }
-
-        public async Task ClientHeartbeat(string name, string group)
-        {
-            using (var conn = new SqlConnection(_options.ConnectionString))
-            {
-                await conn.ExecuteAsync(
-                    "UPDATE [Client] SET [LastModificationTime] = CURRENT_TIMESTAMP, [IsConnected] = 'true'  WHERE [Name] = @Name AND [Group] = @Group",
-                    new {Name = name, Group = group});
             }
         }
 
@@ -346,8 +345,8 @@ namespace Swarm.Core.Impl
             {
                 await conn.OpenAsync();
                 var exists = await conn.ExecuteAsync(
-                                 @"UPDATE [ClientProcess] SET [State] = @State, [Msg] = @Msg, [App] = @App, [AppArguments] = @AppArguments, [LastModificationTime] = CURRENT_TIMESTAMP WHERE
- [Name] = @Name AND [Group] = @Group AND [JobId] = @JobId AND [TraceId] = @TraceId AND [Sharding] = @Sharding AND [ProcessId] = @ProcessId",
+                                 @"UPDATE [ClientProcess] SET [ProcessId] = @ProcessId, [State] = @State, [Msg] = @Msg, [App] = @App, [AppArguments] = @AppArguments, [LastModificationTime] = CURRENT_TIMESTAMP WHERE
+ [Name] = @Name AND [Group] = @Group AND [JobId] = @JobId AND [TraceId] = @TraceId AND [Sharding] = @Sharding",
                                  clientProcess) > 0;
                 if (!exists)
                 {

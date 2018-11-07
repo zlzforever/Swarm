@@ -92,9 +92,9 @@ namespace Swarm.Core.Impl
                 return new ApiResult(ApiResult.Error, $"Job {jobId} not exists");
             }
 
-            var node = await _store.GetAvailableNode(job.SchedName, job.SchedInstanceId);
+            var node = await _sharding.GetNode(job.SchedName, job.SchedInstanceId);
 
-            if (node == null)
+            if (node == null || !node.IsAvailable())
             {
                 return new ApiResult(ApiResult.Error,
                     $"Sharding node [{job.SchedName}, {job.SchedInstanceId}] is offline");
@@ -175,9 +175,9 @@ namespace Swarm.Core.Impl
                 return new ApiResult(ApiResult.Error, $"Job {jobId} not exists");
             }
 
-            var node = await _store.GetAvailableNode(job.SchedName, job.SchedInstanceId);
+            var node = await _sharding.GetNode(job.SchedName, job.SchedInstanceId);
 
-            if (node == null)
+            if (node == null || !node.IsAvailable())
             {
                 return new ApiResult(ApiResult.Error,
                     $"Sharding node [{job.SchedName}, {job.SchedInstanceId}] is offline");

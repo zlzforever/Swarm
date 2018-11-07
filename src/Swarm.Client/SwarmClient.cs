@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -10,11 +9,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 using Microsoft.Extensions.Options;
 using Swarm.Basic;
-using Swarm.Basic.Common;
-using Swarm.Basic.Entity;
 using Swarm.Client.Listener;
 
 namespace Swarm.Client
@@ -140,36 +136,26 @@ namespace Swarm.Client
                 throw new SwarmClientException("Client is running.");
             }
 
-            CancellationToken token = cancellationToken;
-
             _isRunning = true;
 
             return Task.Factory.StartNew(async () =>
             {
-                while (true)
+                HubConnection conn = null;
+                while (_retryTimes < RetryTimes)
                 {
-                    token.ThrowIfCancellationRequested();
+                    cancellationToken.ThrowIfCancellationRequested();
 
-                    if (_isDisconnected)
+                    if (conn == null || _isDisconnected)
                     {
-                        var conn = await CreateConnection(token);
-                        if (conn == null)
-                        {
-                            break;
-                        }
-                        Task.Factory.StartNew(async () =>
-                        {
-                            while (!cancellationToken.IsCancellationRequested)
-                            {
-                                await conn.SendAsync("Heartbeat", cancellationToken);
-                                token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(HeartbeatInterval));
-                            }
-                        }, TaskCreationOptions.LongRunning).ConfigureAwait(false);
+                        conn = await CreateConnection(cancellationToken);
                     }
-                    token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(HeartbeatInterval));
+
+                    await conn.SendAsync("Heartbeat", cancellationToken);
+                    cancellationToken.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(HeartbeatInterval));
                 }
+
                 _isRunning = false;
-            }, token);
+            }, cancellationToken);
         }
 
         private async Task<HubConnection> CreateConnection(CancellationToken token)
@@ -191,15 +177,15 @@ namespace Swarm.Client
                                 {SwarmConsts.AccessTokenHeader, AccessToken}
                             };
                         }).AddMessagePackProtocol().Build();
-                connection.Closed +=  e =>
+                connection.Closed += e =>
                 {
                     _isDisconnected = true;
-                    _logger.LogWarning($"Disconnected from server: {e?.Message}.");
+                    _logger.LogWarning($"Disconnected from server.");
                     return Task.CompletedTask;
                 };
 
                 AddListener(connection, token);
-                
+
                 var tuple = await connection.StartAsync(token)
                     .ContinueWith(t => new Tuple<bool, string>(t.IsFaulted, t.Exception?.Message), token);
                 _isDisconnected = tuple.Item1;
@@ -222,10 +208,7 @@ namespace Swarm.Client
         private void AddListener(HubConnection connection, CancellationToken token)
         {
             connection.On<JobContext>("Trigger",
-                async context =>
-                {
-                    await _triggerListener.Handle(connection, context);
-                });
+                async context => { await _triggerListener.Handle(connection, context, token); });
 
             connection.On("Exit", _exitListener.Handle);
             connection.On<string>("Kill", _killAllListener.Handle);

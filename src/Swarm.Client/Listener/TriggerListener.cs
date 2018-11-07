@@ -6,8 +6,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Swarm.Basic;
 using Swarm.Basic.Common;
-using Swarm.Basic.Entity;
-using Swarm.Client.Impl;
 
 namespace Swarm.Client.Listener
 {

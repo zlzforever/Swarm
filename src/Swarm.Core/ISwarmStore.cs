@@ -4,28 +4,14 @@ using Swarm.Basic.Entity;
 
 namespace Swarm.Core
 {
-    public interface ISwarmStore
+    public interface ISwarmStore:IClientStore
     {
-        #region Client
-
-        Task<bool> AddClient(Client client);
-        Task RemoveClient(int clientId);
-        Task ConnectClient(string name, string group, string connectionId);
-        Task<Client> GetClient(string name, string group);
-        Task DisconnectClient(string name, string group);
-        Task<IEnumerable<Client>> GetAvailableClients(string group);
-        Task DisconnectAllClients();
-        Task ClientHeartbeat(string name, string group);
-
-        #endregion
-
         #region Job
 
         Task<Job> GetJob(string name, string group);
         Task<string> AddJob(Job job);
         Task UpdateJob(Job job);
         Task DeleteJob(string jobId);
-
         Task<Job> GetJob(string jobId);
 
         #endregion
@@ -41,7 +27,7 @@ namespace Swarm.Core
         Task DisconnectNode(string schedName, string schedInstanceId);
         Task RegisterNode(Node node);
         Task<Node> GetMinimumTriggerTimesNode();
-        Task<Node> GetAvailableNode(string schedName, string schedInstanceId);
+        Task<Node> GetNode(string schedName, string schedInstanceId);
         Task IncreaseTriggerTime(string schedName, string schedInstanceId);
 
         #endregion

@@ -9,18 +9,20 @@ namespace Swarm.Core.Impl
     public class SwarmCluster : ISwarmCluster
     {
         private readonly SwarmOptions _options;
-        private readonly ISwarmStore _store;
+        private readonly ISharding _sharding;
+        private readonly IClientStore _clientStore;
 
-        public SwarmCluster(IOptions<SwarmOptions> options, ISwarmStore store)
+        public SwarmCluster(IOptions<SwarmOptions> options, ISharding sharding, IClientStore clientStore)
         {
             _options = options.Value;
-            _store = store;
+            _sharding = sharding;
+            _clientStore = clientStore;
         }
 
         public async Task Start(CancellationToken cancellationToken = default)
         {
             // Clean all old client connect information
-            await _store.DisconnectAllClients();
+            await _clientStore.DisconnectAllClients();
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -33,7 +35,7 @@ namespace Swarm.Core.Impl
                     IsConnected = true,
                     TriggerTimes = 0
                 };
-                await _store.RegisterNode(node);
+                await _sharding.RegisterNode(node);
                 await Task.Delay(TimeSpan.FromMilliseconds(5000), cancellationToken).ConfigureAwait(false);
             }
         }
@@ -41,7 +43,7 @@ namespace Swarm.Core.Impl
         public async Task Shutdown()
         {
             Console.WriteLine("DISCONNECTED");
-            await _store.DisconnectNode(_options.SchedName, _options.SchedInstanceId);
+            await _sharding.DisconnectNode(_options.SchedName, _options.SchedInstanceId);
         }
     }
 }

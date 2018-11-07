@@ -50,6 +50,12 @@ namespace Swarm.Core
             return builder;
         }
 
+        public static ISwarmBuilder UseSqlServerClientStore(this ISwarmBuilder builder)
+        {
+            builder.Services.AddSingleton<IClientStore, SqlServerSwarmStore>();
+            return builder;
+        }
+
         public static ISwarmBuilder UseSqlServer(this ISwarmBuilder builder)
         {
             builder.Services.AddSingleton<ISwarmStore, SqlServerSwarmStore>();
@@ -90,19 +96,13 @@ namespace Swarm.Core
                 options.QuartzConnectionString);
             sched.Start(cancellationToken).ConfigureAwait(false);
 
-            var token=new CancellationToken();
-            cancellationToken.Register(async () =>
-            {
-                await sched.Shutdown(token);
-            });
-            
+            var token = new CancellationToken();
+            cancellationToken.Register(async () => { await sched.Shutdown(token); });
+
             // Start swarm sharding node
             var cluster = app.ApplicationServices.GetRequiredService<ISwarmCluster>();
             cluster.Start(cancellationToken).ConfigureAwait(true);
-            cancellationToken.Register(async () =>
-            {
-                await cluster.Shutdown();
-            });
+            cancellationToken.Register(async () => { await cluster.Shutdown(); });
 
             app.UseSignalR(routes => { routes.MapHub<ClientHub>("/clienthub"); });
 

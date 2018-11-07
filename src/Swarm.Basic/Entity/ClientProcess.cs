@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel.DataAnnotations;
-using System.Dynamic;
 
 namespace Swarm.Basic.Entity
 {

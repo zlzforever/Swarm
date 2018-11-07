@@ -12,16 +12,19 @@ namespace Swarm.Core.SignalR
     {
         private readonly SwarmOptions _options;
         private readonly ILogger _logger;
-        private readonly ISwarmStore _store;
+        private readonly IClientStore _clientStore;
         private readonly ILogStore _logStore;
+        private readonly ISwarmStore _swarmStore;
 
-        public ClientHub(IOptions<SwarmOptions> options,
-            ISwarmStore store, ILogStore logStore, ILoggerFactory loggerFactory)
+        public ClientHub(IOptions<SwarmOptions> options, ISwarmStore swarmStore,
+            IClientStore store,
+            ILogStore logStore, ILoggerFactory loggerFactory)
         {
             _options = options.Value;
             _logger = loggerFactory.CreateLogger<ClientHub>();
-            _store = store;
+            _clientStore = store;
             _logStore = logStore;
+            _swarmStore = swarmStore;
         }
 
         public async Task StateChanged(ClientProcess clientProcess)
@@ -34,7 +37,7 @@ namespace Swarm.Core.SignalR
                 return;
             }
 
-            await _store.AddOrUpdateClientProcess(clientProcess);
+            await _swarmStore.AddOrUpdateClientProcess(clientProcess);
         }
 
         public async Task Log(Log log)
@@ -46,7 +49,7 @@ namespace Swarm.Core.SignalR
         public async Task Heartbeat()
         {
             var ci = Context.GetClient(_options);
-            await _store.ClientHeartbeat(ci.Name, ci.Group);
+            await _clientStore.ClientHeartbeat(ci.Name, ci.Group);
         }
 
         public override async Task OnConnectedAsync()
@@ -74,10 +77,10 @@ namespace Swarm.Core.SignalR
             {
                 try
                 {
-                    var client = await _store.GetClient(ci.Name, ci.Group);
+                    var client = await _clientStore.GetClient(ci.Name, ci.Group);
                     if (client == null)
                     {
-                        await _store.AddClient(ci);
+                        await _clientStore.AddClient(ci);
                         _logger.LogInformation(
                             $"{ci} register success");
                         return;
@@ -87,7 +90,7 @@ namespace Swarm.Core.SignalR
                     if (!client.IsConnected ||
                         (DateTime.Now - (client.LastModificationTime ?? client.CreationTime)).Seconds < 7)
                     {
-                        await _store.ConnectClient(ci.Name, ci.Group, ci.ConnectionId);
+                        await _clientStore.ConnectClient(ci.Name, ci.Group, ci.ConnectionId);
                         _logger.LogInformation(
                             $"{ci} register success");
                         return;
@@ -114,7 +117,7 @@ namespace Swarm.Core.SignalR
 
             try
             {
-                await _store.DisconnectClient(ci.Name, ci.Group);
+                await _clientStore.DisconnectClient(ci.Name, ci.Group);
                 await base.OnDisconnectedAsync(exception);
 
                 _logger.LogInformation($"{ci} disconnected");

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -7,6 +8,7 @@ using Swarm.Core;
 using Swarm.Core.Common;
 using Swarm.Core.Controllers;
 using Swarm.Server.Models;
+using Swarm.Server.Models.Dto;
 
 namespace Swarm.Server.Api
 {
@@ -41,6 +43,26 @@ namespace Swarm.Server.Api
             //TODO: 更多的条件
 
             var output = _dbContext.ClientProcess.PageList<ClientProcess, int, int>(input, where, d => d.Id);
+            var results = new List<ClientProcessDto>();
+            foreach (ClientProcess clientProcess in output.Result)
+            {
+                results.Add(new ClientProcessDto
+                {
+                    Name = clientProcess.Name,
+                    Group = clientProcess.Group,
+                    TraceId = Guid.Parse(clientProcess.TraceId).ToInt64(),
+                    Sharding = clientProcess.Sharding,
+                    ProcessId = clientProcess.ProcessId,
+                    State = clientProcess.State,
+                    App = clientProcess.App,
+                    Arguments = clientProcess.AppArguments,
+                    Msg = clientProcess.Msg,
+                    LastModificationTime = clientProcess.LastModificationTime ?? clientProcess.CreationTime
+                });
+            }
+
+            output.Result = results;
+
             return new JsonResult(new ApiResult(ApiResult.SuccessCode, null, output));
         }
 
