@@ -1,64 +1,123 @@
- <h4>Cron process job</h4>
-<br/>
-<div id="view" class="card">
-    <div class="row">
-        <div class="col s12 m2">
-            <input type="text" v-model="job.name" placeholder="Name">
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        CREATE CRON PROCESS JOB
+        <small></small>
+    </h1>
+    <ol class="breadcrumb">
+        <li>
+            <a href="#"><i class="fa fa-dashboard"></i> Swarm</a>
+        </li>
+        <li class="active">Create cron process job</li>
+    </ol>
+</section>
+
+<!-- Main content -->
+<section class="content container-fluid" id="view">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-body">
+                <div class="row">
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <input class="form-control" type="text" v-model="job.name" placeholder="Name">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Group</label>
+                            <input class="form-control" type="text" v-model="job.group" placeholder="Group">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>Cron</label>
+                            <input class="form-control" type="text" v-model="job.cron" placeholder="Cron">
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <div class="form-group">
+                            <label>RetryCount</label>
+                            <input class="form-control" type="text" v-model="job.retryCount" placeholder="RetryCount">
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <div class="form-group">
+                            <label>Sharding</label>
+                            <input class="form-control" type="text" v-model="job.sharding" placeholder="Sharding">
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <div class="form-group">
+                            <label>Load</label>
+                            <input class="form-control" type="text" v-model="job.load" placeholder="Load">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="form-group">
+                            <label>LogPattern</label>
+                            <input class="form-control" type="text" v-model="job.logPattern" placeholder="LogPattern">
+                        </div>
+                    </div>
+                    <div class="col-md-1">
+                        <div class="form-group">
+                            <label>Concurrent</label>
+                            <select class="form-control" style="width: 100%;" v-model="job.allowConcurrent">
+                                <option selected="selected">True</option>
+                                <option>False</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>ShardingParameters</label>
+                            <input class="form-control" type="text" v-model="job.shardingParameters" placeholder="ShardingParameters">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Application</label>
+                            <input class="form-control" type="text" v-model="job.application" placeholder="Application">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label>Arguments</label>
+                            <input class="form-control" type="text" v-model="job.arguments" placeholder="Arguments">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Owner</label>
+                            <input class="form-control" type="text" v-model="job.owner" placeholder="Owner">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Description</label>
+                            <input class="form-control" type="text" v-model="job.description" placeholder="Description">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.box-body -->
+            <div class="box-footer clearfix">
+                <button type="button" class="btn btn-default" @@click="create()">SUBMIT</button>
+                <a class="btn btn-default" href="/job/cron">BACK</a>
+            </div>
         </div>
-        <div class="col s12 m2">
-            <input type="text" v-model="job.group" placeholder="Group">
-        </div>
-        <div class="col s12 m2">
-            <input type="text" v-model="job.cron" placeholder="Cron">
-        </div>
-        <div class="col s12 m1">
-            <input type="text" v-model="job.retryCount" placeholder="RetryCount">
-        </div>
-        <div class="col s12 m1">
-            <input type="number" value="1" min="1" v-model="job.sharding" placeholder="Sharding" alt="Sharding"/>
-        </div>
-        <div class="col s12 m1">
-            <input type="text" v-model="job.load" placeholder="Load">
-        </div>
-        <div class="col s12 m2">
-            <input type="text" v-model="job.logPattern" placeholder="LogPattern">
-        </div>
-        <div class="col s12 m1">
-            <select v-model="job.concurrentExecutionDisallowed">
-                <option disabled>Parallel</option>
-                <option>True</option>
-                <option selected>False</option>
-            </select>
-        </div>
+        <!-- /.box -->
     </div>
-    <div class="row">
-        <div class="col s12 m12">
-            <input type="text" v-model="job.shardingParameters" placeholder="ShardingParameters">
-        </div>
-    </div>
-    <div class="row">
-        <div class="col s12 m12">
-            <input type="text" v-model="job.application" placeholder="Application">
-        </div>
-    </div>
-    <div class="row">
-        <div class="col s12 m12">
-            <input type="text" v-model="job.arguments" placeholder="Arguments">
-        </div>
-    </div>
-    <div class="row">
-        <div class="col s12 m6">
-            <input type="text" v-model="job.owner" placeholder="Owner">
-        </div>
-        <div class="col s12 m6">
-            <input type="text" v-model="job.description" placeholder="Description">
-        </div>
-    </div>
-    <div class="card-action">
-        <button type="button" class="btn waves-effect" @@click="create()">SUBMIT</button>
-        <a class="btn waves-effect" href="/job">BACK</a>
-    </div>
-</div>
+</section>
 
 @section scripts{
     <script src="~/js/cronProc.js" asp-append-version="true"></script>

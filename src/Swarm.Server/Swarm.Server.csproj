@@ -23,4 +23,7 @@
       </Content>
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\lib\adminLTE" />
+    </ItemGroup>
 </Project>

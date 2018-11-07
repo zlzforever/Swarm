@@ -1,73 +1,86 @@
+<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        JOB PROCESSES
+        <small>view job processes</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li>
+            <a href="#"><i class="fa fa-dashboard"></i> Swarm</a>
+        </li>
+        <li class="active">Job Process</li>
+    </ol>
+</section>
 
-<div id="view" class="row">
-    <h4>
-        JOB PROCESS:  <span v-text="jobId"></span>
-    </h4>
-    <table class="card bordered highlight responsive-table centered">
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Group</th>
-            <th>TraceId</th>
-            <th>Sharding</th>
-            <th>ProcessId</th>
-            <th>State</th>
-            <th>App</th>
-            <th>AppArguments</th>
-            <th>Msg</th>
-            <th>Time</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr v-show="states.length==0">
-            <td colspan="13">
-                No data to display...
-            </td>
-        </tr>
-        <tr v-for="state in states">
-            <td>
-                <span v-text="state.name"></span>
-            </td>
-            <td>
-                <span v-text="state.group"></span>
-            </td>
-            <td>
-                <span v-text="state.traceId"></span>
-            </td>
-            <td>
-                <span v-text="state.sharding"></span>
-            </td>
-            <td>
-                <span v-text="state.processId"></span>
-            </td>
-            <td>
-                <span v-text="state.state"></span>
-            </td>
-            <td>
-                <span v-text="state.app"></span>
-            </td>
-            <td>
-                <span v-text="state.arguments"></span>
-            </td>
-            <td>
-                <span v-text="state.msg"></span>
-            </td>
-            <td>
-                <span v-text="hub.formatDate(state.lastModificationTime)"></span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    <div class="row">
-        <div class="col s12 m6 left">
-            <div v-show="total>size" id="pagination">
+<!-- Main content -->
+<section class="content container-fluid" id="view">
+    <div class="col-xs-12">
+        <div class="box">
+            <!-- /.box-header -->
+            <div class="box-body table-responsive no-padding">
+                <table class="table table-bordered">
+                    <tbody>
+                    <tr>
+                        <th>Name</th>
+                        <th>Group</th>
+                        <th>TraceId</th>
+                        <th>Sharding</th>
+                        <th>ProcessId</th>
+                        <th>State</th>
+                        <th>App</th>
+                        <th>AppArguments</th>
+                        <th>Msg</th>
+                        <th>Time</th>
+                    </tr>
+                    <tr v-show="els.length==0">
+                        <td colspan="13">
+                            No data to display...
+                        </td>
+                    </tr>
+                    <tr v-for="el in els">
+                        <td>
+                            <span v-text="el.name"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.group"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.traceId"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.sharding"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.processId"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.state"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.app"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.arguments"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.msg"></span>
+                        </td>
+                        <td>
+                            <span v-text="hub.formatDate(el.lastModificationTime)"></span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- /.box-body -->
+            <div class="box-footer clearfix">
+                <ul id="pagination" v-show="total>size" class="pagination pagination-sm no-margin pull-left">                    
+                </ul>
             </div>
         </div>
-        <div class="col s12 m6 right ">
-            <h6 class="right" v-show="total>size">Showing <span v-text="page"></span> to <span v-text="size"></span> of <span v-text="total"></span> entries</h6>
-        </div>
+        <!-- /.box -->
     </div>
-</div>
+</section>
 
 @section scripts{
     <script src="~/js/jobProcess.js" asp-append-version="true"></script>

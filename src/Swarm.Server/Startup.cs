@@ -65,7 +65,7 @@ namespace Swarm.Server
             {
                 routes.MapRoute(
                     name: "default",
-                    template: "{controller=Job}/{action=Index}/{id?}");
+                    template: "{controller=Dashboard}/{action=Index}/{id?}");
             });
         }
     }

@@ -1,23 +1,70 @@
 <div id="view">
-    <br></br>
-    <div class="row">
-        <div class="log-body">
-            <div v-for="el in els" class="log-line">
-                <a v-text="el.id"></a>
-                <span v-text="el.clientName + '  '+ el.clientGroup + '  ' + el.jobId + '  ' + el.traceId + '  ' + el.sharding 　+ '  ' + el.msg +'  ' + hub.formatDate(el.creationTime)"></span>
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+        <h1>
+            LOGS
+            <small v-text="jobId"></small>
+        </h1>
+        <ol class="breadcrumb">
+            <li>
+                <a href="#"><i class="fa fa-dashboard"></i> Swarm</a>
+            </li>
+            <li class="active">Log</li>
+        </ol>
+    </section>
+    <!-- Main content -->
+    <section class="content container-fluid">
+        <div class="col-xs-12">
+            <div class="box">
+                <!-- /.box-header -->
+                <div class="box-body table-responsive no-padding">
+                    <table class="table table-bordered">
+                        <tbody>
+                        <tr>
+                            <th>Name</th>
+                            <th>Group</th>
+                            <th>TraceId</th>
+                            <th>Sharding</th>
+                            <th>Msg</th>
+                            <th>Time</th>
+                        </tr>
+                        <tr v-show="els.length==0">
+                            <td colspan="13">
+                                No data to display...
+                            </td>
+                        </tr>
+                        <tr v-for="el in els">
+                            <td>
+                                <span v-text="el.clientName"></span>
+                            </td>
+                            <td>
+                                <span v-text="el.clientGroup"></span>
+                            </td>
+                            <td>
+                                <span v-text="el.traceId"></span>
+                            </td>
+                            <td>
+                                <span v-text="el.sharding"></span>
+                            </td>
+                            <td>
+                                <span v-text="el.msg"></span>
+                            </td>
+                            <td>
+                                <span v-text="hub.formatDate(el.creationTime)"></span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- /.box-body -->
+                <div class="box-footer clearfix">
+                    <ul id="pagination" v-show="total>size" class="pagination pagination-sm no-margin pull-left">
+                    </ul>
+                </div>
             </div>
+            <!-- /.box -->
         </div>
-    </div>
-    <br/>
-    <div class="row">
-        <div class="col s12 m6 left">
-            <div v-show="total>size" id="pagination">
-            </div>
-        </div>
-        <div class="col s12 m6 right ">
-            <h6 class="right" v-show="total>size">Showing <span v-text="page"></span> to <span v-text="size"></span> of <span v-text="total"></span> entries</h6>
-        </div>
-    </div>
+    </section>
 </div>
 
 @section scripts{

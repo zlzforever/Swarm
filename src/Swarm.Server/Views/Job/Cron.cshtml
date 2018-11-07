@@ -1,0 +1,101 @@
+﻿<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        CRON JOBS
+        <small>manage jobs</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li>
+            <a href="#"><i class="fa fa-dashboard"></i> Swarm</a>
+        </li>
+        <li class="active">Job</li>
+    </ol>
+</section>
+
+<!-- Main content -->
+<section class="content container-fluid" id="view">
+    <div class="col-xs-12">
+        <div class="box">
+            <div class="box-header">
+                <div class="box-title">
+                    <a class="btn btn-default" href="/job/cronProc">Create</a>
+                </div>
+                <div class="box-tools">
+                    <div class="input-group input-group-sm" style="width: 150px;">
+                        <input type="text" id="job_search" name="job_search" class="form-control pull-right" placeholder="Search" v-model="keyword" v-on:keypress="onKeyPress($event)">
+                        <div class="input-group-btn">
+                            <button type="submit" class="btn btn-default">
+                                <i class="fa fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- /.box-header -->
+            <div class="box-body table-responsive no-padding">
+                <table class="table table-bordered">
+                    <tbody>
+                    <tr>
+                        <th>Name</th>
+                        <th>Group</th>
+                        <th>Performer</th>
+                        <th>Executor</th>
+                        <th>Load</th>
+                        <th>Sharding</th>
+                        <th>Owner</th>
+                        <th>Action</th>
+                    </tr>
+                    <tr v-show="jobs.length==0">
+                        <td colspan="13">
+                            No data to display...
+                        </td>
+                    </tr>
+                    <tr v-for="job in jobs">
+                        <td>
+                            <span v-text="job.name"></span>
+                        </td>
+                        <td>
+                            <span v-text="job.group"></span>
+                        </td> 
+                        <td>
+                            <span v-text="job.performer"></span>
+                        </td>
+                        <td>
+                            <span v-text="job.executor"></span>
+                        </td>
+                        <td>
+                            <span v-text="job.load"></span>
+                        </td>
+                        <td>
+                            <span v-text="job.sharding"></span>
+                        </td>
+                        <td>
+                            <span v-text="job.owner"></span>
+                        </td>
+                        <td>
+                            <a class="btn btn-default btn-sm" :href="'/job/process?jobId=' + job.id">Process</a>
+                            <a class="btn btn-default btn-sm" :href="'/job/log?jobId=' + job.id">Log</a>
+                            <a class="btn btn-default btn-sm" :href="'/job/detail/' + job.id">Detail</a>
+                            <button class="btn btn-default btn-sm" @@click.stop="trigger(job.id,job.state,job.concurrentExecutionDisallowed)">Trigger</button>
+                            <button class="btn btn-default btn-sm" @@click.stop="remove(job.id)">Remove</button>
+                            <button class="btn btn-default btn-sm" @@click.stop="exit(job.id)">Exit</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- /.box-body -->
+            <div class="box-footer clearfix">
+                <ul id="pagination" v-show="total>size" class="pagination pagination-sm no-margin pull-left">                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.box -->
+    </div>
+</section>
+<!-- /.content -->
+
+
+@section scripts{
+    <script src="~/js/cron.js" asp-append-version="true"></script>
+}

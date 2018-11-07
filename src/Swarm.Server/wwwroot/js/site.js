@@ -1,4 +1,8 @@
-﻿let hub = {};
+﻿
+$(function(){
+    $('.select2').select2();
+});
+let hub = {};
 // TODO: AFTER PERMISSION SYSTEM FINISHED
 hub.accessToken="%wTAd6IgcnQZauJKDTGdkmxyJgFxffXe";
 hub.queryString = function (name) {

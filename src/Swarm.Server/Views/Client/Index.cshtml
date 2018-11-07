@@ -1,54 +1,79 @@
-﻿<h4>
-    CLIENT
-</h4>
-<table class="card bordered highlight responsive-table centered" id="view">
-    <thead>
-    <tr>
-        <th width="5">#</th>
-        <th>Name</th>
-        <th>Group</th>
-        <th>IP</th>
-        <th>ConnectionId</th>
-        <th>Is Connected</th>
-        <th>Connected Time</th>
-        <th>Action</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr v-show="els.length==0">
-        <td colspan="13">
-            No data to display...
-        </td>
-    </tr>
-    <tr v-for="el in els">
-        <td>
-            <span :style="{'background-color': el.isConnected?'green':'red'}"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-        </td>
-        <td>
-            <span v-text="el.name"></span>
-        </td>
-        <td>
-            <span v-text="el.group"></span>
-        </td>
-        <td>
-            <span v-text="el.ip"></span>
-        </td>
-        <td>
-            <span v-text="el.connectionId"></span>
-        </td>
-        <td>
-            <span v-text="el.isConnected"></span>
-        </td>
-        <td>
-            <span v-text="hub.formatDate(el.lastModificationTime)"></span>
-        </td>
-        <td>
-            <button class="waves-effect waves-light btn-small" :disabled="!el.isConnected" @@click.stop="exit(el.connectionId)">Exit</button>
-            <button class="waves-effect waves-light btn-small" :disabled="el.isConnected" @@click.stop="remove(el.id)">Remove</button>
-        </td>
-    </tr>
-    </tbody>
-</table>
+﻿<!-- Content Header (Page header) -->
+<section class="content-header">
+    <h1>
+        CLIENTS
+        <small>view all clients</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li>
+            <a href="#"><i class="fa fa-dashboard"></i> Swarm</a>
+        </li>
+        <li class="active">Client</li>
+    </ol>
+</section>
+
+<!-- Main content -->
+<section class="content container-fluid" id="view">
+    <div class="col-xs-12">
+        <div class="box">
+            <!-- /.box-header -->
+            <div class="box-body table-responsive no-padding">
+                <table class="table table-bordered">
+                    <tbody>
+                    <tr>
+                        <th width="10">#</th>
+                        <th>Name</th>
+                        <th>Group</th>
+                        <th>IP</th>
+                        <th>ConnectionId</th>
+                        <th>Is Connected</th>
+                        <th>Connected Time</th>
+                        <th>Action</th>
+                    </tr>
+                    <tr v-show="els.length==0">
+                        <td colspan="13">
+                            No data to display...
+                        </td>
+                    </tr>
+                    <tr v-for="el in els">
+                        <td>
+                            <span :style="{'background-color': el.isConnected?'green':'red'}"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        </td>
+                        <td>
+                            <span v-text="el.name"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.group"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.ip"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.connectionId"></span>
+                        </td>
+                        <td>
+                            <span v-text="el.isConnected"></span>
+                        </td>
+                        <td>
+                            <span v-text="hub.formatDate(el.lastModificationTime)"></span>
+                        </td>
+                        <td>
+                            <button class="btn btn-default btn-sm" :disabled="!el.isConnected" @@click.stop="exit(el.connectionId)">Exit</button>
+                            <button class="btn btn-default btn-sm" :disabled="el.isConnected" @@click.stop="remove(el.id)">Remove</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- /.box-body -->
+            <div class="box-footer clearfix">
+                <ul id="pagination" v-show="total>size" class="pagination pagination-sm no-margin pull-left">                    
+                </ul>
+            </div>
+        </div>
+        <!-- /.box -->
+    </div>
+</section>
 
 @section scripts{
     <script src="~/js/client.js" asp-append-version="true"></script>

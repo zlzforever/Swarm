@@ -14,12 +14,9 @@ $(function () {
                 description: '',
                 application: '',
                 arguments: '',
-                concurrentExecutionDisallowed: 'True',
+                allowConcurrent: 'True',
                 logPattern: '\\w+'
             }
-        },
-        mounted: function () {
-            $('select').formSelect();
         },
         methods: {
             create: function () {
@@ -36,7 +33,7 @@ $(function () {
                     owner: job.owner,
                     sharding: job.sharding,
                     shardingParameters: job.shardingParameters,
-                    concurrentExecutionDisallowed: !job.concurrentExecutionDisallowed,
+                    allowConcurrent: !job.allowConcurrent,
                     properties: {
                         "cron": job.cron,
                         "application": job.application,
@@ -46,7 +43,7 @@ $(function () {
                     schedName: 'auto',
                     schedInstanceId: 'auto'
                 }, function () {
-                    window.location.href = '/job';
+                    window.location.href = '/job/cron';
                 });
             }
         }

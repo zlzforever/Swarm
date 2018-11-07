@@ -4,7 +4,7 @@ namespace Swarm.Server.Controllers
 {
     public class JobController : Controller
     {
-        public IActionResult Index()
+        public IActionResult Cron()
         {
             return View();
         }

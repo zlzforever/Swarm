@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -68,14 +69,15 @@ namespace Swarm.Server.Api
 
         [HttpGet]
         [Route("swarm/v1.0/job")]
-        public IActionResult Query([FromQuery] JobPaginationQueryInput input)
+        public IActionResult QueryJob([FromQuery] JobPaginationQueryInput input)
         {
             var keyword = input.Keyword;
 
-            Expression<Func<Job, bool>> where = null;
+
+            Expression<Func<Job, bool>> where = j => j.Trigger == input.Trigger;
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                where = t => t.Name.Contains(keyword);
+                where = where.AndAlso(t => t.Name.Contains(keyword));
             }
             //TODO: 更多的条件
 
