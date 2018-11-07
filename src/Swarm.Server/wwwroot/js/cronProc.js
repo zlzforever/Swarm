@@ -1,4 +1,5 @@
 $(function () {
+    $('#jobMenu').addClass('active');
     new Vue({
         el: '#view',
         data: {

@@ -28,7 +28,7 @@ namespace Swarm.Core.Impl
             IOptions<SwarmOptions> options)
         {
             _sharding = sharding;
-            _logger = loggerFactory.CreateLogger<JobController>();
+            _logger = loggerFactory.CreateLogger<JobService>();
             _store = store;
             _hubContext = hubContext;
             _schedCache = schedulerCache;

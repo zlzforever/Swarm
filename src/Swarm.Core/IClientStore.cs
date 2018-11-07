@@ -14,5 +14,7 @@ namespace Swarm.Core
         Task<IEnumerable<Client>> GetAvailableClients(string group);
         Task DisconnectAllClients();
         Task ClientHeartbeat(string name, string group);
+        Task<NodeStatistics> GetNodeStatistics();
+        Task<int> GetClientCount();
     }
 }

@@ -13,6 +13,7 @@ namespace Swarm.Core
         Task UpdateJob(Job job);
         Task DeleteJob(string jobId);
         Task<Job> GetJob(string jobId);
+        Task<int> GetJobCount();
 
         #endregion
 
@@ -29,7 +30,8 @@ namespace Swarm.Core
         Task<Node> GetMinimumTriggerTimesNode();
         Task<Node> GetNode(string schedName, string schedInstanceId);
         Task IncreaseTriggerTime(string schedName, string schedInstanceId);
-
+        Task<IEnumerable<Node>> GetNodes();
+        
         #endregion
     }
 }

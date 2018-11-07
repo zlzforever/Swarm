@@ -1,5 +1,6 @@
 $(function () {
-    var vue = new Vue({
+    $('#jobMenu').addClass('active');
+    const vue = new Vue({
         el: '#view',
         data: {
             els: [],

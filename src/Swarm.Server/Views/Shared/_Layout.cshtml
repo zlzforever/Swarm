@@ -21,7 +21,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <link rel="stylesheet" href="~/lib/sweetalert/dist/sweetalert.css">
     <!-- Select2 -->
     <link rel="stylesheet" href="~/lib/select2/dist/css/select2.min.css">
-    
+
     <!-- AdminLTE Skins. We have chosen the skin-blue for this starter
     page. However, you can choose any other skin. Make sure you
     apply the skin class to the body tag so the changes take effect. -->
@@ -37,7 +37,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
     <!-- Google Font -->
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
-    
+
     <link rel="stylesheet" href="~/css/site.css"/>
 </head>
 <!--
@@ -277,12 +277,12 @@ desired effect
         <ul class="sidebar-menu" data-widget="tree">
             <li class="header">HEADER</li>
             <!-- Optionally, you can add icons to the links -->
-            <li class="active">
-                <a href="#">
+            <li id="dashboardMenu">
+                <a href="/dashboard">
                     <i class="fa fa-dashboard"></i> <span>Dashboard</span>
                 </a>
             </li>
-            <li class="treeview">
+            <li class="treeview" id="jobMenu">
                 <a href="#">
                     <i class="fa fa-calendar"></i> <span>Job</span>
                     <span class="pull-right-container">
@@ -290,21 +290,21 @@ desired effect
                     </span>
                 </a>
                 <ul class="treeview-menu">
-                    <li>
+                    <li id="listCronJobs">
                         <a href="/job/cron">Cron</a>
                     </li>
-                    <li>
+                    <li id="listSimpleJobs">
                         <a href="#">Simple</a>
                     </li>
-                    <li>
+                    <li id="listDailyTimeJobs">
                         <a href="#">DailyTime</a>
                     </li>
-                    <li>
+                    <li id="listCalendarJobs">
                         <a href="#">Calendar</a>
                     </li>
                 </ul>
             </li>
-            <li class="treeview">
+            <li class="treeview" id="nodeMenu">
                 <a href="#">
                     <i class="fa fa-puzzle-piece"></i> <span>Node</span>
                     <span class="pull-right-container">
@@ -312,15 +312,15 @@ desired effect
                     </span>
                 </a>
                 <ul class="treeview-menu">
-                    <li>
-                        <a href="#">View</a>
+                    <li id="listNodes">
+                        <a href="/node">List Nodes</a>
                     </li>
                     <li>
                         <a href="#">Health Check</a>
                     </li>
                 </ul>
             </li>
-            <li class="treeview">
+            <li class="treeview" id="clientMenu">
                 <a href="#">
                     <i class="fa fa-desktop"></i> <span>Client</span>
                     <span class="pull-right-container">
@@ -328,8 +328,8 @@ desired effect
                     </span>
                 </a>
                 <ul class="treeview-menu">
-                    <li>
-                        <a href="~/client">View All Clients</a>
+                    <li id="listClients">
+                        <a href="/client">List Clients</a>
                     </li>
                 </ul>
             </li>

@@ -30,7 +30,16 @@ namespace Swarm.Core.Impl
                     new {Name = name, Group = group});
             }
         }
-        
+
+        public async Task<int> GetClientCount()
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                return await conn.QuerySingleOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM [Client] WHERE DATEDIFF(SECOND, [LastModificationTime], CURRENT_TIMESTAMP) < 6　AND [IsConnected] = 'true'");
+            }
+        }
+
         public async Task<bool> AddClient(Client client)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
@@ -158,6 +167,15 @@ namespace Swarm.Core.Impl
             }
         }
 
+        public async Task<int> GetJobCount()
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                return await conn.QuerySingleOrDefaultAsync<int>(
+                    "SELECT COUNT(*) FROM [Job]");
+            }
+        }
+
         public async Task<string> AddJob(Job job)
         {
             job.Id = string.IsNullOrWhiteSpace(job.Id) ? Guid.NewGuid().ToString("N") : job.Id;
@@ -253,6 +271,15 @@ namespace Swarm.Core.Impl
 
         #region  Node
 
+        public async Task<NodeStatistics> GetNodeStatistics()
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                return await conn.QuerySingleOrDefaultAsync<NodeStatistics>(
+                    "SELECT (SELECT COUNT(*) FROM [Swarm].[dbo].[Node] WHERE [IsConnected] = 'true' AND DATEDIFF(SECOND, [LastModificationTime], CURRENT_TIMESTAMP) < 7) AS [NodeCount], SUM(TriggerTimes) AS [TriggerTimes]  FROM [Node]");
+            }
+        }
+        
         public async Task RegisterNode(Node node)
         {
             using (var conn = new SqlConnection(_options.ConnectionString))
@@ -318,6 +345,15 @@ namespace Swarm.Core.Impl
                 await conn.ExecuteAsync(
                     "UPDATE [Node] SET [TriggerTimes] = [TriggerTimes] + 1  WHERE [SchedInstanceId] = @SchedInstanceId AND [SchedName] = @SchedName",
                     new {SchedInstanceId = schedInstanceId, SchedName = schedName});
+            }
+        }
+
+        public async Task<IEnumerable<Node>> GetNodes()
+        {
+            using (var conn = new SqlConnection(_options.ConnectionString))
+            {
+                return await conn.QueryAsync<Node>(
+                    "SELECT [Id], [SchedName], [SchedInstanceId], [Provider], [TriggerTimes], [IsConnected], [ConnectionString], [CreationTime], [LastModificationTime] FROM [Node]");
             }
         }
 

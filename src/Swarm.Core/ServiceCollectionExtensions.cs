@@ -36,6 +36,7 @@ namespace Swarm.Core
             services.AddSingleton<ISchedCache, SchedCache>();
             services.AddSingleton<ISwarmCluster, SwarmCluster>();
             services.AddSingleton<IJobService, JobService>();
+            services.AddSingleton<INodeService, NodeService>();
 
             var builder = new SwarmBuilder(services);
             configure?.Invoke(builder);

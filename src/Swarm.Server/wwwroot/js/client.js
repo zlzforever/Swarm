@@ -1,4 +1,5 @@
 $(function () {
+    $('#clientMenu').addClass('active');
     let vue = new Vue({
         el: '#view',
         data: {

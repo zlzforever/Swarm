@@ -1,17 +1,17 @@
-<!-- Content Header (Page header) -->
+﻿<!-- Content Header (Page header) -->
 <section class="content-header">
     <h1>
-        JOB PROCESSES
-        <small>view job processes</small>
+        NODES
+        <small>view all node</small>
     </h1>
     <ol class="breadcrumb">
         <li>
             <a href="/"><i class="fa fa-dashboard"></i> Swarm</a>
         </li>
-        <li>Job</li>
-        <li class="active">Process</li>
+        <li class="active">Node</li>
     </ol>
 </section>
+
 <!-- Main content -->
 <section class="content container-fluid" id="view">
     <div class="col-xs-12">
@@ -21,16 +21,14 @@
                 <table class="table table-bordered">
                     <tbody>
                     <tr>
+                        <th width="10">#</th>
                         <th>Name</th>
-                        <th>Group</th>
-                        <th>TraceId</th>
-                        <th>Sharding</th>
-                        <th>ProcessId</th>
-                        <th>State</th>
-                        <th>App</th>
-                        <th>AppArguments</th>
-                        <th>Msg</th>
-                        <th>Time</th>
+                        <th>Instance</th>
+                        <th>Provider</th>
+                        <th>ConnectionString</th>
+                        <th>Available</th>
+                        <th>TriggerTimes</th>
+                        <th>LastHeartbeat</th>
                     </tr>
                     <tr v-show="els.length==0">
                         <td colspan="13">
@@ -39,31 +37,25 @@
                     </tr>
                     <tr v-for="el in els">
                         <td>
-                            <span v-text="el.name"></span>
+                            <span :style="{'background-color': el.isConnected?'green':'red'}"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                         </td>
                         <td>
-                            <span v-text="el.group"></span>
+                            <span v-text="el.schedName"></span>
                         </td>
                         <td>
-                            <span v-text="el.traceId"></span>
+                            <span v-text="el.schedInstanceId"></span>
                         </td>
                         <td>
-                            <span v-text="el.sharding"></span>
+                            <span v-text="el.provider"></span>
                         </td>
                         <td>
-                            <span v-text="el.processId"></span>
+                            <span v-text="el.connectionString"></span>
                         </td>
                         <td>
-                            <span v-text="el.state"></span>
+                            <span v-text="el.isConnected"></span>
                         </td>
                         <td>
-                            <span v-text="el.app"></span>
-                        </td>
-                        <td>
-                            <span v-text="el.arguments"></span>
-                        </td>
-                        <td>
-                            <span v-text="el.msg"></span>
+                            <span v-text="el.triggerTimes"></span>
                         </td>
                         <td>
                             <span v-text="hub.formatDate(el.lastModificationTime)"></span>
@@ -73,14 +65,11 @@
                 </table>
             </div>
             <!-- /.box-body -->
-            <div class="box-footer clearfix">
-                <ul id="pagination" v-show="total>size" class="pagination pagination-sm no-margin pull-left">                    
-                </ul>
-            </div>
         </div>
         <!-- /.box -->
     </div>
 </section>
+
 @section scripts{
-    <script src="~/js/jobProcess.js" asp-append-version="true"></script>
+    <script src="~/js/node.js" asp-append-version="true"></script>
 }
