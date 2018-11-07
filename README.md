@@ -178,6 +178,12 @@ Client | Reflection Executor | IExecutor | 反射任务类型, 执行配置好�
 Client | Process Storage | IProcessStorage | 存储正在执行的任务, 一旦客户端崩溃重启依据本地存储信息检测还在跑的进程有哪些和SSN同步状态, 执行存储操作前先同步到 SSN　|    ☐    |  ☐   |
 Client | Log Filter | ILogFilter | 筛选用户需要的日志上传到 SSN, 默认是全部上传　|    ☐     |  ☐   |
 
+## UI
+
+![1](https://github.com/zlzforever/Swarm/blob/master/images/1.png)
+![2](https://github.com/zlzforever/Swarm/blob/master/images/2.png)
+![3](https://github.com/zlzforever/Swarm/blob/master/images/3.png)
+![4](https://github.com/zlzforever/Swarm/blob/master/images/4.png)
 
 
 ## CONSIDERATION
