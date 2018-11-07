@@ -62,7 +62,7 @@ namespace Swarm.ConsoleClient
                 .Build();
             services.AddSwarmClient(config.GetSection("Client"));
             var client = services.BuildServiceProvider().GetRequiredService<ISwarmClient>();
-            client.Start();
+            client.Start().ConfigureAwait(false);
             Console.WriteLine("Press any key to exit:");
             Console.Read();
             client.Stop();

@@ -101,7 +101,7 @@ namespace Swarm.Core
 
             // Start swarm sharding node
             var cluster = app.ApplicationServices.GetRequiredService<ISwarmCluster>();
-            cluster.Start(cancellationToken).ConfigureAwait(true);
+            cluster.Start(cancellationToken).ConfigureAwait(false);
             cancellationToken.Register(async () => { await cluster.Shutdown(); });
 
             app.UseSignalR(routes => { routes.MapHub<ClientHub>("/clienthub"); });

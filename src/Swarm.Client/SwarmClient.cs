@@ -129,7 +129,7 @@ namespace Swarm.Client
             _exitListener.Handle();
         }
 
-        public Task Start(CancellationToken cancellationToken = default)
+        public async Task Start(CancellationToken cancellationToken = default)
         {
             if (_isRunning)
             {
@@ -138,24 +138,21 @@ namespace Swarm.Client
 
             _isRunning = true;
 
-            return Task.Factory.StartNew(async () =>
+            HubConnection conn = null;
+            while (_retryTimes < RetryTimes)
             {
-                HubConnection conn = null;
-                while (_retryTimes < RetryTimes)
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (conn == null || _isDisconnected)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                    if (conn == null || _isDisconnected)
-                    {
-                        conn = await CreateConnection(cancellationToken);
-                    }
-
-                    await conn.SendAsync("Heartbeat", cancellationToken);
-                    cancellationToken.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(HeartbeatInterval));
+                    conn = await CreateConnection(cancellationToken);
                 }
 
-                _isRunning = false;
-            }, cancellationToken);
+                await conn.SendAsync("Heartbeat", cancellationToken);
+                cancellationToken.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(HeartbeatInterval));
+            }
+
+            _isRunning = false;
         }
 
         private async Task<HubConnection> CreateConnection(CancellationToken token)
