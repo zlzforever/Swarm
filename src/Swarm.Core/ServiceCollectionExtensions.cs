@@ -95,14 +95,14 @@ namespace Swarm.Core
             var sched = app.ApplicationServices.GetRequiredService<ISchedCache>().GetOrCreate(options.SchedName,
                 options.SchedInstanceId, options.Provider,
                 options.QuartzConnectionString);
-            sched.Start(cancellationToken).ConfigureAwait(false);
+            sched.Start(cancellationToken).ConfigureAwait(true);
 
             var token = new CancellationToken();
             cancellationToken.Register(async () => { await sched.Shutdown(token); });
 
             // Start swarm sharding node
             var cluster = app.ApplicationServices.GetRequiredService<ISwarmCluster>();
-            cluster.Start(cancellationToken).ConfigureAwait(false);
+            cluster.Start(cancellationToken).ConfigureAwait(true);
             cancellationToken.Register(async () => { await cluster.Shutdown(); });
 
             app.UseSignalR(routes => { routes.MapHub<ClientHub>("/clienthub"); });

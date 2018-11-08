@@ -8,5 +8,6 @@ namespace Swarm.Client
         public string Ip { get; set; }
         public string AccessToken { get; set; }
         public int RetryTimes { get; set; } = 7200;
+        public int HeartbeatInterval { get; set; }
     }
 }

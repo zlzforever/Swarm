@@ -24,15 +24,19 @@ namespace Swarm.Core.Common
             var ic = _connectionString.Substring(start, end - start);
             using (var masterConn =
                 new SqlConnection(_connectionString.Replace(ic, "Initial Catalog=master")))
-            using (var conn = new SqlConnection(_connectionString))
             {
+                var conn = new SqlConnection(_connectionString);
+                var db = conn.Database;
+                conn.Close();
+                conn.Dispose();
+
                 var exists = masterConn.QuerySingle<int>(
-                                 $"select count(*) from sys.databases where name = '{conn.Database}'") > 0;
+                                 $"select count(*) from sys.databases where name = '{db}'") > 0;
                 if (exists)
                 {
                     if (_reCreate)
                     {
-                        masterConn.Execute($"DROP DATABASE {conn.Database}");
+                        masterConn.Execute($"DROP DATABASE {db}");
                     }
                     else
                     {
@@ -41,29 +45,33 @@ namespace Swarm.Core.Common
                     }
                 }
 
-                Console.WriteLine("Try create database: " + conn.Database);
-                masterConn.Execute($"CREATE DATABASE {conn.Database}");
-                ExecuteSql(conn);
+                Console.WriteLine("Try create database: " + db);
+                masterConn.Execute($"CREATE DATABASE {db}");
+
+                ExecuteSql();
             }
         }
 
-        private void ExecuteSql(IDbConnection conn)
+        private void ExecuteSql()
         {
-            using (var reader =
-                new StreamReader(GetType().Assembly.GetManifestResourceStream("Swarm.Core.Sql.sqlserver.sql") ??
-                                 throw new Exception("Sql resource unfounded")))
+            using (var conn = new SqlConnection(_connectionString))
             {
-                var sqls = reader.ReadToEnd();
-
-                var start = _connectionString.IndexOf("Initial Catalog=", StringComparison.Ordinal);
-                var end = _connectionString.IndexOf(";", start, StringComparison.Ordinal);
-                var ic = _connectionString.Substring(start, end - start);
+                using (var reader =
+                    new StreamReader(GetType().Assembly.GetManifestResourceStream("Swarm.Core.Sql.sqlserver.sql") ??
+                                     throw new Exception("Sql resource unfounded")))
                 {
-                    foreach (var sql in sqls.Split(new[] {"GO"}, StringSplitOptions.RemoveEmptyEntries))
+                    var sqls = reader.ReadToEnd();
+
+                    var start = _connectionString.IndexOf("Initial Catalog=", StringComparison.Ordinal);
+                    var end = _connectionString.IndexOf(";", start, StringComparison.Ordinal);
+                    var ic = _connectionString.Substring(start, end - start);
                     {
-                        if (!string.IsNullOrWhiteSpace(sql))
+                        foreach (var sql in sqls.Split(new[] {"GO"}, StringSplitOptions.RemoveEmptyEntries))
                         {
-                            conn.Execute(sql);
+                            if (!string.IsNullOrWhiteSpace(sql))
+                            {
+                                conn.Execute(sql);
+                            }
                         }
                     }
                 }

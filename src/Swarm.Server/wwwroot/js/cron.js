@@ -13,13 +13,8 @@ $(function () {
             loadView(this);
         },
         methods: {
-            query: function () {
-                window.location.href = 'job?trigger=cron&keyword=' + vue.$data.keyword + '&page=' + vue.$data.page + '&size=' + vue.$data.size;
-            },
-            onKeyPress: function (evt) {
-                if (evt && evt.charCode === 13) {
-                    this.query();
-                }
+            search: function () {
+                window.location.href = '/job/cron?keyword=' + vue.$data.keyword + '&page=' + vue.$data.page + '&size=' + vue.$data.size;
             },
             exit: function (id) {
                 let that = this;
@@ -81,7 +76,7 @@ $(function () {
             vue.$data.size = result.data.size;
 
             hub.ui.initPagination('#pagination', result.data, function (page) {
-                window.location.href = 'job?trigger=cron&keyword=' + vue.$data.keyword + '&page=' + page + '&size=' + vue.$data.size;
+                window.location.href = '/job/cron?keyword=' + vue.$data.keyword + '&page=' + page + '&size=' + vue.$data.size;
             });
         });
     }

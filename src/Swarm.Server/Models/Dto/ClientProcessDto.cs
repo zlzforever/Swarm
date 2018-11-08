@@ -7,7 +7,7 @@ namespace Swarm.Server.Models.Dto
     {
         public string Name { get; set; }
         public string Group { get; set; }
-        public long TraceId { get; set; }
+        public string TraceId { get; set; }
         public int Sharding { get; set; }
         public int ProcessId { get; set; }
         public State State { get; set; }

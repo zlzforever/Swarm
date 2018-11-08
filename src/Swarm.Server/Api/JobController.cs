@@ -51,7 +51,7 @@ namespace Swarm.Server.Api
                 {
                     Name = clientProcess.Name,
                     Group = clientProcess.Group,
-                    TraceId = Guid.Parse(clientProcess.TraceId).ToInt64(),
+                    TraceId = clientProcess.TraceId,
                     Sharding = clientProcess.Sharding,
                     ProcessId = clientProcess.ProcessId,
                     State = clientProcess.State,

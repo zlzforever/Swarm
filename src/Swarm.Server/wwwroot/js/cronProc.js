@@ -10,23 +10,27 @@ $(function () {
                 sharding: 1,
                 shardingParameters: '',
                 load: 1,
-                retryCount: 1,
                 owner: '',
                 description: '',
                 application: '',
                 arguments: '',
-                allowConcurrent: 'True',
                 logPattern: '\\w+'
             }
         },
+        mounted: function () {
+            const allowConcurrent = $('.select2');
+            allowConcurrent.val('False');
+            allowConcurrent.select2({
+                minimumResultsForSearch: Infinity
+            });
+        },
         methods: {
             create: function () {
-                let job = this.$data.job;
+                const job = this.$data.job;
                 const url = "/swarm/v1.0/job";
-                hub.post(url, {
+                const data = {
                     name: job.name,
                     group: job.group,
-                    retryCount: job.retryCount,
                     performer: 'SignalR',
                     executor: 'Process',
                     description: job.description,
@@ -34,7 +38,7 @@ $(function () {
                     owner: job.owner,
                     sharding: job.sharding,
                     shardingParameters: job.shardingParameters,
-                    allowConcurrent: !job.allowConcurrent,
+                    allowConcurrent: $('.select2').val(),
                     properties: {
                         "cron": job.cron,
                         "application": job.application,
@@ -43,7 +47,8 @@ $(function () {
                     },
                     schedName: 'auto',
                     schedInstanceId: 'auto'
-                }, function () {
+                };
+                hub.post(url, data, function () {
                     window.location.href = '/job/cron';
                 });
             }

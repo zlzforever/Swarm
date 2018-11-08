@@ -44,6 +44,8 @@
 @section scripts{
     <script>
         $(function() {
+            $('#jobMenu').addClass('active');
+            
             var jobId = $('#jobId').text();
             if (!jobId) return;
             new Vue({

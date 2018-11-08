@@ -61,15 +61,15 @@ namespace Swarm.Core.Impl
                             var arguments = jc.Parameters[SwarmConsts.ArgumentsProperty];
                             if (!string.IsNullOrWhiteSpace(arguments))
                             {
-                                arguments = arguments.Replace("%jobid%", jc.JobId);
-                                arguments = arguments.Replace("%traceid%", jc.TraceId);
-                                arguments = arguments.Replace("%sharding%", jc.Sharding.ToString());
-                                arguments = arguments.Replace("%currentsharding%", jc.CurrentSharding.ToString());
-                                arguments = arguments.Replace("%currentshardingparameter%",
+                                arguments = arguments.Replace("%jid%", jc.JobId);
+                                arguments = arguments.Replace("%tid%", jc.TraceId);
+                                arguments = arguments.Replace("%s", jc.Sharding.ToString());
+                                arguments = arguments.Replace("%cs%", jc.CurrentSharding.ToString());
+                                arguments = arguments.Replace("%csp%",
                                     jc.CurrentShardingParameter);
-                                arguments = arguments.Replace("%name%", jc.Name);
-                                arguments = arguments.Replace("%group%", jc.Group);
-                                arguments = arguments.Replace("%firetime%",
+                                arguments = arguments.Replace("%n%", jc.Name);
+                                arguments = arguments.Replace("%g%", jc.Group);
+                                arguments = arguments.Replace("%ft%",
                                     jc.FireTimeUtc.ToString("yyyy-MM-dd hh:mm:ss"));
 
                                 jc.Parameters[SwarmConsts.ArgumentsProperty] = arguments;

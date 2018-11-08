@@ -61,7 +61,7 @@ namespace Swarm.Client
         /// <summary>
         /// 心跳间隔
         /// </summary>
-        public int HeartbeatInterval { get; } = 1500;
+        public int HeartbeatInterval { get; } = 5000;
 
         #endregion
 
@@ -89,6 +89,7 @@ namespace Swarm.Client
             AccessToken = ops.AccessToken;
             RetryTimes = ops.RetryTimes;
             Ip = ops.Ip;
+            HeartbeatInterval = ops.HeartbeatInterval;
 
             _killAllListener = killAllListener;
             _killListener = killListener;
@@ -150,6 +151,7 @@ namespace Swarm.Client
 
                 await conn.SendAsync("Heartbeat", cancellationToken);
                 cancellationToken.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(HeartbeatInterval));
+                _logger.LogInformation("Client heartbeat");
             }
 
             _isRunning = false;

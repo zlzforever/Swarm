@@ -31,16 +31,10 @@
                             <input class="form-control" type="text" v-model="job.group" placeholder="Group">
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label>Cron</label>
                             <input class="form-control" type="text" v-model="job.cron" placeholder="Cron">
-                        </div>
-                    </div>
-                    <div class="col-md-1">
-                        <div class="form-group">
-                            <label>RetryCount</label>
-                            <input class="form-control" type="text" v-model="job.retryCount" placeholder="RetryCount">
                         </div>
                     </div>
                     <div class="col-md-1">
@@ -64,7 +58,7 @@
                     <div class="col-md-1">
                         <div class="form-group">
                             <label>Concurrent</label>
-                            <select class="form-control" style="width: 100%;" v-model="job.allowConcurrent">
+                            <select class="form-control select2" style="width: 100%;">
                                 <option selected="selected">True</option>
                                 <option>False</option>
                             </select>
@@ -90,7 +84,7 @@
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-group">
-                            <label>Arguments</label>
+                            <label>Arguments <small style="color: #777">JobId %jid%, TraceId %tid%, Sharding %s%, CurrentSharding %cs%, CurrentShardingParameter %csp%, Name %n%, Group %g%, FireTime %ft%</small></label>
                             <input class="form-control" type="text" v-model="job.arguments" placeholder="Arguments">
                         </div>
                     </div>

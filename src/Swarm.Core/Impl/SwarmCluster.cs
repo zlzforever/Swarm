@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Swarm.Basic.Entity;
 
@@ -11,12 +12,15 @@ namespace Swarm.Core.Impl
         private readonly SwarmOptions _options;
         private readonly ISharding _sharding;
         private readonly IClientStore _clientStore;
+        private readonly ILogger _logger;
 
-        public SwarmCluster(IOptions<SwarmOptions> options, ISharding sharding, IClientStore clientStore)
+        public SwarmCluster(IOptions<SwarmOptions> options, ISharding sharding, IClientStore clientStore,
+            ILoggerFactory loggerFactory)
         {
             _options = options.Value;
             _sharding = sharding;
             _clientStore = clientStore;
+            _logger = loggerFactory.CreateLogger<SwarmCluster>();
         }
 
         public async Task Start(CancellationToken cancellationToken = default)
@@ -36,7 +40,8 @@ namespace Swarm.Core.Impl
                     TriggerTimes = 0
                 };
                 await _sharding.RegisterNode(node);
-                await Task.Delay(TimeSpan.FromMilliseconds(5000), cancellationToken).ConfigureAwait(false);
+                await Task.Delay(TimeSpan.FromMilliseconds(5000), cancellationToken).ConfigureAwait(true);
+                _logger.LogInformation("SSN heartbeat");
             }
         }
 

@@ -18,13 +18,27 @@
         <div class="box">
             <div class="box-header">
                 <div class="box-title">
-                    <a class="btn btn-default" href="/job/cronProc">Create</a>
+                    <div class="btn-group">
+                        <a class="btn btn-default" href="/job/cronProc">Create SignalR Process Job</a>
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                            <span class="caret"></span>
+                            <span class="sr-only">Toggle Dropdown</span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
+                            <li>
+                                <a href="#">Create SignalR Reflection Job</a>
+                            </li>
+                            <li>
+                                <a href="#">Create Http Job</a>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
                 <div class="box-tools">
                     <div class="input-group input-group-sm" style="width: 150px;">
-                        <input type="text" id="job_search" name="job_search" class="form-control pull-right" placeholder="Search" v-model="keyword" v-on:keypress="onKeyPress($event)">
+                        <input type="text" class="form-control pull-right" placeholder="Search" v-model="keyword">
                         <div class="input-group-btn">
-                            <button type="submit" class="btn btn-default">
+                            <button type="submit" class="btn btn-default" @@click="search()">
                                 <i class="fa fa-search"></i>
                             </button>
                         </div>
@@ -42,6 +56,7 @@
                         <th>Executor</th>
                         <th>Load</th>
                         <th>Sharding</th>
+                        <th>CreateTime</th>
                         <th>Owner</th>
                         <th>Action</th>
                     </tr>
@@ -56,7 +71,7 @@
                         </td>
                         <td>
                             <span v-text="job.group"></span>
-                        </td> 
+                        </td>
                         <td>
                             <span v-text="job.performer"></span>
                         </td>
@@ -68,6 +83,9 @@
                         </td>
                         <td>
                             <span v-text="job.sharding"></span>
+                        </td>
+                        <td>
+                            <span v-text="hub.formatDate(job.creationTime)"></span>
                         </td>
                         <td>
                             <span v-text="job.owner"></span>
@@ -86,7 +104,7 @@
             </div>
             <!-- /.box-body -->
             <div class="box-footer clearfix">
-                <ul id="pagination" v-show="total>size" class="pagination pagination-sm no-margin pull-left">                    
+                <ul id="pagination" v-show="total>size" class="pagination pagination-sm no-margin pull-left">
                 </ul>
             </div>
         </div>
