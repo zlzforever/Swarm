@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-        <Version>0.1.0</Version>
+        <Version>0.1.4</Version>
         <Authors>zlzforever@163.com;</Authors>
         <AssemblyName>Swarm.Basic</AssemblyName>
         <Copyright>Copyright 2018 Lewis Zou</Copyright>

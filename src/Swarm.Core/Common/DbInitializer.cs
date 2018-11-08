@@ -1,56 +1,43 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 
 namespace Swarm.Core.Common
 {
     public static class DbInitializer
     {
-        public static void Init(string[] args)
+        public static string Init(string[] args)
         {
-            var config = new ConfigurationBuilder().AddCommandLine(args, new Dictionary<string, string>
-                {
-                    {"--i", "init"},
-                    {"--d", "db"},
-                    {"--r", "re-create"}
-                }).AddJsonFile("appsettings.json")
+            var init = args.Contains("-i");
+            if (!init)
+            {
+                return "Ignore init database";
+            }
+
+            var configPath = args.First(a => !a.StartsWith("-"));;
+            var config = new ConfigurationBuilder().AddJsonFile(configPath)
                 .Build();
-            var init = config.GetValue<string>("init");
-            if (string.IsNullOrWhiteSpace(init))
-            {
-                return;
-            }
 
-            if (!bool.Parse(init))
-            {
-                return;
-            }
-
-            var db = config.GetValue<string>("db");
-            var r = config.GetValue<bool>("re-create");
-            if (string.IsNullOrWhiteSpace(db))
-            {
-                Console.WriteLine("Supply target database like: --d sqlserver");
-                return;
-            }
-            
-            var connectionString = config.GetSection("Swarm").GetValue<string>("QuartzConnectionString");
+            var swarm = config.GetSection("Swarm");
+            var connectionString = swarm.GetValue<string>("QuartzConnectionString");
+            var db = swarm.GetValue<string>("Provider");
             switch (db.ToLower())
             {
                 case "sqlserver":
                 {
-                    var migrator = new SqlServerMigrator(connectionString, r);
-                    migrator.Migrate();
+                    new SqlServerMigrator(connectionString, args.Contains("-r")).Migrate();
                     break;
                 }
                 default:
                 {
-                    Console.WriteLine("Supply correct target database like: --d sqlserver");
+                    Console.WriteLine($"Unsupported provider: {db}");
+                    Environment.Exit(-1);
                     break;
                 }
             }
 
-            Environment.Exit(0);
+            return "OK";
         }
     }
 }

@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Swarm.Basic.Entity;
 using Swarm.Core.Common.Internal;
 using Swarm.Core.Impl;
 using Swarm.Core.SignalR;
@@ -90,6 +92,12 @@ namespace Swarm.Core
             {
                 throw new SwarmException("NodeId in SwarmOption is empty");
             }
+
+            var logger = app.ApplicationServices.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+            logger.LogInformation($"Version: {typeof(ServiceCollectionExtensions).Assembly.GetName().Version}");
+            logger.LogInformation($"BaseDirectory: {AppContext.BaseDirectory}");
+            logger.LogInformation(
+                $"SSN-DB: {options.Provider}, {options.ConnectionString}; SSN-NAME: {options.SchedName}; SSN-ID: {options.SchedInstanceId}; {options.Provider}; SSN-QUARTZ-DB: {options.QuartzConnectionString};");
 
             // Start quartz instance
             var sched = app.ApplicationServices.GetRequiredService<ISchedCache>().GetOrCreate(options.SchedName,
