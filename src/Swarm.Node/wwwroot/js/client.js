@@ -5,7 +5,7 @@ $(function () {
         data: {
             els: [],
             page: hub.queryString('page') || 1,
-            size: hub.queryString('size') || 60,
+            size: hub.queryString('size') || 200,
             total: 0
         },
         mounted: function () {

@@ -5,7 +5,7 @@ $(function () {
         data: {
             jobs: [],
             page: hub.queryString('page') || 1,
-            size: hub.queryString('size') || 60,
+            size: hub.queryString('size') || 16,
             total: 0,
             keyword: decodeURIComponent(hub.queryString('keyword') || '')
         },
