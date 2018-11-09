@@ -181,9 +181,20 @@ Client | Log Filter | ILogFilter | 筛选用户需要的日志上传到 SSN, 默
 ## INSTALLATION
 
 1. open a command prompt/terminal
-2. install Swarm.Node vi execute: dotnet tool install --global Swarm.Node
-3. install Swarm.ConsoleClient vi execute: dotnet tool install --global Swarm.ConsoleClient
-4. create a swarm node configuration swarm.json, change your sqlserver connectionstring
+2. install Swarm.Node
+
+        dotnet tool install --global Swarm.Node
+
+3. install Swarm.ConsoleClient vi execute
+
+        dotnet tool install --global Swarm.ConsoleClient
+
+4. create a swarm node configuration
+        
+        mkdir /etc/swarm
+        vi /etc/swarm/appsettings.json
+
+   paste below configs and change sqlserver connectionstring or other settings
 
         {
           "Swarm": {
@@ -199,8 +210,31 @@ Client | Log Filter | ILogFilter | 筛选用户需要的日志上传到 SSN, 默
           "AllowedHosts": "*",
           "urls": "http://*:8000"
         }
-5. run: Swarm.Node [path-to-swarm.json] to start the website
-6. create a swarm console client configuraiton swarm.ini
+
+5. create a systemctl config
+
+        vi /etc/systemd/system/swarm.service
+
+   paste below codes
+
+        [Unit]
+        Description = Swarm Node
+
+        [Service]
+        ExecStart = /root/.dotnet/tools/Swarm.Node /ect/swarm/appsettings.json
+        Restart = always
+        RestartSec = 10
+        SyslogIdentifier = swarm
+
+6. start swarm service
+
+        systemctl start swarm        
+
+7. create a swarm console client configuraiton 
+
+        vi /etc/swarm/client.ini
+
+    paste below codes and change it as you wish, the host should be swarm node's url
 
        [client]
        name = inhouse001
@@ -210,6 +244,43 @@ Client | Log Filter | ILogFilter | 筛选用户需要的日志上传到 SSN, 默
        retryTimes = 7200
        heartbeatInterval = 5000
        ip = 192.168.10.147
+
+8. create a systemctl config
+
+        vi /etc/systemd/system/swarmclient.service
+    
+    paste below codes
+
+        [Unit]
+        Description = Swarm Client
+
+        [Service]
+        ExecStart = /root/.dotnet/tools/Swarm.ConsoleClient /etc/swarm/client.ini
+        Restart = always
+        RestartSec = 10
+        SyslogIdentifier = swarmclient
+
+9. start client
+
+        systemctl start swarmclient
+
+10. let try a cron process job: http://[host]/job/cronProc        
+
+        input Name: testEcho
+        input ShardingParameters: boy;girl
+        update Sharding: 2
+        input Application: echo
+        input Arguemnts: i am %csp%
+
+    then submit 
+
+11. back to  http://[host]/job/cron and press Log to see the execute logs
+
+        +------------+-----------+----------------------------------+-----------+-----------+--------------------+
+        |    Name    |   Group   |             TraceId              |  Sharding |    Msg    |         Time        |
+        |------------|-----------|----------------------------------|-----------|-----------|---------------------|
+        | inhouse001 |  DEFAULT  | 889bb3b8a6004975b8a1b2ed5d017112 |     2     | i am girl | 2018-11-10 00:40:59 |
+        | inhouse001 |  DEFAULT  | 889bb3b8a6004975b8a1b2ed5d017112 |     1     | i am boy  | 2018-11-10 00:40:59 |
 
 ## UI
 
