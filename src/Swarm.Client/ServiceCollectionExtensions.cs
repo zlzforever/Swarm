@@ -31,7 +31,6 @@ namespace Swarm.Client
             services.AddSingleton<KillAllListener>();
             services.AddSingleton<KillListener>();
             services.AddSingleton<TriggerListener>();
-            services.AddSingleton<ExitListener>();
 
             var builder = new SwarmClientBuilder(services);
             configure?.Invoke(builder);

@@ -9,7 +9,7 @@ using Swarm.Basic.Common;
 
 namespace Swarm.Client.Listener
 {
-    public class TriggerListener
+    public class TriggerListener : IDisposable
     {
         private readonly ILogger _logger;
         private readonly SwarmClientOptions _options;
@@ -61,6 +61,11 @@ namespace Swarm.Client.Listener
 
                 await executorInstance.OnExited(context, connection, 0, $"Failed: {ex.Message}");
             }
+        }
+
+        public void Dispose()
+        {
+            _executorFactory.Dispose();
         }
     }
 }

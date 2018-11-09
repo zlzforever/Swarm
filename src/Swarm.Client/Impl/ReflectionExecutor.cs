@@ -41,8 +41,12 @@ namespace Swarm.Client.Impl
                 throw new SwarmClientException($"{className} is not implement ISwarmJob.");
             }
 
-            await OnExited(context, connection, Process.GetCurrentProcess().Id,$"Exit: -1");
+            await OnExited(context, connection, Process.GetCurrentProcess().Id, $"Exit: -1");
             throw new SwarmClientException($"{className} unfounded.");
+        }
+
+        public override void Dispose()
+        {
         }
     }
 }

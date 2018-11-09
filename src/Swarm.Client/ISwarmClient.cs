@@ -5,7 +5,7 @@ namespace Swarm.Client
 {
     public interface ISwarmClient
     {
-        Task Start(CancellationToken cancellationToken = default);
-        void Stop();
+        Task Run(CancellationToken cancellationToken);
+        bool IsRunning { get; }
     }
 }

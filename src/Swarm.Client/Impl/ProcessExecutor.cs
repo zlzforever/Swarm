@@ -99,6 +99,23 @@ namespace Swarm.Client.Impl
             await OnExited(context, connection, process.Id, $"Exit: {process.ExitCode}");
         }
 
+        public override void Dispose()
+        {
+            // TODO: Wait all process exit, and all ISwarmJob exit.
+            foreach (JobProcess jp in Store.GetProcesses())
+            {
+                try
+                {
+                    Process.GetProcessById(jp.ProcessId).Kill();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogError(e,
+                        $"Kill job {jp.JobId}, trace {jp.TraceId}, sharding {jp.Sharding}] process failed: {e.Message}.");
+                }
+            }
+        }
+
         private string ReplaceEnvironments(string arguments)
         {
             return arguments.Replace("%root%", AppContext.BaseDirectory);

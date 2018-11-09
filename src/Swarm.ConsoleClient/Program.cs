@@ -2,6 +2,7 @@
 using System.IO;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
 using Swarm.Client;
@@ -10,31 +11,14 @@ namespace Swarm.ConsoleClient
 {
     class Program
     {
-        private static readonly string _processIdPath;
-        private static Stream _processStream;
-
-        static Program()
-        {
-            _processIdPath = Path.Combine(AppContext.BaseDirectory, "processId");
-        }
-
         static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
-                .WriteTo.Console(theme: SerilogConsoleTheme.ConsoleTheme).WriteTo.RollingFile("swarm.log")
+                .WriteTo.Console().WriteTo.RollingFile("swarmclient.log")
                 .CreateLogger();
-
-            if (CheckIfIsRunning())
-            {
-                Log.Logger.Error("Client is running.");
-                return;
-            }
-
-            IServiceCollection services = new ServiceCollection();
-            services.AddLogging(options => { options.AddSerilog(); });
 
             string file;
             if (args.Length == 1)
@@ -56,36 +40,24 @@ namespace Swarm.ConsoleClient
                 file = "config.ini";
             }
 
-            var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddIniFile(file)
+            //Microsoft.Extensions.Hosting
+            var host = new HostBuilder()
+                .ConfigureHostConfiguration(builder => { builder.AddIniFile(file, true); })
+                .ConfigureAppConfiguration((context, builder) =>
+                {
+                    context.HostingEnvironment.ApplicationName = "SwarmConsoleClient";
+                    builder.SetBasePath(AppContext.BaseDirectory);
+                })
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddSwarmClient(context.Configuration.GetSection("Client"));
+                    services.AddHostedService<SwarmClientHostService>();
+                })
+                .ConfigureLogging((logging) => { logging.AddSerilog(); })
+                .UseConsoleLifetime()
                 .Build();
-            services.AddSwarmClient(config.GetSection("Client"));
-            var client = services.BuildServiceProvider().GetRequiredService<ISwarmClient>();
-            client.Start().ConfigureAwait(true);
-            Console.WriteLine("Press any key to exit:");
-            Console.Read();
-            client.Stop();
-            Dispose();
-            Console.WriteLine("Exited.");
-        }
 
-        private static bool CheckIfIsRunning()
-        {
-            try
-            {
-                _processStream = File.Open(_processIdPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
-                return false;
-            }
-            catch
-            {
-                return true;
-            }
-        }
-
-        private static void Dispose()
-        {
-            _processStream?.Dispose();
+            host.Run();
         }
     }
 }

@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Swarm.Client.Listener
 {
-    public class KillListener
+    public class KillListener : IDisposable
     {
         private readonly IProcessStore _processStore;
         private readonly ILogger _logger;
@@ -30,6 +30,10 @@ namespace Swarm.Client.Listener
             {
                 _logger.LogError($"Kill PID {proc.ProcessId} Job {jobId} failed: {ex.Message}.");
             }
+        }
+
+        public void Dispose()
+        {
         }
     }
 }

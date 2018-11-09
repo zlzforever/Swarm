@@ -18,15 +18,16 @@ namespace Swarm.Client
     public class SwarmClient : ISwarmClient
     {
         private readonly ILogger _logger;
-        private int _retryTimes;
-        private bool _isRunning;
-        private bool _isDisconnected = true;
         private readonly KillAllListener _killAllListener;
         private readonly KillListener _killListener;
-        private readonly ExitListener _exitListener;
         private readonly TriggerListener _triggerListener;
+        private int _retryTimes;
+        private bool _isDisconnected = true;
+        private bool _stopSignal;
 
         #region Properties
+
+        public bool IsRunning { get; private set; }
 
         /// <summary>
         /// 分组
@@ -61,7 +62,7 @@ namespace Swarm.Client
         /// <summary>
         /// 心跳间隔
         /// </summary>
-        public int HeartbeatInterval { get; } = 5000;
+        public int HeartbeatInterval { get; }
 
         #endregion
 
@@ -69,18 +70,16 @@ namespace Swarm.Client
         /// DI 所使用的构造方法
         /// </summary>
         /// <param name="options"></param>
-        /// <param name="loggerFactory"></param>
+        /// <param name="logger"></param>
         /// <param name="killAllListener"></param>
         /// <param name="killListener"></param>
-        /// <param name="exitListener"></param>
         /// <param name="triggerListener"></param>
-        public SwarmClient(IOptions<SwarmClientOptions> options, ILoggerFactory loggerFactory,
+        public SwarmClient(IOptions<SwarmClientOptions> options, ILogger<SwarmClient> logger,
             KillAllListener killAllListener,
             KillListener killListener,
-            ExitListener exitListener,
             TriggerListener triggerListener)
         {
-            _logger = loggerFactory.CreateLogger<SwarmClient>();
+            _logger = logger;
 
             var ops = options.Value;
             Name = ops.Name;
@@ -93,7 +92,6 @@ namespace Swarm.Client
 
             _killAllListener = killAllListener;
             _killListener = killListener;
-            _exitListener = exitListener;
             _triggerListener = triggerListener;
 
             //TODO: Validate data
@@ -120,50 +118,47 @@ namespace Swarm.Client
             }
         }
 
-        public void Stop()
+
+        public async Task Run(CancellationToken cancellationToken)
         {
-            if (!_isRunning)
+            if (IsRunning)
             {
-                return;
+                throw new SwarmClientException("SwarmClient is running");
             }
 
-            _exitListener.Handle();
-        }
-
-        public async Task Start(CancellationToken cancellationToken = default)
-        {
-            if (_isRunning)
+            try
             {
-                throw new SwarmClientException("Client is running.");
-            }
+                _stopSignal = false;
+                IsRunning = true;
 
-            _isRunning = true;
-
-            HubConnection conn = null;
-            while (_retryTimes < RetryTimes)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (conn == null || _isDisconnected)
+                HubConnection conn = null;
+                while (_retryTimes < RetryTimes && !_stopSignal && !cancellationToken.IsCancellationRequested)
                 {
-                    conn = await CreateConnection(cancellationToken);
-                }
+                    if (conn == null || _isDisconnected)
+                    {
+                        conn = await CreateConnection(cancellationToken);
+                    }
 
-                await conn.SendAsync("Heartbeat", cancellationToken);
-                cancellationToken.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(HeartbeatInterval));
-                _logger.LogInformation("Client heartbeat");
+                    await conn.SendAsync("Heartbeat", cancellationToken);
+                    cancellationToken.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(HeartbeatInterval));
+                    _logger.LogInformation("SwarmClient heartbeat");
+                }               
             }
-
-            _isRunning = false;
+            finally
+            {
+                IsRunning = false;
+                
+                _triggerListener.Dispose();
+                _killListener.Dispose();
+                _killAllListener.Dispose();
+            }
         }
 
         private async Task<HubConnection> CreateConnection(CancellationToken token)
         {
             HubConnection connection = null;
-            while (_retryTimes < RetryTimes)
+            while (_retryTimes < RetryTimes && !_stopSignal && !token.IsCancellationRequested)
             {
-                token.ThrowIfCancellationRequested();
-
                 Interlocked.Increment(ref _retryTimes);
 
                 connection = new HubConnectionBuilder()
@@ -196,7 +191,7 @@ namespace Swarm.Client
                 else
                 {
                     Interlocked.Exchange(ref _retryTimes, 0);
-                    _logger.LogInformation("Connect server success.");
+                    _logger.LogInformation("Connect server success");
                     break;
                 }
             }
@@ -209,7 +204,7 @@ namespace Swarm.Client
             connection.On<JobContext>("Trigger",
                 async context => { await _triggerListener.Handle(connection, context, token); });
 
-            connection.On("Exit", _exitListener.Handle);
+            connection.On("Exit", () => { _stopSignal = true; });
             connection.On<string>("Kill", _killAllListener.Handle);
             connection.On<string, string, int>("Kill", _killListener.Handle);
         }

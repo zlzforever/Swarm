@@ -1,10 +1,11 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Swarm.Basic;
 
 namespace Swarm.Client
 {
-    public interface IExecutor
+    public interface IExecutor : IDisposable
     {
         Task Execute(JobContext context, HubConnection connection);
 

@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
@@ -70,5 +71,7 @@ namespace Swarm.Client.Impl
                 ProcessId = processId
             });
         }
+
+        public abstract void Dispose();
     }
 }

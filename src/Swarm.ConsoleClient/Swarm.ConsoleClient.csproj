@@ -5,7 +5,7 @@
         <TargetFramework>netcoreapp2.1</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-        <Version>0.1.4</Version>
+        <Version>0.1.5</Version>
         <Authors>zlzforever@163.com;</Authors>
         <AssemblyName>Swarm.ConsoleClient</AssemblyName>
         <Copyright>Copyright 2018 Lewis Zou</Copyright>
@@ -26,6 +26,7 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1.0" />
         <PackageReference Include="Serilog.AspNetCore" Version="2.1.1" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Ini" Version="2.1.1" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="2.1.1" />
     </ItemGroup>
     <ItemGroup>
       <None Update="config.ini">
