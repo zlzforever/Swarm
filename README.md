@@ -178,6 +178,39 @@ Client | Reflection Executor | IExecutor | 反射任务类型, 执行配置好�
 Client | Process Storage | IProcessStorage | 存储正在执行的任务, 一旦客户端崩溃重启依据本地存储信息检测还在跑的进程有哪些和SSN同步状态, 执行存储操作前先同步到 SSN　|    ☐    |  ☐   |
 Client | Log Filter | ILogFilter | 筛选用户需要的日志上传到 SSN, 默认是全部上传　|    ☐     |  ☐   |
 
+## INSTALLATION
+
+1. open a command prompt/terminal
+2. install Swarm.Node vi execute: dotnet tool install --global Swarm.Node
+3. install Swarm.ConsoleClient vi execute: dotnet tool install --global Swarm.ConsoleClient
+4. create a swarm node configuration swarm.json, change your sqlserver connectionstring
+
+        {
+          "Swarm": {
+            "ConnectionString": "Data Source=.;Initial Catalog=Swarm;User Id=sa;Password='1qazZAQ!'",
+            "AccessTokens": [
+              "%wTAd6IgcnQZauJKDTGdkmxyJgFxffXe"
+            ],
+            "SchedName": "SwarmCluster",
+            "SchedInstanceId": "Swarm001",
+            "Provider": "SqlServer",
+            "QuartzConnectionString": "Data Source=.;Initial Catalog=Swarm001;User Id=sa;Password='1qazZAQ!'"
+          },
+          "AllowedHosts": "*",
+          "urls": "http://*:8000"
+        }
+5. run: Swarm.Node [path-to-swarm.json] to start the website
+6. create a swarm console client configuraiton swarm.ini
+
+       [client]
+       name = inhouse001
+       group = DEFAULT
+       host = http://localhost:8000
+       accessToken= %wTAd6IgcnQZauJKDTGdkmxyJgFxffXe
+       retryTimes = 7200
+       heartbeatInterval = 5000
+       ip = 192.168.10.147
+
 ## UI
 
 ![1](https://github.com/zlzforever/Swarm/blob/master/images/1.png)
