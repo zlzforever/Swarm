@@ -14,11 +14,14 @@ namespace Swarm.ConsoleClient
         private Stream _processStream;
         private readonly ILogger _logger;
         private CancellationTokenSource _cancellationTokenSource;
+        private readonly IApplicationLifetime _applicationLifetime;
 
-        public SwarmClientHostService(ISwarmClient client, ILogger<SwarmClientHostService> logger)
+        public SwarmClientHostService(ISwarmClient client, ILogger<SwarmClientHostService> logger,
+            IApplicationLifetime applicationLifetime)
         {
             _client = client;
             _logger = logger;
+            _applicationLifetime = applicationLifetime;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
@@ -35,13 +38,15 @@ namespace Swarm.ConsoleClient
             }
 
             _cancellationTokenSource = new CancellationTokenSource();
-            _client.Run(_cancellationTokenSource.Token);
+            _client.Run(_cancellationTokenSource.Token).ConfigureAwait(true);
+            _client.Closed += Close;
             _logger.LogInformation("ConsoleClient start");
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            _client.Closed -= Close;
             _cancellationTokenSource.Cancel();
             while (_client.IsRunning)
             {
@@ -51,6 +56,11 @@ namespace Swarm.ConsoleClient
             _processStream.Dispose();
             _logger.LogInformation("ConsoleClient stopped");
             return Task.CompletedTask;
+        }
+
+        private void Close()
+        {
+            _applicationLifetime.StopApplication();
         }
     }
 }

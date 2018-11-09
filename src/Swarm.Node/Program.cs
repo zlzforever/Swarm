@@ -8,7 +8,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Console;
 using Serilog;
+using Serilog.AspNetCore;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using Swarm.Core.Common;
@@ -41,15 +43,20 @@ namespace Swarm.Node
                 argList.Add(configPath);
             }
 
-            var internalArgs = argList.ToArray();
-            Log.Logger.Information(DbInitializer.Init(internalArgs));
-
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Information()
                 .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .WriteTo.Console().WriteTo.RollingFile("swarm.log")
                 .CreateLogger();
+
+            DbInitializer.Logger = new SerilogLoggerFactory().CreateLogger("Swarm.Node");
+            var internalArgs = argList.ToArray();
+            if (!DbInitializer.Init(internalArgs))
+            {
+                return;
+            }
+
 
             Log.Logger.Information($"Load configuration from {configPath}");
             var config = new ConfigurationBuilder()
@@ -58,6 +65,7 @@ namespace Swarm.Node
                 .Build();
 
             new SwarmDbContext().CreateDbContext(new[] {configPath}).Database.Migrate();
+            Log.Logger.Information($"Swarm database update success");
             var host = CreateWebHostBuilder(args).UseConfiguration(config).Build();
             host.Run();
         }

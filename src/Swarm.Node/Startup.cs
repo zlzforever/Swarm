@@ -62,12 +62,21 @@ namespace Swarm.Node
 
             app.UseHttpsRedirection();
             var staticFileOptions = new StaticFileOptions();
-            if (!env.IsDevelopment())
+            var path = Path.Combine(AppContext.BaseDirectory, "wwwroot");
+            if (Directory.Exists(path))
             {
                 staticFileOptions.FileProvider =
-                    new PhysicalFileProvider(Path.Combine(AppContext.BaseDirectory, "wwwroot"));
+                    new PhysicalFileProvider(path);
             }
-
+            else
+            {
+                path= Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                if (Directory.Exists(path))
+                {
+                    staticFileOptions.FileProvider =
+                        new PhysicalFileProvider(path);
+                }
+            }
             app.UseStaticFiles(staticFileOptions);
 
             app.UseCookiePolicy();

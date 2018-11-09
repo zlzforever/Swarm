@@ -2,20 +2,24 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Swarm.Core.Common
 {
     public static class DbInitializer
     {
-        public static string Init(string[] args)
+        public static ILogger Logger;
+
+        public static bool Init(string[] args)
         {
             var init = args.Contains("-i");
             if (!init)
             {
-                return "Ignore init database";
+                Logger?.LogInformation("Ignore init database");
             }
 
-            var configPath = args.First(a => !a.StartsWith("-"));;
+            var configPath = args.First(a => !a.StartsWith("-"));
+            ;
             var config = new ConfigurationBuilder().AddJsonFile(configPath)
                 .Build();
 
@@ -26,18 +30,17 @@ namespace Swarm.Core.Common
             {
                 case "sqlserver":
                 {
-                    new SqlServerMigrator(connectionString, args.Contains("-r")).Migrate();
+                    new SqlServerMigrator(connectionString, args.Contains("-r"), Logger).Migrate();
                     break;
                 }
                 default:
                 {
                     Console.WriteLine($"Unsupported provider: {db}");
-                    Environment.Exit(-1);
-                    break;
+                    return false;
                 }
             }
 
-            return "OK";
+            return true;
         }
     }
 }

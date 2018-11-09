@@ -25,6 +25,8 @@ namespace Swarm.Client
         private bool _isDisconnected = true;
         private bool _stopSignal;
 
+        public event Action Closed;
+
         #region Properties
 
         public bool IsRunning { get; private set; }
@@ -142,15 +144,17 @@ namespace Swarm.Client
                     await conn.SendAsync("Heartbeat", cancellationToken);
                     cancellationToken.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(HeartbeatInterval));
                     _logger.LogInformation("SwarmClient heartbeat");
-                }               
+                }
             }
             finally
             {
                 IsRunning = false;
-                
+
                 _triggerListener.Dispose();
                 _killListener.Dispose();
                 _killAllListener.Dispose();
+
+                Closed?.Invoke();
             }
         }
 

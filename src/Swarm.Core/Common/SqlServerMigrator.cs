@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using Dapper;
+using Microsoft.Extensions.Logging;
 
 namespace Swarm.Core.Common
 {
@@ -10,11 +11,13 @@ namespace Swarm.Core.Common
     {
         private readonly string _connectionString;
         private readonly bool _reCreate;
+        private readonly ILogger _logger;
 
-        public SqlServerMigrator(string connectionString, bool reCreate)
+        public SqlServerMigrator(string connectionString, bool reCreate,ILogger logger=null)
         {
             _connectionString = connectionString;
             _reCreate = reCreate;
+            _logger = logger;
         }
 
         public void Migrate()
@@ -37,18 +40,21 @@ namespace Swarm.Core.Common
                     if (_reCreate)
                     {
                         masterConn.Execute($"DROP DATABASE {db}");
+                        _logger?.LogInformation($"Drop database: {db} success");
                     }
                     else
                     {
-                        Console.WriteLine("Database already exists");
+                        _logger?.LogInformation("Database already exists, ignore Quartz database init");
                         return;
                     }
                 }
 
-                Console.WriteLine("Try create database: " + db);
                 masterConn.Execute($"CREATE DATABASE {db}");
+                _logger?.LogInformation($"Create database: {db} success");
 
                 ExecuteSql();
+
+                _logger?.LogInformation("Init tables success");
             }
         }
 
